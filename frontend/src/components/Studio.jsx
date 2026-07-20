@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LogOut, Moon, Sun } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import AdminBoard from './admin/AdminBoard'
 import {
   DEFAULT_HD_SCALE,
   HD_SCALES,
@@ -78,8 +80,13 @@ export default function Studio({
   onThemeChange,
 }) {
   const { user, logout, isAdmin } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
   const frameRefs = useRef({})
   const shellRef = useRef(null)
+
+  const samplesOpen = location.pathname === '/samples'
+  const adminOpen = location.pathname === '/admin'
 
   const [openTabIds, setOpenTabIds] = useState(getInitialTabs)
   const [activeProjectId, setActiveProjectId] = useState(() => getInitialTabs()[0])
@@ -91,9 +98,6 @@ export default function Studio({
     return initial
   })
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [samplesOpen, setSamplesOpen] = useState(
-    () => typeof window !== 'undefined' && window.location.hash === '#/samples',
-  )
   const [openSampleCollectionId, setOpenSampleCollectionId] = useState(null)
   const [selectedSampleTemplateId, setSelectedSampleTemplateId] = useState(null)
 
@@ -516,27 +520,44 @@ export default function Studio({
   }, [openTabIds])
 
   useEffect(() => {
-    const hash = samplesOpen ? '#/samples' : '#/'
-    if (window.location.hash !== hash) {
-      window.history.replaceState(null, '', hash)
+    const hash = window.location.hash
+    if (hash === '#/samples' || hash === '#samples') {
+      navigate('/samples', { replace: true })
+      return
+    }
+    if (hash === '#/admin' || hash === '#admin') {
+      navigate(isAdmin ? '/admin' : '/', { replace: true })
+      return
+    }
+    if (hash === '#/' || hash === '#') {
+      navigate('/', { replace: true })
+    }
+  }, [navigate, isAdmin])
+
+  useEffect(() => {
+    if (adminOpen && !isAdmin) {
+      navigate('/', { replace: true })
+    }
+  }, [adminOpen, isAdmin, navigate])
+
+  useEffect(() => {
+    if (!samplesOpen) {
+      setOpenSampleCollectionId(null)
+      setSelectedSampleTemplateId(null)
     }
   }, [samplesOpen])
 
-  useEffect(() => {
-    function onHashChange() {
-      const next = window.location.hash === '#/samples'
-      setSamplesOpen(next)
-      if (!next) {
-        setOpenSampleCollectionId(null)
-        setSelectedSampleTemplateId(null)
-      }
-    }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
-
   function toggleTheme() {
     onThemeChange?.(theme === 'dark' ? 'light' : 'dark')
+  }
+
+  function toggleSamples() {
+    navigate(samplesOpen ? '/' : '/samples')
+  }
+
+  function toggleAdmin() {
+    if (!isAdmin) return
+    navigate(adminOpen ? '/' : '/admin')
   }
 
   function patchTab(projectId, patch) {
@@ -582,7 +603,7 @@ export default function Studio({
     const next = getProject(projectId)
     if (!next) return
 
-    setSamplesOpen(false)
+    navigate('/')
     setOpenSampleCollectionId(null)
     setSelectedSampleTemplateId(null)
     setOpenTabIds((prev) => (prev.includes(projectId) ? prev : [...prev, projectId]))
@@ -593,18 +614,7 @@ export default function Studio({
     frameRefs.current = {}
     setDialogOpen(false)
     setError('')
-  }, [])
-
-  function toggleSamples() {
-    setSamplesOpen((prev) => {
-      const next = !prev
-      if (!next) {
-        setOpenSampleCollectionId(null)
-        setSelectedSampleTemplateId(null)
-      }
-      return next
-    })
-  }
+  }, [navigate])
 
   function handleSamplesInspectorSelect(id) {
     if (openSampleCollection) {
@@ -792,7 +802,7 @@ export default function Studio({
         <div className="studio-topbar__left">
           <strong>Flier Studio</strong>
           <span className="studio-topbar__sep" />
-          <span>{samplesOpen ? 'Samples' : project.name}</span>
+          <span>{adminOpen ? 'Admin' : samplesOpen ? 'Samples' : project.name}</span>
           <button
             type="button"
             className={`studio-topbar__chip${samplesOpen ? ' is-active' : ''}`}
@@ -801,15 +811,27 @@ export default function Studio({
           >
             Samples
           </button>
+          {isAdmin ? (
+            <button
+              type="button"
+              className={`studio-topbar__chip${adminOpen ? ' is-active' : ''}`}
+              onClick={toggleAdmin}
+              title="Admin dashboard"
+            >
+              Admin
+            </button>
+          ) : null}
         </div>
         <div className="studio-topbar__center">
-          {samplesOpen
-            ? openSampleCollection
-              ? openSampleCollection.name
-              : 'Sample library'
-            : selected
-              ? selected.name
-              : 'No selection'}
+          {adminOpen
+            ? 'Users & activity'
+            : samplesOpen
+              ? openSampleCollection
+                ? openSampleCollection.name
+                : 'Sample library'
+              : selected
+                ? selected.name
+                : 'No selection'}
         </div>
         <div className="studio-topbar__right">
           <div className="studio-topbar__user" title={user?.email || ''}>
@@ -839,7 +861,7 @@ export default function Studio({
           >
             {theme === 'dark' ? <Sun size={14} strokeWidth={2.25} /> : <Moon size={14} strokeWidth={2.25} />}
           </button>
-          {!samplesOpen ? (
+          {!samplesOpen && !adminOpen ? (
             <>
               <button type="button" className="studio-topbar__chip" onClick={() => handleAction('zoomOut')}>
                 −
@@ -857,9 +879,9 @@ export default function Studio({
 
       <ProjectTabs
         openTabs={openTabs}
-        activeProjectId={samplesOpen ? null : activeProjectId}
+        activeProjectId={samplesOpen || adminOpen ? null : activeProjectId}
         onSelect={(id) => {
-          setSamplesOpen(false)
+          navigate('/')
           setOpenSampleCollectionId(null)
           setSelectedSampleTemplateId(null)
           setActiveProjectId(id)
@@ -888,12 +910,14 @@ export default function Studio({
           onToggleLabels={() => setShowLabels((v) => !v)}
           showGrid={showGrid}
           onToggleGrid={() => setShowGrid((v) => !v)}
-          canExport={!samplesOpen && Boolean(selected)}
+          canExport={!samplesOpen && !adminOpen && Boolean(selected)}
           busy={busy}
         />
 
         <div className="studio-shell" ref={shellRef}>
-          {samplesOpen ? (
+          {adminOpen && isAdmin ? (
+            <AdminBoard />
+          ) : samplesOpen ? (
             <SamplesBoard
               showGrid={showGrid}
               openCollectionId={openSampleCollectionId}
@@ -926,7 +950,13 @@ export default function Studio({
           )}
 
           <footer className="studio-statusbar">
-            {samplesOpen ? (
+            {adminOpen ? (
+              <>
+                <span>Admin</span>
+                <span>Users, logins, and design activity</span>
+                <span>Admin only</span>
+              </>
+            ) : samplesOpen ? (
               <>
                 <span>Samples</span>
                 <span>
@@ -957,7 +987,7 @@ export default function Studio({
         </div>
 
         <Inspector
-          mode={samplesOpen ? 'samples' : 'board'}
+          mode={adminOpen ? 'admin' : samplesOpen ? 'samples' : 'board'}
           items={boardItems}
           selectedId={selectedId}
           selected={selected}
@@ -980,11 +1010,13 @@ export default function Studio({
           }
           onSamplesSelect={handleSamplesInspectorSelect}
           samplesHint={
-            openSampleCollection
-              ? 'Click a template to preview full-screen and download for your phone.'
-              : 'Open a sample collection to browse its template variations.'
+            adminOpen
+              ? 'Admin view — manage users and review activity.'
+              : openSampleCollection
+                ? 'Click a template to preview full-screen and download for your phone.'
+                : 'Open a sample collection to browse its template variations.'
           }
-          editEnabled={!samplesOpen && editEnabled}
+          editEnabled={!samplesOpen && !adminOpen && editEnabled}
           editContent={editContent}
           focusedPath={focusedPath}
           focusedKind={focusedKind}

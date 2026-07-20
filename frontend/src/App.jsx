@@ -1,3 +1,4 @@
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from './auth/AuthContext'
 import LoginScreen from './components/auth/LoginScreen'
@@ -16,7 +17,7 @@ function getInitialTheme() {
 }
 
 function AuthGate({ theme, onThemeChange }) {
-  const { user, loading } = useAuth()
+  const { user, loading, isAdmin } = useAuth()
 
   if (loading) {
     return (
@@ -30,7 +31,23 @@ function AuthGate({ theme, onThemeChange }) {
     return <LoginScreen theme={theme} />
   }
 
-  return <Studio theme={theme} onThemeChange={onThemeChange} />
+  return (
+    <Routes>
+      <Route path="/" element={<Studio theme={theme} onThemeChange={onThemeChange} />} />
+      <Route path="/samples" element={<Studio theme={theme} onThemeChange={onThemeChange} />} />
+      <Route
+        path="/admin"
+        element={
+          isAdmin ? (
+            <Studio theme={theme} onThemeChange={onThemeChange} />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
 }
 
 export default function App() {

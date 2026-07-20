@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { OAuth2Client } from 'google-auth-library'
+import { Event } from '../models/Event.js'
 import { User } from '../models/User.js'
 import {
   clearAuthCookie,
@@ -78,6 +79,13 @@ router.post('/google', async (req, res) => {
     const user = await upsertGoogleUser(payload)
     const token = signUserToken(user)
     setAuthCookie(res, token)
+
+    Event.create({
+      userId: user._id,
+      action: 'login',
+      meta: { provider: 'google' },
+    }).catch((err) => console.error('Failed to log login event', err))
+
     return res.json({ user: user.toSafeJSON() })
   } catch (err) {
     console.error('Google auth failed', err)

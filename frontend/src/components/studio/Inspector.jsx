@@ -49,7 +49,24 @@ export default function Inspector({
   const outW = selected ? selected.width * scale : 0
   const outH = selected ? selected.height * scale : 0
   const samplesMode = mode === 'samples'
+  const adminMode = mode === 'admin'
   const layerItems = samplesMode ? samplesItems : items
+
+  if (adminMode) {
+    return (
+      <aside className="inspector" aria-label="Inspector">
+        <header className="inspector__head">
+          <Layers size={14} strokeWidth={2.25} />
+          <span>Admin</span>
+        </header>
+        <div className="inspector__block">
+          <p className="inspector__note">
+            {samplesHint || 'Review users and activity. Only admins can open this tab.'}
+          </p>
+        </div>
+      </aside>
+    )
+  }
 
   return (
     <aside className="inspector" aria-label="Inspector">

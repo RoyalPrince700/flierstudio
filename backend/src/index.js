@@ -6,6 +6,7 @@ import helmet from 'helmet'
 import mongoose from 'mongoose'
 import morgan from 'morgan'
 import authRoutes from './routes/auth.js'
+import adminRoutes from './routes/admin.js'
 
 const PORT = Number(process.env.PORT) || 8080
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'
@@ -39,6 +40,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/admin', adminRoutes)
 
 app.use((err, _req, res, _next) => {
   console.error(err)
