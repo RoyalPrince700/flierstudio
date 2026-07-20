@@ -1,0 +1,23 @@
+---
+description: Analyze reference designs into reusable samples with PRINCIPLES.md
+globs: sample/**/*,src/samples/**/*,src/components/placeholders/**/*
+alwaysApply: false
+---
+
+# Sample Analysis Rules
+
+When the user adds designs to `sample/inbox/`, attaches references, or asks to create/reuse a **sample**:
+
+1. Follow `sample/ANALYZE.md` end-to-end.
+2. **Folder = one collection.** If `sample/inbox/<name>/` contains multiple images, analyze them as template variations of one system (shared chrome first, then each layout). Do not treat each file as an unrelated sample unless the user says so.
+3. Follow `sample/PLACEHOLDERS.md` for people, logos, or products.
+4. Save under `src/samples/{id}/` with `PRINCIPLES.md`, `tokens.js`, and one component per variation.
+5. Register via `ANALYZED_COLLECTIONS` in `src/samples/registry.js` so Samples shows **one card** that expands to all templates.
+6. Use demo brand/copy — never clone reference wording or assets.
+7. When the user says “use sample `{id}`”, read that collection’s principles and implement under their brand project.
+
+## Naming
+
+- Folder pack: kebab-case folder name → `malik-gadget`
+- Single style: `{technique}-{composition}[-{mood}]` → `glass-stack`
+- Template ids inside a pack: `{collection}-{variation}` → `malik-gadget-flagship-tray`

@@ -1,0 +1,212 @@
+.ph-portrait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: var(--ph-width, 160px);
+  font-family: var(--ph-font, inherit);
+  color: var(--ph-ink, #f5f7fa);
+}
+
+.ph-portrait__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--ph-aspect, 3 / 4);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--ph-surface, rgba(255, 255, 255, 0.08));
+  border: var(--ph-border, 1.5px solid rgba(255, 255, 255, 0.28));
+  box-shadow: var(--ph-shadow, none);
+  color: var(--ph-icon, rgba(255, 255, 255, 0.75));
+}
+
+.ph-portrait__frame--rounded {
+  border-radius: 12px;
+}
+
+.ph-portrait__frame--soft {
+  border-radius: 28px;
+}
+
+.ph-portrait__frame--rect {
+  border-radius: 4px;
+}
+
+.ph-portrait__frame--circle {
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+}
+
+.ph-portrait__slab {
+  position: absolute;
+  inset: 10px -8px -8px 10px;
+  border-radius: inherit;
+  background: var(--ph-accent, #f4c430);
+  z-index: 0;
+  opacity: 0.95;
+}
+
+.ph-portrait__frame--circle .ph-portrait__slab {
+  inset: 8px -6px -6px 8px;
+}
+
+.ph-portrait__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--ph-fill, linear-gradient(160deg, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0.28)));
+  border-radius: inherit;
+  backdrop-filter: var(--ph-blur, blur(6px));
+}
+
+.ph-portrait__frame--flat .ph-portrait__inner {
+  background: var(--ph-surface, #2a3540);
+  backdrop-filter: none;
+}
+
+.ph-portrait__frame--outline .ph-portrait__inner {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.ph-portrait__frame--glass .ph-portrait__inner {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(10px);
+}
+
+.ph-portrait__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ph-portrait__icon {
+  width: 42%;
+  height: 42%;
+}
+
+.ph-portrait__name {
+  margin: 10px 0 0;
+  font-size: var(--ph-name-size, 15px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.15;
+}
+
+.ph-portrait__title {
+  margin: 4px 0 0;
+  font-size: var(--ph-title-size, 12px);
+  font-weight: 500;
+  line-height: 1.2;
+  opacity: 0.78;
+}
+
+.ph-portrait--sm {
+  --ph-name-size: 12px;
+  --ph-title-size: 10px;
+}
+
+.ph-portrait--md {
+  --ph-name-size: 15px;
+  --ph-title-size: 12px;
+}
+
+.ph-portrait--lg {
+  --ph-name-size: 18px;
+  --ph-title-size: 13px;
+}
+
+.ph-logo {
+  display: inline-grid;
+  place-items: center;
+  width: var(--ph-width, 72px);
+  height: var(--ph-height, 72px);
+  border-radius: var(--ph-radius, 16px);
+  background: var(--ph-surface, rgba(255, 255, 255, 0.1));
+  border: var(--ph-border, 1px solid rgba(255, 255, 255, 0.28));
+  color: var(--ph-ink, rgba(255, 255, 255, 0.85));
+  backdrop-filter: var(--ph-blur, blur(8px));
+  overflow: hidden;
+}
+
+.ph-logo--circle {
+  border-radius: 50%;
+}
+
+.ph-logo--pill {
+  border-radius: 999px;
+  width: var(--ph-width, 160px);
+  height: var(--ph-height, 48px);
+}
+
+.ph-logo__img {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
+
+.ph-logo__mark {
+  font-size: var(--ph-mark-size, 18px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ph-logo__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.ph-image {
+  position: relative;
+  width: var(--ph-width, 100%);
+  height: var(--ph-height, auto);
+  aspect-ratio: var(--ph-aspect, 16 / 9);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--ph-radius, 16px);
+  background: var(--ph-surface, rgba(255, 255, 255, 0.08));
+  border: var(--ph-border, 1px dashed rgba(255, 255, 255, 0.35));
+  color: var(--ph-ink, rgba(255, 255, 255, 0.7));
+  backdrop-filter: var(--ph-blur, blur(4px));
+}
+
+.ph-image__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ph-image__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  text-align: center;
+}
+
+.ph-image__icon {
+  width: 28%;
+  max-width: 64px;
+  height: auto;
+  opacity: 0.85;
+}
+
+.ph-image__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}

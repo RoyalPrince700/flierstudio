@@ -1,0 +1,211 @@
+/* —— Flagship tray —— */
+.mg-tray__shelf {
+  position: relative;
+  width: 860px;
+  height: 420px;
+  border-radius: 36px;
+  background: linear-gradient(160deg, #1a72ff 0%, #0b5fff 45%, #0847c7 100%);
+  box-shadow:
+    0 30px 60px rgba(11, 95, 255, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.35);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  padding: 48px 28px 28px;
+}
+
+.mg-tray__slot {
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(6px);
+}
+
+.mg-tray__logos {
+  position: absolute;
+  top: -28px;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  padding: 0 28px;
+  pointer-events: none;
+}
+
+.mg-tray__logo-chip {
+  justify-self: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* —— Upgrade hero —— */
+.mg-upgrade__hero {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.mg-upgrade__glow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(244, 245, 247, 0) 70%);
+}
+
+/* —— Pocket split —— */
+.mg-pocket {
+  color: #fff;
+  background:
+    radial-gradient(circle at 18% 78%, rgba(77, 155, 255, 0.55), transparent 42%),
+    linear-gradient(165deg, #0a2a7a 0%, #061433 100%);
+}
+
+.mg-pocket .mg__support {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.mg-pocket__layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 20px;
+  align-items: center;
+  min-height: 0;
+}
+
+.mg-pocket__copy {
+  text-align: left;
+}
+
+.mg-pocket__copy .mg__headline {
+  font-size: 58px;
+  text-align: left;
+}
+
+.mg-pocket__copy .mg__support {
+  text-align: left;
+}
+
+.mg-pocket__copy .mg__swoosh {
+  margin-left: 0;
+}
+
+.mg-pocket__media {
+  position: relative;
+  justify-self: end;
+}
+
+.mg-pocket .mg__badge {
+  left: 42%;
+  top: 8%;
+}
+
+/* —— Gadget burst —— */
+.mg-burst {
+  color: #fff;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(40, 90, 180, 0.45), transparent 55%),
+    #0a0a0a;
+}
+
+.mg-burst .mg__support {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.mg-burst__cluster {
+  position: relative;
+  width: 920px;
+  height: 620px;
+}
+
+.mg-burst__item {
+  position: absolute;
+}
+
+.mg-burst .mg__badge {
+  left: 6%;
+  top: 28%;
+}
+
+/* —— Box stack —— */
+.mg-boxes__stack {
+  position: relative;
+  width: 640px;
+  height: 520px;
+  display: grid;
+  place-items: center;
+}
+
+.mg-boxes__card {
+  position: absolute;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #333;
+}
+
+.mg-boxes__card--a {
+  width: 420px;
+  height: 260px;
+  top: 40px;
+  transform: rotate(-6deg);
+  background: linear-gradient(160deg, #f7f7f7, #e9e9ee);
+}
+
+.mg-boxes__card--b {
+  width: 380px;
+  height: 230px;
+  top: 150px;
+  transform: rotate(4deg);
+  background: linear-gradient(160deg, #111, #333);
+  color: #fff;
+}
+
+.mg-boxes__card--c {
+  width: 300px;
+  height: 190px;
+  top: 280px;
+  transform: rotate(-2deg);
+  background: linear-gradient(160deg, #0b5fff, #4d9bff);
+  color: #fff;
+}
+
+/* —— Week plans —— */
+.mg-week__hero {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.mg-week__sky {
+  position: absolute;
+  inset: 40px 80px auto;
+  height: 420px;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(135, 180, 255, 0.55), rgba(244, 245, 247, 0.2)),
+    linear-gradient(90deg, #c8d9f5, #e8eef8);
+  filter: blur(0.2px);
+}

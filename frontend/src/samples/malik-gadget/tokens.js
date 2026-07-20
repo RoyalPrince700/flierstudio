@@ -1,0 +1,40 @@
+/** Shared tokens for sample collection: malik-gadget */
+export const malikGadget = {
+  id: 'malik-gadget',
+  size: { width: 1080, height: 1350 },
+  colors: {
+    ink: '#111111',
+    inkSoft: '#3a3a3a',
+    muted: '#6b6b6b',
+    paper: '#f4f5f7',
+    paperDeep: '#e8eaee',
+    white: '#ffffff',
+    brand: '#0b5fff',
+    brandDeep: '#0847c7',
+    brandSoft: '#4d9bff',
+    accent: '#ffe14a',
+    accentInk: '#111111',
+    pink: '#ff2d7b',
+    navy: '#0a2a7a',
+    navyDeep: '#061433',
+    black: '#0a0a0a',
+    footerFrame: '#0d0d0d',
+  },
+  fonts: {
+    display: '"Manrope", "DM Sans", sans-serif',
+    body: '"DM Sans", "Segoe UI", sans-serif',
+  },
+  spacing: {
+    safe: 48,
+    radius: 28,
+    footerRadius: 32,
+  },
+  demo: {
+    brand: 'Orbit Gadgets',
+    mark: 'OG',
+    address: 'Unit 12 · Market Plaza · Demo City',
+    phone: '+234 000 000 0000',
+    handle: '@orbit_gadgets',
+    cta: 'Shop now',
+  },
+}

@@ -1,0 +1,45 @@
+.blank-flier {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 18px;
+  padding: 72px;
+  color: #f4f7fb;
+  background:
+    radial-gradient(ellipse 70% 50% at 80% 10%, rgba(255, 255, 255, 0.12), transparent 55%),
+    linear-gradient(160deg, #1a2330 0%, #0f141c 100%);
+  font-family: 'Manrope', sans-serif;
+}
+
+.blank-flier__brand {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #d4ff4f;
+}
+
+.blank-flier__title {
+  margin: 0;
+  max-width: 780px;
+  font-size: 72px;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.blank-flier__note {
+  margin: 0;
+  max-width: 640px;
+  font-size: 24px;
+  line-height: 1.4;
+  color: rgba(244, 247, 251, 0.72);
+}
+
+.blank-flier__size {
+  margin: 28px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(244, 247, 251, 0.45);
+}

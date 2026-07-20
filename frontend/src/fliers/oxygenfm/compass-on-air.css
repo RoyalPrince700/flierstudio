@@ -1,0 +1,407 @@
+.compass-air {
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  font-family: var(--rs-body);
+  color: var(--rs-white);
+}
+
+.compass-air *,
+.compass-air *::before,
+.compass-air *::after {
+  box-sizing: border-box;
+}
+
+.compass-air__safe {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: var(--rs-safe);
+  display: flex;
+  flex-direction: column;
+}
+
+.compass-air__stage {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
+
+/* Slab bleeds off the left canvas edge (reference silhouette) */
+.compass-air__copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 32px;
+  margin-left: calc(var(--rs-safe) * -1);
+  max-width: 760px;
+}
+
+/*
+ * Line wraps fuse into one stepped black mass:
+ * flush left edge, ragged clipped right edge; negative gaps kill blue seams.
+ */
+.compass-air__wrap {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  background: var(--rs-black);
+  color: inherit;
+}
+
+.compass-air__wrap--display {
+  padding: 14px 44px 0 var(--rs-safe);
+  clip-path: polygon(0 0, 96% 0, 100% 100%, 0 100%);
+}
+
+.compass-air__wrap--display + .compass-air__wrap--display {
+  margin-top: -12px;
+  padding-top: 0;
+  padding-bottom: 10px;
+  padding-right: 54px;
+  clip-path: polygon(0 0, 100% 0, 93% 100%, 0 100%);
+}
+
+.compass-air__wrap--host {
+  margin-top: -8px;
+  padding: 8px 48px 16px var(--rs-safe);
+  clip-path: polygon(0 0, 97% 0, 100% 55%, 94% 100%, 0 100%);
+}
+
+.compass-air__wrap--show {
+  margin-top: -6px;
+  padding: 18px 48px 22px var(--rs-safe);
+  clip-path: polygon(0 0, 96% 0, 100% 55%, 98% 100%, 0 100%);
+}
+
+.compass-air__wrap--tagline {
+  margin-top: -6px;
+  padding: 4px 52px 12px var(--rs-safe);
+  clip-path: polygon(0 0, 98% 0, 100% 100%, 0 100%);
+}
+
+.compass-air__wrap--schedule {
+  margin-top: -6px;
+  padding: 16px 48px 4px var(--rs-safe);
+  clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%);
+}
+
+.compass-air__wrap--schedule + .compass-air__wrap--schedule {
+  margin-top: -4px;
+  padding-top: 4px;
+  padding-bottom: 18px;
+  padding-right: 60px;
+  clip-path: polygon(0 0, 100% 0, 91% 100%, 0 100%);
+}
+
+.compass-air__wrap--cta {
+  margin-top: -4px;
+  padding: 18px 56px 34px var(--rs-safe);
+  clip-path: polygon(0 0, 95% 0, 100% 45%, 88% 100%, 0 100%);
+}
+
+/* Tapered black tail continues the slab toward the bottom edge */
+.compass-air__tail {
+  width: 440px;
+  height: 290px;
+  margin-top: -4px;
+  background: var(--rs-black);
+  clip-path: polygon(0 0, 100% 0, 40% 42%, 0 100%);
+}
+
+.compass-air__display {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-family: var(--rs-display);
+  font-size: 236px;
+  font-weight: 400;
+  line-height: 0.78;
+  letter-spacing: 0.012em;
+  color: var(--rs-orange);
+}
+
+.compass-air__host-credit {
+  margin: 0;
+  font-family: var(--rs-ui);
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--rs-orange);
+}
+
+.compass-air__show {
+  margin: 0;
+  font-family: var(--rs-ui);
+  font-size: 88px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.94;
+  color: var(--rs-white);
+}
+
+.compass-air__tagline {
+  margin: 0;
+  max-width: 640px;
+  font-family: var(--rs-body);
+  font-size: 33px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.compass-air__tagline .compass-air__wrap--tagline {
+  max-width: 640px;
+}
+
+.compass-air__schedule {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-family: var(--rs-body);
+  font-size: 46px;
+  font-weight: 600;
+  line-height: 1.12;
+  color: var(--rs-white);
+}
+
+.compass-air__cta-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.compass-air__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 84px;
+  padding: 20px 58px;
+  border-radius: 12px;
+  background: var(--rs-orange);
+  color: #fff;
+  font-family: var(--rs-ui);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* ── Right column: chips + host ─────────────────────────── */
+
+.compass-air__chip {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  border: 5px solid var(--rs-black);
+  background: var(--rs-white);
+  box-shadow: 10px 10px 0 var(--rs-black);
+  color: var(--rs-black);
+}
+
+.compass-air__chip--speaker {
+  width: 112px;
+  height: 112px;
+  right: 34px;
+  top: 0;
+  transform: rotate(-6deg);
+}
+
+.compass-air__chip--mic {
+  width: 98px;
+  height: 98px;
+  right: 116px;
+  top: 948px;
+  background: var(--rs-green);
+  transform: rotate(8deg);
+}
+
+.compass-air__host {
+  position: absolute;
+  right: -8px;
+  top: 186px;
+  z-index: 1;
+}
+
+.compass-air__portrait {
+  position: relative;
+  width: 430px;
+  height: 620px;
+  border-radius: 22px;
+  border: 5px solid var(--rs-black);
+  box-shadow: 14px 14px 0 var(--rs-black);
+  overflow: hidden;
+  background: #2a2a2a;
+}
+
+.compass-air__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 16%;
+  display: block;
+}
+
+.compass-air__photo-empty {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, #333, #111);
+}
+
+.compass-air__mic-badge {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--rs-green);
+  border: 4px solid var(--rs-black);
+  color: var(--rs-black);
+}
+
+.compass-air__footer {
+  position: absolute;
+  right: var(--rs-safe);
+  bottom: var(--rs-safe);
+  z-index: 4;
+}
+
+.compass-air__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--rs-white);
+}
+
+.compass-air__brand-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  flex-shrink: 0;
+}
+
+.compass-air__brand-name {
+  font-family: var(--rs-ui);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* ── Square 1080×1080 ───────────────────────────────────── */
+
+.compass-air--square .compass-air__copy {
+  margin-top: 8px;
+  max-width: 640px;
+}
+
+.compass-air--square .compass-air__wrap--display {
+  padding-top: 10px;
+  padding-right: 36px;
+}
+
+.compass-air--square .compass-air__wrap--display + .compass-air__wrap--display {
+  padding-right: 44px;
+  padding-bottom: 8px;
+}
+
+.compass-air--square .compass-air__wrap--host {
+  padding: 6px 40px 12px var(--rs-safe);
+}
+
+.compass-air--square .compass-air__wrap--show {
+  padding-top: 14px;
+  padding-bottom: 16px;
+}
+
+.compass-air--square .compass-air__wrap--tagline {
+  padding-bottom: 10px;
+}
+
+.compass-air--square .compass-air__wrap--schedule {
+  padding-top: 12px;
+}
+
+.compass-air--square .compass-air__wrap--schedule + .compass-air__wrap--schedule {
+  padding-bottom: 14px;
+}
+
+.compass-air--square .compass-air__wrap--cta {
+  padding: 14px 44px 26px var(--rs-safe);
+}
+
+.compass-air--square .compass-air__tail {
+  width: 330px;
+  height: 150px;
+}
+
+.compass-air--square .compass-air__display {
+  font-size: 176px;
+}
+
+.compass-air--square .compass-air__host-credit {
+  font-size: 34px;
+}
+
+.compass-air--square .compass-air__show {
+  font-size: 68px;
+}
+
+.compass-air--square .compass-air__tagline {
+  font-size: 27px;
+  max-width: 520px;
+}
+
+.compass-air--square .compass-air__schedule {
+  font-size: 36px;
+}
+
+.compass-air--square .compass-air__cta {
+  min-height: 66px;
+  padding: 16px 44px;
+  font-size: 26px;
+}
+
+.compass-air--square .compass-air__chip--speaker {
+  width: 96px;
+  height: 96px;
+  right: 24px;
+}
+
+.compass-air--square .compass-air__chip--mic {
+  width: 82px;
+  height: 82px;
+  right: 104px;
+  top: 742px;
+}
+
+.compass-air--square .compass-air__host {
+  right: -4px;
+  top: 128px;
+}
+
+.compass-air--square .compass-air__portrait {
+  width: 370px;
+  height: 500px;
+}
+
+.compass-air--square .compass-air__mic-badge {
+  width: 58px;
+  height: 58px;
+}
+
+.compass-air--square .compass-air__brand-name {
+  font-size: 24px;
+}

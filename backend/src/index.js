@@ -1,0 +1,61 @@
+import 'dotenv/config'
+import cookieParser from 'cookie-parser'
+import cors from 'cors'
+import express from 'express'
+import helmet from 'helmet'
+import mongoose from 'mongoose'
+import morgan from 'morgan'
+import authRoutes from './routes/auth.js'
+
+const PORT = Number(process.env.PORT) || 8080
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'
+
+function requireEnv(name) {
+  if (!process.env[name]) {
+    console.error(`Missing required env: ${name}`)
+    process.exit(1)
+  }
+}
+
+requireEnv('MONGODB_URI')
+requireEnv('JWT_SECRET')
+requireEnv('GOOGLE_CLIENT_ID')
+
+const app = express()
+
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
+app.use(
+  cors({
+    origin: CLIENT_URL,
+    credentials: true,
+  }),
+)
+app.use(morgan('dev'))
+app.use(express.json({ limit: '2mb' }))
+app.use(cookieParser())
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, service: 'flier-studio-api' })
+})
+
+app.use('/api/auth', authRoutes)
+
+app.use((err, _req, res, _next) => {
+  console.error(err)
+  res.status(500).json({ error: 'Server error' })
+})
+
+async function start() {
+  await mongoose.connect(process.env.MONGODB_URI)
+  console.log('MongoDB connected')
+
+  app.listen(PORT, () => {
+    console.log(`API listening on http://localhost:${PORT}`)
+    console.log(`CORS origin: ${CLIENT_URL}`)
+  })
+}
+
+start().catch((err) => {
+  console.error('Failed to start API', err)
+  process.exit(1)
+})

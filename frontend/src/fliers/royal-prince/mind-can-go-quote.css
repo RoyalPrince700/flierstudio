@@ -1,0 +1,294 @@
+.rp-quote {
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: var(--rp-ink);
+  font-family: var(--rp-body);
+  background: var(--rp-bg);
+}
+
+.rp-quote *,
+.rp-quote *::before,
+.rp-quote *::after {
+  box-sizing: border-box;
+}
+
+.rp-quote::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background-image: none;
+}
+
+.rp-quote--lines-a::before {
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.1) 0,
+    rgba(255, 255, 255, 0.1) 2px,
+    transparent 1px,
+    transparent 30px
+  );
+}
+
+.rp-quote--lines-b::before {
+  opacity: 0.32;
+  background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 2px,
+      transparent 1px,
+      transparent 22px
+    ),
+    repeating-linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.06) 0,
+      rgba(255, 255, 255, 0.06) 2px,
+      transparent 1px,
+      transparent 26px
+    );
+}
+
+.rp-quote--lines-c::before {
+  opacity: 0.3;
+  background-image: repeating-linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.1) 0,
+    rgba(255, 255, 255, 0.1) 2px,
+    transparent 1px,
+    transparent 26px
+  );
+}
+
+.rp-quote--lines-d::before {
+  opacity: 0.32;
+  background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 2px,
+      transparent 1px,
+      transparent 28px
+    ),
+    radial-gradient(circle at 80% 12%, rgba(255, 255, 255, 0.2), transparent 60%);
+}
+
+.rp-quote--grotesk-a::before {
+  opacity: 0.32;
+  background-image: radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.16), transparent 60%);
+}
+
+.rp-quote--grotesk-b::before {
+  opacity: 0.34;
+  background-image: repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px,
+      transparent 24px
+    ),
+    radial-gradient(circle at 80% 16%, rgba(255, 255, 255, 0.2), transparent 60%);
+}
+
+.rp-quote--grotesk-c::before {
+  opacity: 0.32;
+  background-image:
+    radial-gradient(circle at -8% 30%, rgba(255, 255, 255, 0.14), transparent 60%),
+    radial-gradient(circle at 110% 80%, rgba(255, 255, 255, 0.2), transparent 65%);
+}
+
+.rp-quote--grotesk-d::before {
+  opacity: 0.32;
+  background-image:
+    repeating-linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 1.5px,
+      transparent 1.5px,
+      transparent 26px
+    ),
+    radial-gradient(circle at 82% 8%, rgba(255, 255, 255, 0.2), transparent 60%);
+}
+
+.rp-quote--grotesk-e::before {
+  opacity: 0.3;
+  background-image:
+    radial-gradient(circle at 14% 10%, rgba(255, 255, 255, 0.18), transparent 55%),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.06) 0,
+      rgba(255, 255, 255, 0.06) 1px,
+      transparent 1px,
+      transparent 22px
+    );
+}
+
+.rp-quote__safe {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--rp-safe-y) var(--rp-safe-x);
+}
+
+.rp-quote__header {
+  display: flex;
+  align-items: center;
+  gap: var(--rp-gap-header);
+  max-width: 780px;
+}
+
+.rp-quote__avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--rp-avatar);
+  height: var(--rp-avatar);
+  overflow: visible;
+}
+
+.rp-quote__avatar-ring {
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rp-ring-outer);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.rp-quote__avatar .ph-portrait {
+  width: 100%;
+}
+
+.rp-quote__avatar .ph-portrait__frame {
+  width: 100%;
+  border-width: 2px;
+  border-color: var(--rp-ring);
+  box-shadow: none;
+}
+
+.rp-quote__avatar .ph-portrait__inner {
+  background: #1a1a1a;
+  backdrop-filter: none;
+}
+
+.rp-quote__avatar .ph-portrait__img {
+  object-fit: cover;
+  object-position: 50% 12%;
+  filter: grayscale(1) contrast(1.05);
+}
+
+.rp-quote__avatar .ph-portrait__name,
+.rp-quote__avatar .ph-portrait__title {
+  display: none;
+}
+
+.rp-quote__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rp-quote__name {
+  margin: 0;
+  font-family: var(--rp-display);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--rp-ink);
+}
+
+.rp-quote__role {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--rp-muted);
+  letter-spacing: 0.02em;
+}
+
+.rp-quote__role-accent {
+  color: var(--rp-ink);
+  font-weight: 600;
+}
+
+.rp-quote__spacer-top {
+  flex: 1.15;
+  min-height: 48px;
+}
+
+.rp-quote__ask {
+  margin: 0;
+  max-width: 940px;
+  font-family: var(--rp-display);
+  font-size: 78px;
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  color: var(--rp-ink);
+}
+
+.rp-quote__ask-line {
+  display: block;
+}
+
+.rp-quote__ask-muted {
+  color: var(--rp-accent-word);
+}
+
+.rp-quote__spacer-bottom {
+  flex: 1.35;
+  min-height: 64px;
+}
+
+.rp-quote__footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.rp-quote__cta-copy {
+  margin: 0;
+  max-width: 460px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--rp-cta, #d6d6d6);
+}
+
+.rp-quote__circles {
+  display: flex;
+  align-items: center;
+  gap: var(--rp-gap-footer);
+  flex: 0 0 auto;
+}
+
+.rp-quote__circle {
+  width: var(--rp-circle);
+  height: var(--rp-circle);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: var(--rp-circle-border, none);
+}
+
+.rp-quote__circle--light {
+  background: var(--rp-circle-light);
+}
+
+.rp-quote__circle--dark {
+  background: var(--rp-circle-dark);
+  color: var(--rp-ink);
+}
+
+.rp-quote__circle-icon {
+  width: 28px;
+  height: 28px;
+}

@@ -1,0 +1,38 @@
+---
+description: How to design and revise fliers in this studio
+alwaysApply: true
+---
+
+# Flier Studio Rules
+
+This repo is a React flier design studio (`frontend/`) plus optional MERN API (`backend/`). Users prompt designs; you implement them as pixel-perfect layouts they preview with `npm run dev` and download as PNG/JPG.
+
+## Always
+
+- Follow `frontend/DESIGN_PRINCIPLES.md` and tokens in `frontend/src/design/tokens.js`.
+- Group work by **project/brand** under `frontend/src/projects/<brand>/project.js` and register it in `frontend/src/projects/registry.js`. Never mix brands on one board.
+- For Kinesis / Emergence work, follow `frontend/emergencedesignguide.md` + `frontend/src/design/emergenceTokens.js` and templates in `frontend/src/fliers/emergence/`.
+- Use `lucide-react` for icons (one consistent set).
+- Put flier components in `frontend/src/fliers/<brand-or-platform>/`.
+- Put user media in `frontend/public/assets/<brand>/` and reference as `/assets/<brand>/...`.
+- Design at native export size (e.g. Instagram post 1080×1080, Emergence 1080×1350). Preview scaling stays in `Studio.jsx` only.
+- Keep the export root as a single DOM node the studio can capture.
+- Prefer CSS + React over canvas drawing unless the brief needs canvas.
+- When the user sends a reference flier, analyze layout, type, color, spacing, and mood first, then update tokens + the matching flier component / project board.
+- Leave speaker/convener photo slots empty until the user provides assets — use `frontend/src/components/placeholders`.
+- Make copy and photos **studio-editable**: put strings/images in props (or Emergence `content`), wrap with `EditableText` / `EditableImageSlot` + `editableTextProps(studioEdit, path)`, and accept a `studioEdit` prop. Each artboard saves its own draft — never share one draft across boards in a project.
+- For reusable style templates: drop references in `frontend/sample/inbox/`, follow `frontend/sample/ANALYZE.md`, save under `frontend/src/samples/{id}/`, register in `frontend/src/samples/registry.js`. When the user says “use sample `{id}`”, read that sample’s `PRINCIPLES.md` and apply it to the brand project.
+
+## Do not
+
+- Invent brand assets — use placeholders or files the user provided.
+- Add dashboard clutter to the flier itself (stats, chips, stickers) unless the reference has them.
+- Change export utilities unless needed for a new format.
+
+## When starting a new flier
+
+1. Confirm platform + size from `frontend/src/lib/sizes.js` (add size if missing).
+2. Update copy/props or hardcode brief-specific content in the flier component.
+3. Wire assets from `frontend/public/assets`.
+4. Run the mandatory QA pass in `frontend/DESIGN_QA.md` (unity, detail, relation, fix loop). Fix until it passes.
+5. Tell the user to run `npm run dev` (from repo root or `frontend/`) and download from the studio panel.

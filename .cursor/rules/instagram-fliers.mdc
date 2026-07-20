@@ -1,0 +1,15 @@
+---
+description: Instagram flier layout conventions
+globs: src/fliers/instagram/**
+alwaysApply: false
+---
+
+# Instagram Fliers
+
+- Default: 1080×1080 post. Also support 1080×1350 portrait and 1080×1920 story.
+- Keep text inside the safe inset from `tokens.spacing.safe`.
+- Stories need extra top/bottom clearance for Instagram UI chrome.
+- Brand/logo near the top; CTA near the bottom.
+- Full-bleed background imagery; overlay gradient only for text legibility.
+- Component + colocated CSS in `src/fliers/instagram/`.
+- Studio wires size via `width` / `height` props — do not hardcode size only in CSS.

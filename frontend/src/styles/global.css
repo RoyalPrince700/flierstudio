@@ -1,0 +1,58 @@
+:root {
+  --bg: #1e1e1e;
+  --panel: #2c2c2c;
+  --panel-border: #111;
+  --text: #e8e8e8;
+  --muted: #9a9a9a;
+  --accent: #0d66d0;
+  --accent-ink: #ffffff;
+  --danger: #ff8e8e;
+  --radius: 8px;
+  --font-ui: 'Manrope', 'DM Sans', sans-serif;
+  --font-display: 'Orbitron', 'Bebas Neue', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* Keep page chrome in sync if studio theme flips early */
+html[data-studio-theme='light'] body {
+  --bg: #e8e8e8;
+  --text: #1f1f1f;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.auth-boot {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 14px;
+}

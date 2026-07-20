@@ -1,0 +1,10 @@
+node_modules
+dist
+tmp
+.DS_Store
+*.local
+.vite
+.env
+frontend/.env
+backend/.env
+backend/uploads
