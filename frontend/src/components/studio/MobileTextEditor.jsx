@@ -56,8 +56,8 @@ function clearKeyboardDock(el) {
 
 /**
  * Mobile text edit dock — keeps the artboard visible while editing in a
- * readable 16px+ field (avoids iOS page-zoom + transform scroll jumps).
- * When the virtual keyboard opens, docks above it via Visual Viewport.
+ * readable 16px+ multiline field (avoids iOS page-zoom + transform scroll jumps).
+ * Return inserts a new line; Done commits/closes. Soft keyboard docks via Visual Viewport.
  */
 export default function MobileTextEditor({ path, value = '', onChange, onDone }) {
   const inputRef = useRef(null)
@@ -143,14 +143,25 @@ export default function MobileTextEditor({ path, value = '', onChange, onDone })
       <textarea
         ref={inputRef}
         className="mobile-text-editor__input"
-        rows={3}
+        rows={4}
         value={typeof value === 'string' ? value : ''}
         onChange={(e) => onChange?.(path, e.target.value)}
-        enterKeyHint="done"
+        onKeyDown={(e) => {
+          // Stop studio shortcuts; never treat Enter as Done (Done is the button).
+          e.stopPropagation()
+        }}
+        /* "enter" keeps Return = newline on iOS/Android soft keyboards.
+           "done" remaps Return to dismiss and blocks multi-line editing. */
+        enterKeyHint="enter"
+        inputMode="text"
         autoCapitalize="sentences"
         autoCorrect="on"
         spellCheck
+        aria-describedby="mobile-text-editor-hint"
       />
+      <p id="mobile-text-editor-hint" className="mobile-text-editor__hint">
+        Return = new line · Done when finished
+      </p>
     </div>
   )
 }

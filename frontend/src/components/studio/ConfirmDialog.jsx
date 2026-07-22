@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
-import { AlertTriangle, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { AlertTriangle, ImageIcon, X } from 'lucide-react'
 
 /**
  * Studio-matched confirm / notice dialog.
- * tone: 'danger' | 'default'
+ * Portaled to body so it stays viewport-fixed above transformed artboards.
+ * tone: 'danger' | 'default' | 'image'
  */
 export default function ConfirmDialog({
   open,
@@ -36,9 +38,13 @@ export default function ConfirmDialog({
     if (open) confirmRef.current?.focus()
   }, [open])
 
-  if (!open) return null
+  if (!open || typeof document === 'undefined') return null
 
-  return (
+  const Icon = tone === 'image' ? ImageIcon : AlertTriangle
+  const iconDanger = tone === 'danger'
+  const btnAccent = tone !== 'danger'
+
+  return createPortal(
     <div className="open-dialog confirm-dialog" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" className="open-dialog__backdrop" aria-label="Close" onClick={onClose} />
       <div className="open-dialog__panel confirm-dialog__panel">
@@ -54,10 +60,10 @@ export default function ConfirmDialog({
 
         <div className="confirm-dialog__body">
           <span
-            className={`confirm-dialog__icon${tone === 'danger' ? ' confirm-dialog__icon--danger' : ''}`}
+            className={`confirm-dialog__icon${iconDanger ? ' confirm-dialog__icon--danger' : ''}`}
             aria-hidden
           >
-            <AlertTriangle size={18} strokeWidth={2.25} />
+            <Icon size={18} strokeWidth={2.25} />
           </span>
           <p className="confirm-dialog__message">{message}</p>
         </div>
@@ -72,7 +78,7 @@ export default function ConfirmDialog({
             ref={confirmRef}
             type="button"
             className={`confirm-dialog__btn${
-              tone === 'danger' ? ' confirm-dialog__btn--danger' : ' confirm-dialog__btn--accent'
+              btnAccent ? ' confirm-dialog__btn--accent' : ' confirm-dialog__btn--danger'
             }`}
             onClick={onConfirm}
           >
@@ -80,6 +86,7 @@ export default function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

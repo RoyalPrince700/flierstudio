@@ -14,7 +14,8 @@ function now() {
 
 /**
  * Session-scoped tool coaching: reads gesture signals → blink + short toast.
- * Non-blocking; cooldown + dismiss suppress spam.
+ * Non-blocking; short cooldowns only debounce spam — suggestions keep returning
+ * whenever wrong-tool intent is detected (see TOOL_COACH in toolCoach.js).
  */
 export function useToolCoach({ isNarrow, enabled = true, onSwitchTool, currentTool }) {
   const [suggestion, setSuggestion] = useState(null)

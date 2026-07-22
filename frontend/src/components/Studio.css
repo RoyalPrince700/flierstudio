@@ -323,6 +323,139 @@
   cursor: not-allowed;
 }
 
+.tool-btn--accent.is-busy:disabled,
+.inspector__rail-btn--accent.is-busy:disabled,
+.inspector__export.is-busy:disabled,
+.studio-statusbar__action--export.is-busy:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+
+/* —— Export progress: thin Signal line —— */
+.export-progress {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.export-progress--compact {
+  width: 26px;
+  gap: 0;
+}
+
+.export-progress--line {
+  display: block;
+  width: 100%;
+  gap: 0;
+}
+
+.export-progress__track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--studio-accent) 16%, var(--studio-panel-2));
+}
+
+.export-progress--compact .export-progress__track {
+  height: 2px;
+  border-radius: 999px;
+}
+
+.export-progress--labeled .export-progress__track {
+  border-radius: 999px;
+}
+
+.export-progress--line .export-progress__track {
+  height: 2px;
+  border-radius: 0;
+  background: color-mix(in srgb, #ff4a1d 18%, transparent);
+}
+
+.export-progress__fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  border-radius: inherit;
+  background: var(--studio-accent);
+  transition: transform 90ms linear;
+  will-change: transform;
+}
+
+.export-progress--line .export-progress__fill {
+  background: #ff4a1d;
+}
+
+.export-progress__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.export-progress__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--studio-text-soft);
+}
+
+.export-progress__pct {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--studio-accent);
+}
+
+/* Phone chrome: full-width thin bar above bottom tool dock */
+.studio-export-chrome {
+  display: none;
+}
+
+.tool-btn--export.is-busy,
+.inspector__rail-btn--export.is-busy {
+  position: relative;
+  background: var(--studio-panel-3);
+  border-color: color-mix(in srgb, var(--studio-accent) 45%, var(--studio-border-soft));
+}
+
+.tool-btn--export.is-busy .export-progress--compact,
+.inspector__rail-btn--export.is-busy .export-progress--compact {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  bottom: 7px;
+  width: auto;
+}
+
+.inspector__export.is-busy {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  background: var(--studio-panel-3);
+  color: var(--studio-text);
+  border: 1px solid color-mix(in srgb, var(--studio-accent) 35%, var(--studio-border-soft));
+}
+
+/* Middle-bar download stays icon-sized while busy — progress is the chrome line */
+.studio-statusbar__action--export.is-busy {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .tool-btn--accent {
   background: var(--studio-panel-3);
   border: 1px solid var(--studio-border-soft);
@@ -574,6 +707,14 @@
   font-weight: 600;
 }
 
+.studio-statusbar__primary.is-busy {
+  color: var(--studio-text);
+}
+
+.studio-statusbar__primary.is-error {
+  color: var(--studio-danger);
+}
+
 .studio-statusbar__quick {
   display: none;
 }
@@ -753,6 +894,17 @@
 
 .mobile-text-editor__input:focus {
   border-color: color-mix(in srgb, var(--studio-accent) 70%, var(--studio-border));
+}
+
+.mobile-text-editor__hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--studio-muted-2);
+}
+
+.mobile-text-editor.is-keyboard-open .mobile-text-editor__hint {
+  flex-shrink: 0;
 }
 
 .studio-editable--sheet {
@@ -2222,8 +2374,22 @@
 
   .studio-body,
   .studio-body--inspector-collapsed {
+    position: relative;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  /* Thin Signal progress — sits on top edge of bottom tool dock, full chrome width */
+  .studio-export-chrome {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    z-index: 6;
+    height: 2px;
+    overflow: hidden;
+    pointer-events: none;
   }
 
   .studio-shell {
@@ -2306,7 +2472,7 @@
     flex-shrink: 0;
   }
 
-  .tool-rail__group--zoom .tool-btn:nth-child(n + 3),
+  .tool-btn--phone-hide,
   .tool-rail__group--view,
   .tool-rail__divider--view,
   .tool-rail__theme-btn {

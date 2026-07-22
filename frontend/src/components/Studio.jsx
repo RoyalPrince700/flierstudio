@@ -4,11 +4,11 @@ import {
   Copy,
   CopyPlus,
   Download,
+  Layers,
   LogOut,
   Maximize2,
   Moon,
   MoreHorizontal,
-  PanelBottom,
   Sun,
 } from 'lucide-react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -19,6 +19,7 @@ import { LiftoffMark } from '../fliers/flier-studio/FSLogo'
 import { fsTokens } from '../design/flierStudioTokens'
 import {
   DEFAULT_HD_SCALE,
+  EXPORT_PROGRESS,
   HD_SCALES,
   exportFlier,
 } from '../lib/exportFlier'
@@ -71,6 +72,7 @@ import { hasSeenStudioTour } from '../lib/studioTour'
 import TemplatesBoard from './TemplatesBoard'
 import Artboard from './studio/Artboard'
 import ConfirmDialog from './studio/ConfirmDialog'
+import ExportProgress from './studio/ExportProgress'
 import Inspector from './studio/Inspector'
 import MobileTextEditor from './studio/MobileTextEditor'
 import ProjectTabs from './studio/ProjectTabs'
@@ -236,6 +238,8 @@ export default function Studio({
   const [helpOpen, setHelpOpen] = useState(false)
   const [tourOpen, setTourOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [exportProgress, setExportProgress] = useState(0)
+  const [exportLabel, setExportLabel] = useState(EXPORT_PROGRESS.started.label)
   const [error, setError] = useState('')
   const [drafts, setDrafts] = useState({})
   const [draftsReady, setDraftsReady] = useState(false)
@@ -246,6 +250,8 @@ export default function Studio({
   const [focusedKind, setFocusedKind] = useState(null)
   const [pendingImagePath, setPendingImagePath] = useState(null)
   const fileInputRef = useRef(null)
+  /** Sync guard — blocks duplicate exports before React re-renders `busy`. */
+  const exportBusyRef = useRef(false)
   const draftsRef = useRef(drafts)
   const boardLayoutsRef = useRef(boardLayouts)
   const historyRef = useRef(createStudioHistory())
@@ -971,14 +977,17 @@ export default function Studio({
   )
 
   const handleExport = useCallback(async () => {
-    if (!selected) return
+    if (!selected || exportBusyRef.current) return
     const node = frameRefs.current[selected.id]
     if (!node) {
       setError('Could not find the selected artboard.')
       return
     }
 
+    exportBusyRef.current = true
     setBusy(true)
+    setExportProgress(EXPORT_PROGRESS.started.progress)
+    setExportLabel(EXPORT_PROGRESS.started.label)
     setError('')
     try {
       const scale = HD_SCALES[hdScaleId]?.scale ?? 3
@@ -989,6 +998,10 @@ export default function Studio({
         height: selected.height,
         scale,
         quality: 1,
+        onProgress: ({ progress, label }) => {
+          setExportProgress(progress)
+          setExportLabel(label)
+        },
       })
       trackEvent({
         action: 'download',
@@ -996,11 +1009,17 @@ export default function Studio({
         designId: selected.sourceId || selected.id,
         meta: { format, hdScaleId },
       })
+      // Brief beat at 100% so completion reads before UI resets
+      await new Promise((resolve) => window.setTimeout(resolve, 320))
     } catch (err) {
       console.error(err)
-      setError('Export failed. Check the console.')
+      setError('Export failed. Try again — if it keeps failing, check the console.')
+      setExportProgress(0)
+      setExportLabel(EXPORT_PROGRESS.started.label)
     } finally {
+      exportBusyRef.current = false
       setBusy(false)
+      setExportProgress(0)
     }
   }, [selected, format, hdScaleId, activeProjectId])
 
@@ -1284,12 +1303,13 @@ export default function Studio({
                 mobileInspectorOpen ? ' is-active' : ''
               }`}
               onClick={toggleMobileInspector}
-              title="Layers, edit & export"
+              title="Open layers, edit & export"
+              aria-label="Open layers, edit and export"
               aria-pressed={mobileInspectorOpen}
               data-tour="panel"
             >
-              <PanelBottom size={14} strokeWidth={2.25} />
-              <span>Panel</span>
+              <Layers size={14} strokeWidth={2.25} />
+              <span>Edit</span>
             </button>
           ) : null}
         </div>
@@ -1488,10 +1508,19 @@ export default function Studio({
           onToggleGrid={() => setShowGrid((v) => !v)}
           canExport={!templatesOpen && Boolean(selected)}
           busy={busy}
+          exportProgress={exportProgress}
+          exportLabel={exportLabel}
           onToggleInspector={isNarrow ? toggleMobileInspector : undefined}
           inspectorOpen={mobileInspectorOpen}
           highlightTool={toolCoachHighlight}
         />
+
+        {/* Phone: thin Signal line above bottom tool dock — does not displace icons */}
+        {isPhone && busy ? (
+          <div className="studio-export-chrome" aria-live="polite">
+            <ExportProgress progress={exportProgress} label={exportLabel} line />
+          </div>
+        ) : null}
 
         <div className="studio-shell" ref={shellRef} data-tour="canvas">
           {templatesOpen ? (
@@ -1600,24 +1629,32 @@ export default function Studio({
                 <span className="studio-statusbar__tool">
                   {tool === 'hand' ? 'Hand' : tool === 'text' ? 'Text' : editEnabled ? 'Move' : 'Select'}
                 </span>
-                <span className="studio-statusbar__primary">
-                  {selected
-                    ? isNarrow
-                      ? `${selected.name} · ${selected.width}×${selected.height}`
-                      : `${selected.name} · artboard ${selected.width}×${selected.height} · export ${selected.width * (HD_SCALES[hdScaleId]?.scale ?? 3)}×${selected.height * (HD_SCALES[hdScaleId]?.scale ?? 3)}`
-                    : 'Click an artboard'}
+                <span
+                  className={`studio-statusbar__primary${error ? ' is-error' : ''}${busy ? ' is-busy' : ''}`}
+                  aria-live="polite"
+                >
+                  {busy
+                    ? `${exportLabel} ${Math.round(exportProgress * 100)}%`
+                    : error
+                      ? error
+                      : selected
+                        ? isNarrow
+                          ? `${selected.name} · ${selected.width}×${selected.height}`
+                          : `${selected.name} · artboard ${selected.width}×${selected.height} · export ${selected.width * (HD_SCALES[hdScaleId]?.scale ?? 3)}×${selected.height * (HD_SCALES[hdScaleId]?.scale ?? 3)}`
+                        : 'Click an artboard'}
                 </span>
                 {isNarrow && selected ? (
                   <div className="studio-statusbar__quick" role="toolbar" aria-label="Board actions">
                     <button
                       type="button"
-                      className="studio-statusbar__action"
-                      title={busy ? 'Exporting…' : 'Download / Export'}
-                      aria-label="Download"
+                      className={`studio-statusbar__action studio-statusbar__action--export${busy ? ' is-busy' : ''}`}
+                      title={busy ? exportLabel : 'Download flier'}
+                      aria-label={busy ? exportLabel : 'Download flier'}
+                      aria-busy={busy || undefined}
                       disabled={busy}
                       onClick={handleExport}
                     >
-                      <Download size={16} strokeWidth={2.25} />
+                      <Download size={16} strokeWidth={2.25} aria-hidden />
                       <span>Export</span>
                     </button>
                     <button
@@ -1684,6 +1721,8 @@ export default function Studio({
           format={format}
           hdScaleId={hdScaleId}
           busy={busy}
+          exportProgress={exportProgress}
+          exportLabel={exportLabel}
           error={error}
           zoom={zoom}
           onSelect={(id) => patchTab(activeProjectId, { selectedId: id })}

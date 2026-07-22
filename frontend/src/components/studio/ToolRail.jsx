@@ -2,12 +2,12 @@ import {
   Download,
   Hand,
   LayoutGrid,
+  Layers,
   Maximize2,
   Moon,
   MousePointer2,
-  PanelBottom,
-  Scan,
   Scaling,
+  Scan,
   Sun,
   Type,
   ZoomIn,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { LiftoffMark } from '../../fliers/flier-studio/FSLogo'
 import { fsTokens } from '../../design/flierStudioTokens'
+import ExportProgress from './ExportProgress'
 
 const TOOLS = [
   { id: 'select', label: 'Move / Select (V)', icon: MousePointer2 },
@@ -23,10 +24,10 @@ const TOOLS = [
 ]
 
 const ACTIONS = [
-  { id: 'zoomIn', label: 'Zoom in (+)', icon: ZoomIn },
-  { id: 'zoomOut', label: 'Zoom out (-)', icon: ZoomOut },
-  { id: 'fit', label: 'Fit to screen (Ctrl+0)', icon: Maximize2 },
-  { id: 'zoom100', label: 'Zoom 100% (Ctrl+1)', icon: Scaling },
+  { id: 'zoomIn', label: 'Zoom in (+)', icon: ZoomIn, phoneHide: false },
+  { id: 'zoomOut', label: 'Zoom out (-)', icon: ZoomOut, phoneHide: false },
+  { id: 'fit', label: 'Fit to screen (Ctrl+0)', icon: Maximize2, phoneHide: true },
+  { id: 'zoom100', label: 'Zoom 100% (Ctrl+1)', icon: Scaling, phoneHide: true },
 ]
 
 export default function ToolRail({
@@ -44,6 +45,8 @@ export default function ToolRail({
   onToggleGrid,
   canExport,
   busy,
+  exportProgress = 0,
+  exportLabel = 'Preparing your flier…',
   onToggleInspector,
   inspectorOpen = false,
   /** Brief coach highlight: 'hand' | 'select' | null */
@@ -78,13 +81,13 @@ export default function ToolRail({
           <button
             type="button"
             className={`tool-btn tool-btn--mobile-panel${inspectorOpen ? ' is-active' : ''}`}
-            title="Layers, edit & export"
-            aria-label="Layers, edit and export"
+            title="Open layers, edit & export"
+            aria-label="Open layers, edit and export"
             aria-pressed={inspectorOpen}
             data-tour="panel"
             onClick={onToggleInspector}
           >
-            <PanelBottom size={18} strokeWidth={2} />
+            <Layers size={18} strokeWidth={2} />
           </button>
         ) : null}
       </div>
@@ -112,11 +115,11 @@ export default function ToolRail({
       <div className="tool-rail__divider" />
 
       <div className="tool-rail__group tool-rail__group--zoom">
-        {ACTIONS.map(({ id, label, icon: Icon }) => (
+        {ACTIONS.map(({ id, label, icon: Icon, phoneHide }) => (
           <button
             key={id}
             type="button"
-            className="tool-btn"
+            className={`tool-btn${phoneHide ? ' tool-btn--phone-hide' : ''}`}
             title={label}
             aria-label={label}
             onClick={() => onAction(id)}
@@ -163,16 +166,25 @@ export default function ToolRail({
         <ThemeIcon size={18} strokeWidth={2} />
       </button>
 
+      {/* Desktop / tablet side rail only — hidden on phone bottom dock (≤640) */}
       <button
         type="button"
-        className="tool-btn tool-btn--accent"
-        title={busy ? 'Exporting…' : 'Export selection (Ctrl+E)'}
-        aria-label="Export selection"
+        className={`tool-btn tool-btn--accent tool-btn--export tool-btn--phone-hide${busy ? ' is-busy' : ''}`}
+        title={busy ? exportLabel : 'Download flier (Ctrl+E)'}
+        aria-label={busy ? exportLabel : 'Download flier'}
+        aria-busy={busy || undefined}
         data-tour="export"
         disabled={!canExport || busy}
         onClick={onExport}
       >
-        <Download size={18} strokeWidth={2.25} />
+        {busy ? (
+          <>
+            <Download size={18} strokeWidth={2.25} aria-hidden />
+            <ExportProgress progress={exportProgress} label={exportLabel} compact />
+          </>
+        ) : (
+          <Download size={18} strokeWidth={2.25} />
+        )}
       </button>
     </aside>
   )

@@ -9,12 +9,16 @@ export const TOOL_COACH = {
   blinkPeriodMs: 320,
   /** Toast auto-hides */
   toastMs: 5200,
-  /** After a suggestion shows (auto or action), wait before same kind again */
-  cooldownAfterShowMs: 50_000,
-  /** After explicit dismiss (X), longer quiet period for that kind */
-  cooldownAfterDismissMs: 120_000,
-  /** After N dismisses of the same kind, suppress for the rest of the session */
-  maxDismissesPerKind: 2,
+  /**
+   * Anti-spam only — keep coaching aggressive for a new app.
+   * Short quiet after a show so the same toast doesn't stack instantly;
+   * wrong-tool gestures after this still get help for the whole session.
+   */
+  cooldownAfterShowMs: 1800,
+  /** Brief quiet after X — do not silence for minutes */
+  cooldownAfterDismissMs: 2500,
+  /** Effectively no permanent suppress (tighten later once users know the tools) */
+  maxDismissesPerKind: 999,
   /** Rolling window for streak counting */
   streakWindowMs: 4500,
 }

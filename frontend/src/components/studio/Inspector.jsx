@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { HD_SCALES } from '../../lib/exportFlier'
 import EditPanel from './EditPanel'
+import ExportProgress from './ExportProgress'
 
 export default function Inspector({
   items,
@@ -21,6 +22,8 @@ export default function Inspector({
   format,
   hdScaleId,
   busy,
+  exportProgress = 0,
+  exportLabel = 'Preparing your flier…',
   error,
   zoom,
   onSelect,
@@ -142,17 +145,27 @@ export default function Inspector({
         {!templatesMode && !adminMode ? (
           <button
             type="button"
-            className="inspector__rail-btn inspector__rail-btn--accent"
+            className={`inspector__rail-btn inspector__rail-btn--accent inspector__rail-btn--export${busy ? ' is-busy' : ''}`}
             title={
-              selected
-                ? `Export ${outW}×${outH} ${format.toUpperCase()}`
-                : 'Select an artboard to export'
+              busy
+                ? exportLabel
+                : selected
+                  ? `Export ${outW}×${outH} ${format.toUpperCase()}`
+                  : 'Select an artboard to export'
             }
-            aria-label="Export"
+            aria-label={busy ? exportLabel : 'Export'}
+            aria-busy={busy || undefined}
             disabled={busy || !selected}
             onClick={onExport}
           >
-            <Download size={16} strokeWidth={2.25} />
+            {busy ? (
+              <>
+                <Download size={16} strokeWidth={2.25} aria-hidden />
+                <ExportProgress progress={exportProgress} label={exportLabel} compact />
+              </>
+            ) : (
+              <Download size={16} strokeWidth={2.25} />
+            )}
           </button>
         ) : null}
       </aside>
@@ -386,16 +399,23 @@ export default function Inspector({
 
               <button
                 type="button"
-                className="inspector__export"
+                className={`inspector__export${busy ? ' is-busy' : ''}`}
                 disabled={busy}
                 onClick={onExport}
-                title={`Download ${outW}×${outH} ${format.toUpperCase()}`}
+                title={busy ? exportLabel : `Download ${outW}×${outH} ${format.toUpperCase()}`}
+                aria-busy={busy || undefined}
               >
-                <Download size={16} strokeWidth={2.25} />
-                <span>{busy ? 'Exporting HD…' : `Export ${scale}×`}</span>
+                {busy ? (
+                  <ExportProgress progress={exportProgress} label={exportLabel} />
+                ) : (
+                  <>
+                    <Download size={16} strokeWidth={2.25} />
+                    <span>{`Export ${scale}×`}</span>
+                  </>
+                )}
               </button>
 
-              {error ? <p className="inspector__error">{error}</p> : null}
+              {error ? <p className="inspector__error" role="alert">{error}</p> : null}
             </div>
           ) : (
             <p className="inspector__empty">Select an artboard to export.</p>
