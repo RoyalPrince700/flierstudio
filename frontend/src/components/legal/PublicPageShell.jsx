@@ -36,7 +36,7 @@ export function PublicFooter({ showSectionAnchors = false }) {
               {link.label}
             </Link>
           ))}
-          <Link to="/templates">Sign in</Link>
+          <Link to="/studio">Sign in</Link>
         </nav>
 
         <span className="pub-footer__note">
@@ -81,10 +81,10 @@ export default function PublicPageShell({
             </nav>
 
             <div className="landing-nav__actions">
-              <Link to="/templates" className="l-btn l-btn--ghost l-btn--small">
+              <Link to="/studio" className="l-btn l-btn--ghost l-btn--small">
                 Sign in
               </Link>
-              <Link to="/templates" className="l-btn l-btn--primary l-btn--small">
+              <Link to="/studio" className="l-btn l-btn--primary l-btn--small">
                 Open Studio
               </Link>
             </div>

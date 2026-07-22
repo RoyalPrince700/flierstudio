@@ -35,7 +35,7 @@ export default function CtaFooter() {
             viewport={viewportOnce}
             custom={0.2}
           >
-            <Link to="/templates" className="l-btn l-btn--primary">
+            <Link to="/studio" className="l-btn l-btn--primary">
               Open the Studio — it&rsquo;s free
             </Link>
           </motion.div>
@@ -56,7 +56,7 @@ export default function CtaFooter() {
               <a href="/#editing">Editing</a>
               <a href="/#templates">Templates</a>
               <a href="/#export">Export</a>
-              <Link to="/templates">Sign in</Link>
+              <Link to="/studio">Sign in</Link>
             </div>
             <div className="landing-footer__link-group landing-footer__link-group--legal">
               <Link to="/about">About</Link>

@@ -20,38 +20,91 @@ export function markStudioTourSeen() {
  * Tour steps. Each step may supply desktop/mobile copy + selectors.
  * Selectors are `[data-tour="…"]` attributes on studio chrome.
  *
- * Templates-first: when the user has no open design, skip artboard/edit
- * steps that only make sense inside a project.
+ * Empty studio first: when the user has no open design, welcome on the
+ * empty studio, then point at Templates — skip artboard/edit/export steps.
  */
-export function getStudioTourSteps({ isNarrow, isPhone, hasOpenDesign = false }) {
+export function getStudioTourSteps({
+  isNarrow,
+  isPhone,
+  hasOpenDesign = false,
+  templatesOpen = false,
+}) {
   const mobile = isNarrow || isPhone
 
   if (!hasOpenDesign) {
+    if (templatesOpen) {
+      return [
+        {
+          id: 'welcome',
+          title: 'Start with a template',
+          body: mobile
+            ? 'Browse layouts, then open one to edit and export. This quick tour covers the basics.'
+            : 'Pick a template to open it in your studio. This quick tour shows where things live.',
+          target: null,
+          openPanel: false,
+        },
+        {
+          id: 'templates',
+          title: 'Browse templates',
+          body: mobile
+            ? 'Scroll the board and tap a layout to open it as your project.'
+            : 'Click a collection, then a layout — it opens in the studio as a project.',
+          target: '[data-tour="canvas"]',
+          openPanel: false,
+        },
+        {
+          id: 'templates-chip',
+          title: 'Templates anytime',
+          body: mobile
+            ? 'Use Templates on the dock (or in the top bar) to come back here.'
+            : 'Use Templates in the top bar or left rail to return to this browser anytime.',
+          target: mobile ? '[data-tour="templates-rail"]' : '[data-tour="templates"]',
+          openPanel: false,
+        },
+        {
+          id: 'tools',
+          title: mobile ? 'Tools on the dock' : 'Tools on the left',
+          body: mobile
+            ? 'After you open a design: Select to move, Text to edit type, Hand to pan. Export is on the dock too.'
+            : 'After you open a design: V = Select, T = Text, H = Hand. Export is on the rail (or Ctrl+E).',
+          target: '[data-tour="tools"]',
+          openPanel: false,
+        },
+        {
+          id: 'done',
+          title: 'You’re ready',
+          body: 'Open any template to start editing. You can replay this tour from Help anytime.',
+          target: null,
+          openPanel: false,
+        },
+      ]
+    }
+
     return [
       {
         id: 'welcome',
-        title: 'Start with a template',
+        title: 'Welcome to your studio',
         body: mobile
-          ? 'Browse layouts first, then open one to edit and export. This quick tour covers the basics.'
-          : 'Pick a template before editing. This quick tour shows where things live.',
+          ? 'Your studio is empty for now. This quick tour shows how to pick a template and get started.'
+          : 'Your studio is empty. Pick a template to begin — here’s a quick look around.',
         target: null,
         openPanel: false,
       },
       {
-        id: 'templates',
-        title: 'Browse templates',
+        id: 'templates-cta',
+        title: 'Open Templates',
         body: mobile
-          ? 'Scroll the board and tap a layout to open it as your project.'
-          : 'Click a collection, then a layout — it opens in the studio as a project.',
-        target: '[data-tour="canvas"]',
+          ? 'Tap Templates to browse layouts. Choose one and it opens here to edit.'
+          : 'Click Templates to browse layouts. Pick a design to open it in the studio.',
+        target: '[data-tour="templates-cta"]',
         openPanel: false,
       },
       {
         id: 'templates-chip',
         title: 'Templates anytime',
         body: mobile
-          ? 'Use Templates on the dock (or in the top bar) to come back here.'
-          : 'Use Templates in the top bar or left rail to return to this browser anytime.',
+          ? 'You can also open Templates from the dock or top bar whenever you need a new layout.'
+          : 'Templates stays in the top bar and left rail — jump back anytime.',
         target: mobile ? '[data-tour="templates-rail"]' : '[data-tour="templates"]',
         openPanel: false,
       },
@@ -67,7 +120,7 @@ export function getStudioTourSteps({ isNarrow, isPhone, hasOpenDesign = false })
       {
         id: 'done',
         title: 'You’re ready',
-        body: 'Open any template to start editing. You can replay this tour from Help anytime.',
+        body: 'Hit Templates whenever you’re ready to start. You can replay this tour from Help anytime.',
         target: null,
         openPanel: false,
       },

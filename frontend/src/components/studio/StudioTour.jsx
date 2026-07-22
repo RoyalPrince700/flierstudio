@@ -52,17 +52,18 @@ function tooltipStyle(rect, isPhone) {
 
 /**
  * Lightweight first-time studio tour. Non-blocking after skip/complete.
- * Templates-first when `hasOpenDesign` is false — does not require Emergence or any project.
+ * Empty-studio welcome when `hasOpenDesign` is false — does not require Emergence or any project.
  */
 export default function StudioTour({
   open,
   isNarrow,
   isPhone,
   hasOpenDesign = false,
+  templatesOpen = false,
   onClose,
   onEnsurePanelOpen,
 }) {
-  const steps = getStudioTourSteps({ isNarrow, isPhone, hasOpenDesign })
+  const steps = getStudioTourSteps({ isNarrow, isPhone, hasOpenDesign, templatesOpen })
   const [index, setIndex] = useState(0)
   const [rect, setRect] = useState(null)
 

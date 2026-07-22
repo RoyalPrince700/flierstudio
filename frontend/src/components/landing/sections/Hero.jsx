@@ -200,7 +200,7 @@ export default function Hero() {
           animate="visible"
           custom={0.3}
         >
-          <Link to="/templates" className="l-btn l-btn--primary">
+          <Link to="/studio" className="l-btn l-btn--primary">
             Open the Studio
           </Link>
           <Link to="/templates" className="l-btn l-btn--ghost">

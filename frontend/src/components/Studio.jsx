@@ -11,7 +11,7 @@ import {
   PanelBottom,
   Sun,
 } from 'lucide-react'
-import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { trackEvent } from '../lib/trackEvent'
 import { useMediaQuery } from '../lib/useMediaQuery'
@@ -77,7 +77,9 @@ import ProjectTabs from './studio/ProjectTabs'
 import StudioHelp from './studio/StudioHelp'
 import StudioTour from './studio/StudioTour'
 import ThemeRail from './studio/ThemeRail'
+import ToolCoachToast from './studio/ToolCoachToast'
 import ToolRail from './studio/ToolRail'
+import { useToolCoach } from './studio/useToolCoach'
 import './Studio.css'
 
 const TABS_KEY_LEGACY = 'flier-studio-open-tabs'
@@ -94,6 +96,15 @@ function isBrandNewAccount(user) {
   const created = new Date(user.createdAt).getTime()
   if (Number.isNaN(created)) return false
   return Date.now() - created < NEW_USER_TAB_GUARD_MS
+}
+
+/** First name from Google display name, else email local-part, else friendly fallback. */
+function displayFirstName(user) {
+  const raw = String(user?.name || '').trim()
+  if (raw) return raw.split(/\s+/)[0]
+  const local = String(user?.email || '').split('@')[0].trim()
+  if (local) return local.charAt(0).toUpperCase() + local.slice(1)
+  return 'there'
 }
 
 function parseTabIds(raw) {
@@ -192,6 +203,23 @@ export default function Studio({
 
   const [primaryTool, setPrimaryTool] = useState('select')
   const [spaceHandActive, setSpaceHandActive] = useState(false)
+
+  const {
+    suggestion: toolCoachSuggestion,
+    highlightTool: toolCoachHighlight,
+    onCoachSignal,
+    dismissCoach,
+    acceptCoach,
+  } = useToolCoach({
+    isNarrow,
+    // Skip while Space temporarily holds Hand — user already knows the tool
+    enabled: !templatesOpen && !spaceHandActive,
+    currentTool: primaryTool,
+    onSwitchTool: (id) => {
+      setPrimaryTool(id)
+      setSpaceHandActive(false)
+    },
+  })
   const [format, setFormat] = useState('png')
   const [hdScaleId, setHdScaleId] = useState(DEFAULT_HD_SCALE)
   const [showLabels, setShowLabels] = useState(true)
@@ -738,11 +766,11 @@ export default function Studio({
       return
     }
     if (hash === '#/admin' || hash === '#admin') {
-      navigate(isAdmin ? '/admin/overview' : '/templates', { replace: true })
+      navigate(isAdmin ? '/admin/overview' : '/studio', { replace: true })
       return
     }
     if (hash === '#/' || hash === '#') {
-      navigate('/templates', { replace: true })
+      navigate('/studio', { replace: true })
     }
   }, [navigate, isAdmin])
 
@@ -781,7 +809,7 @@ export default function Studio({
 
   function toggleTemplates() {
     if (templatesOpen) {
-      navigate(openTabIds.length ? '/studio' : '/templates')
+      navigate('/studio')
       return
     }
     navigate('/templates')
@@ -929,7 +957,7 @@ export default function Studio({
           frameRefs.current = {}
         }
         if (!next.length) {
-          navigate('/templates')
+          navigate('/studio')
         }
         return next
       })
@@ -1119,9 +1147,9 @@ export default function Studio({
 
   useEffect(() => {
     if (hasSeenStudioTour()) return undefined
-    // First-time tour is templates-first — never bounce a new user into /studio.
-    if (location.pathname !== '/templates') {
-      navigate('/templates', { replace: true })
+    // First-time tour starts on empty /studio welcome — not templates-first.
+    if (!openTabIds.length && location.pathname !== '/studio') {
+      navigate('/studio', { replace: true })
     }
     const timer = window.setTimeout(() => setTourOpen(true), 600)
     return () => window.clearTimeout(timer)
@@ -1138,18 +1166,15 @@ export default function Studio({
   function startTour() {
     setTopbarMenuOpen(false)
     setHelpOpen(false)
-    // Replay: stay where they are if they have a design; otherwise templates.
-    if (!openTabIds.length && location.pathname !== '/templates') {
-      navigate('/templates')
+    // Replay: prefer empty-studio welcome when there is no open design.
+    if (!openTabIds.length && location.pathname !== '/studio') {
+      navigate('/studio')
     }
     setTourOpen(true)
   }
 
   function closeTour() {
     setTourOpen(false)
-    if (!openTabIds.length && location.pathname !== '/templates') {
-      navigate('/templates')
-    }
   }
 
   function toggleInspectorCollapsed() {
@@ -1205,23 +1230,24 @@ export default function Studio({
     .filter(Boolean)
     .join(' ')
 
-  if (!project && !templatesOpen) {
-    if (searchParams.get('template')) {
-      return (
-        <div className="studio-app" data-theme={theme}>
-          <div className="studio-empty-state">
-            <LiftoffMark
-              size={40}
-              base={theme === 'dark' ? fsTokens.colors.paper : fsTokens.colors.ink}
-              corner={fsTokens.colors.signal}
-            />
-            <h1 className="studio-empty-state__title">Opening template…</h1>
-            <p className="studio-empty-state__copy">Loading your design into the studio.</p>
-          </div>
+  const studioEmpty = !project && !templatesOpen
+  const openingTemplate = studioEmpty && Boolean(searchParams.get('template'))
+  const firstName = displayFirstName(user)
+
+  if (openingTemplate) {
+    return (
+      <div className="studio-app" data-theme={theme}>
+        <div className="studio-empty-state">
+          <LiftoffMark
+            size={40}
+            base={theme === 'dark' ? fsTokens.colors.paper : fsTokens.colors.ink}
+            corner={fsTokens.colors.signal}
+          />
+          <h1 className="studio-empty-state__title">Opening template…</h1>
+          <p className="studio-empty-state__copy">Loading your design into the studio.</p>
         </div>
-      )
-    }
-    return <Navigate to="/templates" replace />
+      </div>
+    )
   }
 
   return (
@@ -1272,9 +1298,11 @@ export default function Studio({
             ? openTemplateCollectionFiltered
               ? openTemplateCollectionFiltered.name
               : 'Template library'
-            : selected
-              ? selected.name
-              : 'No selection'}
+            : studioEmpty
+              ? 'Your studio'
+              : selected
+                ? selected.name
+                : 'No selection'}
         </div>
         <div className="studio-topbar__right">
           <div className="studio-topbar__user studio-topbar__chip--desktop-only" title={user?.email || ''}>
@@ -1313,7 +1341,7 @@ export default function Studio({
           >
             {theme === 'dark' ? <Sun size={14} strokeWidth={2.25} /> : <Moon size={14} strokeWidth={2.25} />}
           </button>
-          {!templatesOpen ? (
+          {!templatesOpen && !studioEmpty ? (
             <div className="studio-topbar__zoom studio-topbar__chip--desktop-only">
               <button type="button" className="studio-topbar__chip" onClick={() => handleAction('zoomOut')}>
                 −
@@ -1366,7 +1394,7 @@ export default function Studio({
                     Admin console
                   </Link>
                 ) : null}
-                {!templatesOpen ? (
+                {!templatesOpen && !studioEmpty ? (
                   <button
                     type="button"
                     className="studio-topbar__menu-item"
@@ -1462,6 +1490,7 @@ export default function Studio({
           busy={busy}
           onToggleInspector={isNarrow ? toggleMobileInspector : undefined}
           inspectorOpen={mobileInspectorOpen}
+          highlightTool={toolCoachHighlight}
         />
 
         <div className="studio-shell" ref={shellRef} data-tour="canvas">
@@ -1481,6 +1510,26 @@ export default function Studio({
               onSelectTemplate={setSelectedTemplateId}
               onUseTemplate={openTemplateInStudio}
             />
+          ) : studioEmpty ? (
+            <div className="studio-empty-state">
+              <LiftoffMark
+                size={40}
+                base={theme === 'dark' ? fsTokens.colors.paper : fsTokens.colors.ink}
+                corner={fsTokens.colors.signal}
+              />
+              <h1 className="studio-empty-state__title">Welcome, {firstName}</h1>
+              <p className="studio-empty-state__copy">
+                Your studio is empty. Pick a template to begin.
+              </p>
+              <button
+                type="button"
+                className="studio-empty-state__cta"
+                data-tour="templates-cta"
+                onClick={() => navigate('/templates')}
+              >
+                Templates
+              </button>
+            </div>
           ) : (
             <Artboard
               items={boardItems}
@@ -1495,8 +1544,15 @@ export default function Studio({
               onPanChange={(next) => patchTab(activeProjectId, { pan: next })}
               onZoomChange={(next) => patchTab(activeProjectId, { zoom: next })}
               onExitTextEdit={handleExitTextEdit}
+              onCoachSignal={onCoachSignal}
             />
           )}
+
+          <ToolCoachToast
+            suggestion={toolCoachSuggestion}
+            onAccept={acceptCoach}
+            onDismiss={dismissCoach}
+          />
 
           {showThemeRail ? (
             <ThemeRail
@@ -1531,6 +1587,13 @@ export default function Studio({
                 </span>
                 <span className="studio-statusbar__meta">{templateCollections.length} collections</span>
                 <span className="studio-statusbar__meta">{showGrid ? 'Grid on' : 'Grid off'}</span>
+              </>
+            ) : studioEmpty ? (
+              <>
+                <span className="studio-statusbar__tool">Studio</span>
+                <span className="studio-statusbar__primary">
+                  Pick a template to open your first design
+                </span>
               </>
             ) : (
               <>
@@ -1705,6 +1768,7 @@ export default function Studio({
         isNarrow={isNarrow}
         isPhone={isPhone}
         hasOpenDesign={openTabIds.length > 0 && !templatesOpen}
+        templatesOpen={templatesOpen}
         onClose={closeTour}
         onEnsurePanelOpen={() => {
           if (isNarrow) setMobileInspectorOpen(true)

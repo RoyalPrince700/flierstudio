@@ -30,7 +30,7 @@ export const PROJECTS = [
 
 export const PROJECT_MAP = Object.fromEntries(PROJECTS.map((project) => [project.id, project]))
 
-/** @deprecated Not used for post-login entry. Users land on /templates; studio opens only after a template is selected (or restored open tabs). */
+/** @deprecated Not used for post-login entry. Users land on empty /studio; a board opens only after a template is selected (or restored open tabs). */
 export const DEFAULT_PROJECT_ID = 'emergence'
 
 export function getProject(id) {

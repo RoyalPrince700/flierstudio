@@ -46,6 +46,8 @@ export default function ToolRail({
   busy,
   onToggleInspector,
   inspectorOpen = false,
+  /** Brief coach highlight: 'hand' | 'select' | null */
+  highlightTool = null,
 }) {
   const ThemeIcon = theme === 'dark' ? Sun : Moon
   const themeLabel = theme === 'dark' ? 'Light mode' : 'Dark mode'
@@ -94,7 +96,9 @@ export default function ToolRail({
           <button
             key={id}
             type="button"
-            className={`tool-btn${tool === id ? ' is-active' : ''}`}
+            className={`tool-btn${tool === id ? ' is-active' : ''}${
+              highlightTool === id ? ' is-coach-blink' : ''
+            }`}
             title={label}
             aria-label={label}
             aria-pressed={tool === id}

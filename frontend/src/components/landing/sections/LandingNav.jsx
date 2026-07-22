@@ -80,10 +80,10 @@ export default function LandingNav() {
         </nav>
 
         <div className="landing-nav__actions">
-          <Link to="/templates" className="l-btn l-btn--ghost l-btn--small landing-nav__signin">
+          <Link to="/studio" className="l-btn l-btn--ghost l-btn--small landing-nav__signin">
             Sign in
           </Link>
-          <Link to="/templates" className="l-btn l-btn--primary l-btn--small">
+          <Link to="/studio" className="l-btn l-btn--primary l-btn--small">
             Open Studio
           </Link>
           <button
@@ -127,7 +127,7 @@ export default function LandingNav() {
                 <NavLink key={link.label} link={link} onNavigate={closeMenu} />
               ))}
               <Link
-                to="/templates"
+                to="/studio"
                 className="landing-nav__drawer-signin"
                 onClick={closeMenu}
               >

@@ -46,7 +46,7 @@ function RequireAuth({ theme, children }) {
 
 function AdminOnly({ children }) {
   const { isAdmin } = useAuth()
-  return isAdmin ? children : <Navigate to="/templates" replace />
+  return isAdmin ? children : <Navigate to="/studio" replace />
 }
 
 export default function App() {

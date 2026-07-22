@@ -15,6 +15,19 @@ function midpoint(a, b) {
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
 }
 
+function hitMeta(target) {
+  if (!(target instanceof Element)) {
+    return { overFrame: false, overEditable: false }
+  }
+  const overFrame = Boolean(target.closest('.artboard__frame'))
+  const overEditable = Boolean(
+    target.closest('.studio-editable') ||
+      target.closest('[data-edit-path]') ||
+      target.closest('.studio-image-slot'),
+  )
+  return { overFrame, overEditable }
+}
+
 export default function Artboard({
   items,
   selectedId,
@@ -28,12 +41,15 @@ export default function Artboard({
   onPanChange,
   onZoomChange,
   onExitTextEdit,
+  onCoachSignal,
 }) {
   const viewportRef = useRef(null)
   const dragRef = useRef(null)
   const gestureRef = useRef(null)
   const panZoomRef = useRef({ pan, zoom })
+  const coachRef = useRef(onCoachSignal)
   panZoomRef.current = { pan, zoom }
+  coachRef.current = onCoachSignal
 
   useEffect(() => {
     const node = viewportRef.current
@@ -136,38 +152,106 @@ export default function Artboard({
     }
   }, [onPanChange, onZoomChange])
 
-  function beginPan(e) {
+  function beginPan(e, meta = {}) {
     dragRef.current = {
       mode: 'pan',
       startX: e.clientX,
       startY: e.clientY,
       originX: pan.x,
       originY: pan.y,
+      startTime: performance.now(),
+      pointerType: e.pointerType || 'mouse',
+      moved: 0,
+      ...meta,
+    }
+  }
+
+  function beginProbePan(e) {
+    dragRef.current = {
+      mode: 'probe-pan',
+      startX: e.clientX,
+      startY: e.clientY,
+      startTime: performance.now(),
+      pointerType: e.pointerType || 'mouse',
+      moved: 0,
+    }
+  }
+
+  function finishDrag(e) {
+    const drag = dragRef.current
+    dragRef.current = null
+    if (!drag) return
+
+    const endX = e?.clientX ?? drag.startX
+    const endY = e?.clientY ?? drag.startY
+    const dist = Math.hypot(endX - drag.startX, endY - drag.startY)
+    const durationMs = performance.now() - drag.startTime
+    const moved = Math.max(drag.moved || 0, dist)
+
+    if (drag.mode === 'probe-pan') {
+      coachRef.current?.({
+        type: 'select-empty-drag',
+        distance: moved,
+        durationMs,
+        pointerType: drag.pointerType,
+      })
+      return
+    }
+
+    if (drag.mode === 'pan') {
+      // Short press on a board/editable while Hand is active → likely edit intent
+      coachRef.current?.({
+        type: 'hand-edit-tap',
+        distance: moved,
+        durationMs,
+        overFrame: Boolean(drag.overFrame),
+        overEditable: Boolean(drag.overEditable),
+        pointerType: drag.pointerType,
+      })
+      if (moved > 16) {
+        coachRef.current?.({ type: 'did-pan' })
+      }
     }
   }
 
   function onPointerDown(e) {
     if (e.button !== 0 && e.button !== 1) return
     if (gestureRef.current) return
+
+    const meta = hitMeta(e.target)
     const wantsPan = tool === 'hand' || e.button === 1
+
     if (wantsPan) {
       e.preventDefault()
-      beginPan(e)
+      beginPan(e, meta)
+      e.currentTarget.setPointerCapture(e.pointerId)
+      return
+    }
+
+    // Select / Text: empty-canvas drag often means "I wanted to pan"
+    if ((tool === 'select' || tool === 'text') && !meta.overFrame) {
+      beginProbePan(e)
       e.currentTarget.setPointerCapture(e.pointerId)
     }
   }
 
   function onPointerMove(e) {
     const drag = dragRef.current
-    if (!drag || drag.mode !== 'pan') return
-    onPanChange({
-      x: drag.originX + (e.clientX - drag.startX),
-      y: drag.originY + (e.clientY - drag.startY),
-    })
+    if (!drag) return
+
+    const dist = Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY)
+    drag.moved = Math.max(drag.moved || 0, dist)
+
+    if (drag.mode === 'pan') {
+      onPanChange({
+        x: drag.originX + (e.clientX - drag.startX),
+        y: drag.originY + (e.clientY - drag.startY),
+      })
+    }
   }
 
-  function onPointerUp() {
-    dragRef.current = null
+  function onPointerUp(e) {
+    finishDrag(e)
   }
 
   function onFramePointerDown(e, id) {
@@ -184,6 +268,60 @@ export default function Artboard({
       }
       onExitTextEdit?.()
     }
+
+    // Mobile often drags on the board itself expecting pan — probe that intent.
+    // Skip when the press starts on an editable slot (likely edit, not pan).
+    const meta = hitMeta(e.target)
+    if ((tool === 'select' || tool === 'text') && !meta.overEditable && e.button === 0) {
+      dragRef.current = {
+        mode: 'probe-frame-pan',
+        startX: e.clientX,
+        startY: e.clientY,
+        startTime: performance.now(),
+        pointerType: e.pointerType || 'mouse',
+        moved: 0,
+        frameId: id,
+      }
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId)
+      } catch {
+        // ignore
+      }
+    } else {
+      coachRef.current?.({ type: 'did-select', id })
+    }
+  }
+
+  function onFramePointerMove(e) {
+    const drag = dragRef.current
+    if (!drag || drag.mode !== 'probe-frame-pan') return
+    const dist = Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY)
+    drag.moved = Math.max(drag.moved || 0, dist)
+  }
+
+  function onFramePointerUp(e) {
+    const drag = dragRef.current
+    if (!drag || drag.mode !== 'probe-frame-pan') return
+    const endX = e?.clientX ?? drag.startX
+    const endY = e?.clientY ?? drag.startY
+    const dist = Math.hypot(endX - drag.startX, endY - drag.startY)
+    const durationMs = performance.now() - drag.startTime
+    const moved = Math.max(drag.moved || 0, dist)
+    dragRef.current = null
+
+    if (moved < 12) {
+      // Genuine tap-to-select — not a pan attempt
+      coachRef.current?.({ type: 'did-select', id: drag.frameId })
+      return
+    }
+
+    coachRef.current?.({
+      type: 'select-empty-drag',
+      distance: moved,
+      durationMs,
+      pointerType: drag.pointerType,
+      onFrame: true,
+    })
   }
 
   const cursor =
@@ -203,7 +341,12 @@ export default function Artboard({
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onPointerLeave={(e) => {
+        // Only end if we lost the pointer (no capture) — capture keeps drag alive
+        if (dragRef.current && e.currentTarget.hasPointerCapture?.(e.pointerId)) return
+        if (dragRef.current && !e.buttons) finishDrag(e)
+      }}
       onMouseDown={(e) => {
         if (e.target !== e.currentTarget) return
         if (tool === 'text') {
@@ -235,6 +378,9 @@ export default function Artboard({
                 height: item.height,
               }}
               onPointerDown={(e) => onFramePointerDown(e, item.id)}
+              onPointerMove={onFramePointerMove}
+              onPointerUp={onFramePointerUp}
+              onPointerCancel={onFramePointerUp}
             >
               {showLabels ? (
                 <div
