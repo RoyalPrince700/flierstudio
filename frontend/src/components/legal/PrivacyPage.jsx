@@ -118,10 +118,11 @@ export default function PrivacyPage() {
         <p>
           We use authentication tokens / session mechanisms so you stay signed
           in after Google login. We may also use local storage (described above)
-          for preferences. We use Google Analytics 4 to understand aggregate
-          product usage (for example pages visited). GA may set cookies or
-          similar identifiers as described in Google’s documentation. We do not
-          run a wall of third-party advertising cookies on the product itself.
+          for preferences. We use Google Tag Manager to load measurement tags
+          (such as analytics) so we can understand aggregate product usage. Those
+          tags may set cookies or similar identifiers as described by Google. We
+          do not run a wall of third-party advertising cookies on the product
+          itself.
         </p>
       </section>
 
