@@ -2,9 +2,17 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { AlertTriangle, ImageIcon, X } from 'lucide-react'
 
+function portalHost() {
+  if (typeof document === 'undefined') return null
+  // Stay inside .studio-app so --studio-* theme tokens apply (body has none).
+  // Still escapes transformed artboards; StudioHelp already mounts here successfully.
+  return document.querySelector('.studio-app') || document.body
+}
+
 /**
  * Studio-matched confirm / notice dialog.
- * Portaled to body so it stays viewport-fixed above transformed artboards.
+ * Portaled to .studio-app (fallback: body) so chrome stays viewport-fixed
+ * above transformed artboards while inheriting studio theme tokens.
  * tone: 'danger' | 'default' | 'image'
  */
 export default function ConfirmDialog({
@@ -20,6 +28,7 @@ export default function ConfirmDialog({
   onClose,
 }) {
   const confirmRef = useRef(null)
+  const host = portalHost()
 
   useEffect(() => {
     if (!open) return undefined
@@ -38,22 +47,49 @@ export default function ConfirmDialog({
     if (open) confirmRef.current?.focus()
   }, [open])
 
-  if (!open || typeof document === 'undefined') return null
+  if (!open || !host) return null
 
   const Icon = tone === 'image' ? ImageIcon : AlertTriangle
   const iconDanger = tone === 'danger'
   const btnAccent = tone !== 'danger'
 
+  const stop = (e) => {
+    e.stopPropagation()
+  }
+
   return createPortal(
-    <div className="open-dialog confirm-dialog" role="dialog" aria-modal="true" aria-label={title}>
-      <button type="button" className="open-dialog__backdrop" aria-label="Close" onClick={onClose} />
-      <div className="open-dialog__panel confirm-dialog__panel">
+    <div
+      className="open-dialog confirm-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      onPointerDown={stop}
+      onClick={stop}
+    >
+      <button
+        type="button"
+        className="open-dialog__backdrop"
+        aria-label="Close"
+        onClick={(e) => {
+          e.stopPropagation()
+          onClose?.()
+        }}
+      />
+      <div className="open-dialog__panel confirm-dialog__panel" onClick={stop}>
         <header className="open-dialog__head">
           <div>
             <p className="open-dialog__eyebrow">{eyebrow}</p>
             <h2>{title}</h2>
           </div>
-          <button type="button" className="open-dialog__icon-btn" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            className="open-dialog__icon-btn"
+            onClick={(e) => {
+              e.stopPropagation()
+              onClose?.()
+            }}
+            aria-label="Close"
+          >
             <X size={16} strokeWidth={2.25} />
           </button>
         </header>
@@ -70,7 +106,14 @@ export default function ConfirmDialog({
 
         <div className="confirm-dialog__actions">
           {!hideCancel ? (
-            <button type="button" className="confirm-dialog__btn confirm-dialog__btn--ghost" onClick={onClose}>
+            <button
+              type="button"
+              className="confirm-dialog__btn confirm-dialog__btn--ghost"
+              onClick={(e) => {
+                e.stopPropagation()
+                onClose?.()
+              }}
+            >
               {cancelLabel}
             </button>
           ) : null}
@@ -80,13 +123,16 @@ export default function ConfirmDialog({
             className={`confirm-dialog__btn${
               btnAccent ? ' confirm-dialog__btn--accent' : ' confirm-dialog__btn--danger'
             }`}
-            onClick={onConfirm}
+            onClick={(e) => {
+              e.stopPropagation()
+              onConfirm?.()
+            }}
           >
             {confirmLabel}
           </button>
         </div>
       </div>
     </div>,
-    document.body,
+    host,
   )
 }

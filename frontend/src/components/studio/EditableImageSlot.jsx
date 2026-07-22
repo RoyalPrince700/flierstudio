@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import ConfirmDialog from './ConfirmDialog'
 
 /**
@@ -21,12 +21,28 @@ export default function EditableImageSlot({
   filledTitle = 'Click to change photo',
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
+  // Mobile browsers can deliver a click-through to the slot after the overlay
+  // unmounts; ignore that synthetic re-open for a short window.
+  const ignoreSlotClickUntil = useRef(0)
 
   if (!editable) return children
 
-  const openReplace = () => {
+  const armClickThroughGuard = () => {
+    ignoreSlotClickUntil.current = Date.now() + 450
+  }
+
+  const closeConfirm = () => {
+    armClickThroughGuard()
     setConfirmOpen(false)
+  }
+
+  const openReplace = () => {
+    armClickThroughGuard()
+    // Pick while still in the user-gesture turn, then close.
+    // Deferring the file input click (e.g. rAF after unmount) loses activation
+    // on some browsers and makes Change appear to do nothing.
     onPickImage?.(path)
+    setConfirmOpen(false)
   }
 
   return (
@@ -41,6 +57,7 @@ export default function EditableImageSlot({
         onClick={(e) => {
           e.stopPropagation()
           onFocusField?.(path, 'image')
+          if (Date.now() < ignoreSlotClickUntil.current) return
           if (!hasImage) {
             onPickImage?.(path)
             return
@@ -64,7 +81,7 @@ export default function EditableImageSlot({
         cancelLabel="Cancel"
         tone="image"
         onConfirm={openReplace}
-        onClose={() => setConfirmOpen(false)}
+        onClose={closeConfirm}
       />
     </>
   )

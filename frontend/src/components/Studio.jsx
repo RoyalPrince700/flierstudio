@@ -545,7 +545,9 @@ export default function Studio({
     setFocusedPath(path)
     setFocusedKind('image')
     setPrimaryTool('select')
-    requestAnimationFrame(() => fileInputRef.current?.click())
+    // Must stay synchronous with the user gesture. Deferring (rAF) after a
+    // confirm dialog unmounts drops activation and the picker never opens.
+    fileInputRef.current?.click()
   }, [])
 
   const handleClearImage = useCallback(
