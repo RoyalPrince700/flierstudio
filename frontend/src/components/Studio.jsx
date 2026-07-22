@@ -63,12 +63,25 @@ import StudioTour from './studio/StudioTour'
 import ToolRail from './studio/ToolRail'
 import './Studio.css'
 
-const TABS_KEY = 'flier-studio-open-tabs'
+const TABS_KEY_LEGACY = 'flier-studio-open-tabs'
 const INSPECTOR_COLLAPSED_KEY = 'flier-studio-inspector-collapsed'
+/** Brand-new accounts within this window never inherit legacy shared tabs. */
+const NEW_USER_TAB_GUARD_MS = 15 * 60 * 1000
 
-function getInitialTabs() {
+function tabsStorageKey(userId) {
+  return userId ? `flier-studio-open-tabs:${userId}` : null
+}
+
+function isBrandNewAccount(user) {
+  if (!user?.createdAt) return false
+  const created = new Date(user.createdAt).getTime()
+  if (Number.isNaN(created)) return false
+  return Date.now() - created < NEW_USER_TAB_GUARD_MS
+}
+
+function parseTabIds(raw) {
   try {
-    const saved = JSON.parse(localStorage.getItem(TABS_KEY) || 'null')
+    const saved = JSON.parse(raw || 'null')
     if (Array.isArray(saved) && saved.length) {
       const valid = saved.filter((id) => PROJECT_MAP[id])
       if (valid.length) return valid
@@ -79,8 +92,42 @@ function getInitialTabs() {
   return []
 }
 
-function getInitialActiveProjectId() {
-  return getInitialTabs()[0] ?? null
+function readStoredTabs(user) {
+  const userId = user?.id
+  if (!userId) return []
+  const key = tabsStorageKey(userId)
+  if (!key) return []
+
+  try {
+    const scopedRaw = localStorage.getItem(key)
+    if (scopedRaw != null) {
+      return parseTabIds(scopedRaw)
+    }
+
+    const legacyRaw = localStorage.getItem(TABS_KEY_LEGACY)
+    // New signups must not inherit another session's Emergence (etc.) tabs.
+    if (!legacyRaw || isBrandNewAccount(user)) {
+      if (legacyRaw && isBrandNewAccount(user)) {
+        localStorage.removeItem(TABS_KEY_LEGACY)
+      }
+      return []
+    }
+
+    // Established account, first load after scoping: claim legacy once.
+    localStorage.setItem(key, legacyRaw)
+    localStorage.removeItem(TABS_KEY_LEGACY)
+    return parseTabIds(legacyRaw)
+  } catch {
+    return []
+  }
+}
+
+function clearLegacySharedTabs() {
+  try {
+    localStorage.removeItem(TABS_KEY_LEGACY)
+  } catch {
+    // ignore
+  }
 }
 
 function createTabState(projectId) {
@@ -97,23 +144,27 @@ export default function Studio({
   onThemeChange,
 }) {
   const { user, logout, isAdmin } = useAuth()
+  const userId = user?.id ?? null
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const frameRefs = useRef({})
   const shellRef = useRef(null)
   const topbarMenuRef = useRef(null)
+  const tabsUserRef = useRef(null)
 
   const isNarrow = useMediaQuery('(max-width: 900px)')
   const isPhone = useMediaQuery('(max-width: 640px)')
 
   const templatesOpen = location.pathname === '/templates'
 
-  const [openTabIds, setOpenTabIds] = useState(getInitialTabs)
-  const [activeProjectId, setActiveProjectId] = useState(getInitialActiveProjectId)
+  const [openTabIds, setOpenTabIds] = useState(() => readStoredTabs(user))
+  const [activeProjectId, setActiveProjectId] = useState(
+    () => readStoredTabs(user)[0] ?? null,
+  )
   const [tabState, setTabState] = useState(() => {
     const initial = {}
-    getInitialTabs().forEach((id) => {
+    readStoredTabs(user).forEach((id) => {
       initial[id] = createTabState(id)
     })
     return initial
@@ -575,12 +626,38 @@ export default function Studio({
   }, [openTemplateCollectionFiltered, templateCollections])
 
   useEffect(() => {
+    // Drop the pre-scoping shared key after the current user has been considered.
+    // Brand-new accounts already ignore it inside readStoredTabs.
+    if (userId && !isBrandNewAccount(user)) {
+      clearLegacySharedTabs()
+    }
+  }, [user, userId])
+
+  useEffect(() => {
+    if (!userId || tabsUserRef.current === userId) return
+    tabsUserRef.current = userId
+    const tabs = readStoredTabs(user)
+    setOpenTabIds(tabs)
+    setActiveProjectId(tabs[0] ?? null)
+    setTabState(() => {
+      const initial = {}
+      tabs.forEach((id) => {
+        initial[id] = createTabState(id)
+      })
+      return initial
+    })
+    frameRefs.current = {}
+  }, [user, userId])
+
+  useEffect(() => {
+    const key = tabsStorageKey(userId)
+    if (!key) return
     try {
-      localStorage.setItem(TABS_KEY, JSON.stringify(openTabIds))
+      localStorage.setItem(key, JSON.stringify(openTabIds))
     } catch {
       // ignore
     }
-  }, [openTabIds])
+  }, [openTabIds, userId])
 
   useEffect(() => {
     const hash = window.location.hash
@@ -962,8 +1039,14 @@ export default function Studio({
 
   useEffect(() => {
     if (hasSeenStudioTour()) return undefined
+    // First-time tour is templates-first — never bounce a new user into /studio.
+    if (location.pathname !== '/templates') {
+      navigate('/templates', { replace: true })
+    }
     const timer = window.setTimeout(() => setTourOpen(true), 600)
     return () => window.clearTimeout(timer)
+    // First visit only — do not re-run when the user later opens a template.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function openHelp() {
@@ -975,7 +1058,18 @@ export default function Studio({
   function startTour() {
     setTopbarMenuOpen(false)
     setHelpOpen(false)
+    // Replay: stay where they are if they have a design; otherwise templates.
+    if (!openTabIds.length && location.pathname !== '/templates') {
+      navigate('/templates')
+    }
     setTourOpen(true)
+  }
+
+  function closeTour() {
+    setTourOpen(false)
+    if (!openTabIds.length && location.pathname !== '/templates') {
+      navigate('/templates')
+    }
   }
 
   function toggleInspectorCollapsed() {
@@ -1444,7 +1538,8 @@ export default function Studio({
         open={tourOpen}
         isNarrow={isNarrow}
         isPhone={isPhone}
-        onClose={() => setTourOpen(false)}
+        hasOpenDesign={openTabIds.length > 0 && !templatesOpen}
+        onClose={closeTour}
         onEnsurePanelOpen={() => {
           if (isNarrow) setMobileInspectorOpen(true)
         }}
