@@ -527,6 +527,36 @@
   background: var(--studio-panel);
   border: 1px solid var(--studio-border-soft);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  /* Keyboard inset set by Visual Viewport sync in MobileTextEditor */
+  --studio-keyboard-inset: 0px;
+}
+
+/*
+ * While the virtual keyboard is open, escape the shell and pin to the
+ * layout viewport so the dock sits just above the keyboard (iOS Safari
+ * often does not resize layout height — absolute bottom inside the shell
+ * would stay hidden behind the keyboard).
+ */
+.mobile-text-editor.is-keyboard-open {
+  position: fixed;
+  z-index: 70;
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--studio-keyboard-inset, 0px) + 8px);
+  max-height: min(42dvh, 280px);
+  overflow: hidden;
+}
+
+.mobile-text-editor.is-keyboard-open .mobile-text-editor__head {
+  flex-shrink: 0;
+}
+
+.mobile-text-editor.is-keyboard-open .mobile-text-editor__input {
+  flex: 1 1 auto;
+  min-height: 48px;
+  max-height: none;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mobile-text-editor__head {
