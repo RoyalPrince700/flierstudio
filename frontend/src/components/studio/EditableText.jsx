@@ -12,6 +12,9 @@ function normalizeEditableText(raw) {
 /**
  * Click-to-edit text for flier canvases.
  * Enter inserts a new line; blur commits and can exit the text tool.
+ *
+ * On mobile (`canvasReadOnly`), taps select the field for the sheet editor
+ * instead of focusing contentEditable (avoids browser zoom / scroll jumps).
  */
 export default function EditableText({
   as: Tag = 'p',
@@ -21,6 +24,7 @@ export default function EditableText({
   editable = false,
   focused = false,
   align,
+  canvasReadOnly = false,
   onFocusField,
   onChange,
   onExitTextEdit,
@@ -31,12 +35,12 @@ export default function EditableText({
   const mergedStyle = { ...style, ...alignStyle }
 
   useLayoutEffect(() => {
-    if (!editable) return
+    if (!editable || canvasReadOnly) return
     const node = ref.current
     if (!node || document.activeElement === node) return
     const next = value ?? ''
     if (node.innerText !== next) node.innerText = next
-  }, [value, editable])
+  }, [value, editable, canvasReadOnly])
 
   if (!editable) {
     return (
@@ -56,7 +60,38 @@ export default function EditableText({
     return Boolean(
       related.closest('.studio-editable') ||
         related.closest('.edit-panel') ||
-        related.closest('.inspector'),
+        related.closest('.inspector') ||
+        related.closest('.mobile-text-editor'),
+    )
+  }
+
+  function selectForSheetEdit(e) {
+    e.stopPropagation()
+    e.preventDefault()
+    onFocusField?.(path, 'text')
+  }
+
+  // Mobile: tap selects for the dock editor — never focus contentEditable on-canvas.
+  if (canvasReadOnly) {
+    return (
+      <Tag
+        ref={ref}
+        className={`studio-text studio-editable studio-editable--sheet${focused ? ' is-focused' : ''} ${className}`.trim()}
+        style={mergedStyle}
+        data-edit-path={path}
+        role="button"
+        tabIndex={0}
+        aria-pressed={focused}
+        onPointerDown={selectForSheetEdit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onFocusField?.(path, 'text')
+          }
+        }}
+      >
+        {value}
+      </Tag>
     )
   }
 

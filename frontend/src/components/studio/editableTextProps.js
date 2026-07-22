@@ -8,6 +8,7 @@ export function editableTextProps(studioEdit, path) {
     editable: Boolean(studioEdit.enabled),
     focused: studioEdit.focusedPath === path,
     align: studioEdit.alignments?.[path],
+    canvasReadOnly: Boolean(studioEdit.canvasReadOnly),
     onFocusField: studioEdit.onFocusField,
     onChange: studioEdit.onChange,
     onExitTextEdit: studioEdit.onExitTextEdit,

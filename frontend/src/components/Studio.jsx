@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CircleHelp, LogOut, Moon, MoreHorizontal, PanelBottom, Sun } from 'lucide-react'
+import {
+  CircleHelp,
+  Copy,
+  CopyPlus,
+  Download,
+  LogOut,
+  Maximize2,
+  Moon,
+  MoreHorizontal,
+  PanelBottom,
+  Sun,
+} from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { trackEvent } from '../lib/trackEvent'
@@ -16,6 +27,7 @@ import {
   clearArtboardDraft,
   copyArtboardDraft,
   getArtboardDraft,
+  getByPath,
   getItemEditKind,
   loadSavedDrafts,
   mergeEmergenceDraft,
@@ -25,6 +37,9 @@ import {
   saveDrafts,
   setArtboardAlignment,
 } from '../lib/flierDraft'
+import {
+  DEFAULT_EMERGENCE_COLOR_THEME,
+} from '../design/emergenceThemes'
 import {
   addTemplateLayer,
   deleteBoardLayer,
@@ -57,9 +72,11 @@ import TemplatesBoard from './TemplatesBoard'
 import Artboard from './studio/Artboard'
 import ConfirmDialog from './studio/ConfirmDialog'
 import Inspector from './studio/Inspector'
+import MobileTextEditor from './studio/MobileTextEditor'
 import ProjectTabs from './studio/ProjectTabs'
 import StudioHelp from './studio/StudioHelp'
 import StudioTour from './studio/StudioTour'
+import ThemeRail from './studio/ThemeRail'
 import ToolRail from './studio/ToolRail'
 import './Studio.css'
 
@@ -150,6 +167,7 @@ export default function Studio({
   const [searchParams, setSearchParams] = useSearchParams()
   const frameRefs = useRef({})
   const shellRef = useRef(null)
+  const panRef = useRef({ x: 64, y: 64 })
   const topbarMenuRef = useRef(null)
   const tabsUserRef = useRef(null)
 
@@ -253,6 +271,7 @@ export default function Studio({
   const selectedId = currentTab.selectedId
   const zoom = currentTab.zoom
   const pan = currentTab.pan
+  panRef.current = pan
   const editEnabled = true
   const selectedBaseItem = selectedId
     ? baseBoardItems.find((item) => item.id === selectedId)
@@ -400,14 +419,65 @@ export default function Studio({
     }
   }, [drafts, draftsReady])
 
-  const handleFocusField = useCallback((path, kind = 'text') => {
-    setFocusedPath(path)
-    setFocusedKind(kind)
-    if (kind === 'text') {
-      setPrimaryTool('text')
-      setSpaceHandActive(false)
-    }
-  }, [])
+  const handleFocusField = useCallback(
+    (path, kind = 'text') => {
+      setFocusedPath(path)
+      setFocusedKind(kind)
+      if (kind === 'text') {
+        setPrimaryTool('text')
+        setSpaceHandActive(false)
+        // Keep artboard visible: close the inspector sheet while editing text on mobile.
+        if (isNarrow) setMobileInspectorOpen(false)
+      }
+    },
+    [isNarrow],
+  )
+
+  const frameFocusedTextInView = useCallback(
+    (path) => {
+      if (!isNarrow || !path || !selectedId || !activeProjectId) return
+      const shell = shellRef.current
+      const frame = frameRefs.current[selectedId]
+      if (!shell || !frame) return
+      const viewport = shell.querySelector('.artboard') || shell
+      const el = frame.querySelector(`[data-edit-path="${CSS.escape(path)}"]`)
+      if (!el) return
+
+      const shellRect = viewport.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      // Reserve space for mobile text dock + bottom tool rail.
+      const dockReserve = Math.min(200, shellRect.height * 0.38)
+      const safe = {
+        left: shellRect.left + 20,
+        right: shellRect.right - 52,
+        top: shellRect.top + 16,
+        bottom: shellRect.bottom - dockReserve,
+      }
+      const fullyVisible =
+        elRect.left >= safe.left &&
+        elRect.right <= safe.right &&
+        elRect.top >= safe.top &&
+        elRect.bottom <= safe.bottom
+      if (fullyVisible) return
+
+      const targetX = (safe.left + safe.right) / 2
+      const targetY = (safe.top + safe.bottom) / 2
+      const dx = targetX - (elRect.left + elRect.width / 2)
+      const dy = targetY - (elRect.top + elRect.height / 2)
+      const currentPan = panRef.current
+      // Gentle pan only — never change zoom (avoids extreme close-up).
+      patchTab(activeProjectId, {
+        pan: { x: currentPan.x + dx, y: currentPan.y + dy },
+      })
+    },
+    [activeProjectId, isNarrow, selectedId],
+  )
+
+  useEffect(() => {
+    if (!isNarrow || focusedKind !== 'text' || !focusedPath) return
+    const id = window.requestAnimationFrame(() => frameFocusedTextInView(focusedPath))
+    return () => window.cancelAnimationFrame(id)
+  }, [focusedKind, focusedPath, frameFocusedTextInView, isNarrow])
 
   const handleExitTextEdit = useCallback(() => {
     setPrimaryTool((prev) => (prev === 'text' ? 'select' : prev))
@@ -509,6 +579,7 @@ export default function Studio({
         enabled: !spaceHandActive && (primaryTool === 'select' || primaryTool === 'text'),
         focusedPath: selectedId === item.id ? focusedPath : null,
         alignments: alignments || {},
+        canvasReadOnly: isNarrow,
         onFocusField: (path, kind) => {
           if (selectedId !== item.id) {
             patchTab(activeProjectId, { selectedId: item.id })
@@ -555,6 +626,7 @@ export default function Studio({
     handleExitTextEdit,
     handleFocusField,
     handlePickImage,
+    isNarrow,
     patchDraft,
     primaryTool,
     selectedId,
@@ -942,6 +1014,10 @@ export default function Studio({
       }
 
       if (e.key === 'Escape') {
+        if (isNarrow && focusedKind === 'text' && focusedPath) {
+          handleExitTextEdit()
+          return
+        }
         if (mobileInspectorOpen) {
           setMobileInspectorOpen(false)
           return
@@ -1009,8 +1085,12 @@ export default function Studio({
   }, [
     activeProjectId,
     closeProject,
+    focusedKind,
+    focusedPath,
     handleAction,
+    handleExitTextEdit,
     handleExport,
+    isNarrow,
     mobileInspectorOpen,
     navigate,
     primaryTool,
@@ -1099,11 +1179,28 @@ export default function Studio({
     }
   }
 
+  const mobileTextEditing =
+    isNarrow && !templatesOpen && focusedKind === 'text' && Boolean(focusedPath)
+
+  const mobileTextValue = useMemo(() => {
+    if (!mobileTextEditing || !editContent || !focusedPath) return ''
+    if (editContent.kind === 'emergence') return getByPath(editContent, focusedPath) ?? ''
+    return getByPath(editContent.fields, focusedPath) ?? ''
+  }, [editContent, focusedPath, mobileTextEditing])
+
+  const showThemeRail =
+    isNarrow &&
+    !templatesOpen &&
+    !mobileInspectorOpen &&
+    editContent?.kind === 'emergence' &&
+    Boolean(selected)
+
   const studioAppClass = [
     'studio-app',
     isNarrow ? 'studio-app--narrow' : '',
     isPhone ? 'studio-app--phone' : '',
     isNarrow && mobileInspectorOpen ? 'is-inspector-sheet-open' : '',
+    mobileTextEditing ? 'is-mobile-text-editing' : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -1401,10 +1498,32 @@ export default function Studio({
             />
           )}
 
-          <footer className="studio-statusbar">
+          {showThemeRail ? (
+            <ThemeRail
+              activeThemeId={editContent.colorTheme || DEFAULT_EMERGENCE_COLOR_THEME}
+              onChange={(themeId) => {
+                if (!selectedId) return
+                patchDraft(activeProjectId, selectedId, 'colorTheme', themeId)
+              }}
+            />
+          ) : null}
+
+          {mobileTextEditing ? (
+            <MobileTextEditor
+              path={focusedPath}
+              value={typeof mobileTextValue === 'string' ? mobileTextValue : ''}
+              onChange={(path, value) => {
+                if (!selectedId) return
+                patchDraft(activeProjectId, selectedId, path, value)
+              }}
+              onDone={handleExitTextEdit}
+            />
+          ) : null}
+
+          <footer className={`studio-statusbar${isNarrow ? ' studio-statusbar--mobile' : ''}`}>
             {templatesOpen ? (
               <>
-                <span>Templates</span>
+                <span className="studio-statusbar__tool">Templates</span>
                 <span className="studio-statusbar__primary">
                   {openTemplateCollectionFiltered
                     ? `${openTemplateCollectionFiltered.name} · ${openTemplateCollectionFiltered.templateCount} templates`
@@ -1415,14 +1534,61 @@ export default function Studio({
               </>
             ) : (
               <>
-                <span>
+                <span className="studio-statusbar__tool">
                   {tool === 'hand' ? 'Hand' : tool === 'text' ? 'Text' : editEnabled ? 'Move' : 'Select'}
                 </span>
                 <span className="studio-statusbar__primary">
                   {selected
-                    ? `${selected.name} · artboard ${selected.width}×${selected.height} · export ${selected.width * (HD_SCALES[hdScaleId]?.scale ?? 3)}×${selected.height * (HD_SCALES[hdScaleId]?.scale ?? 3)}`
+                    ? isNarrow
+                      ? `${selected.name} · ${selected.width}×${selected.height}`
+                      : `${selected.name} · artboard ${selected.width}×${selected.height} · export ${selected.width * (HD_SCALES[hdScaleId]?.scale ?? 3)}×${selected.height * (HD_SCALES[hdScaleId]?.scale ?? 3)}`
                     : 'Click an artboard'}
                 </span>
+                {isNarrow && selected ? (
+                  <div className="studio-statusbar__quick" role="toolbar" aria-label="Board actions">
+                    <button
+                      type="button"
+                      className="studio-statusbar__action"
+                      title={busy ? 'Exporting…' : 'Download / Export'}
+                      aria-label="Download"
+                      disabled={busy}
+                      onClick={handleExport}
+                    >
+                      <Download size={16} strokeWidth={2.25} />
+                      <span>Export</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="studio-statusbar__action"
+                      title="Copy artboard size"
+                      aria-label="Copy size"
+                      onClick={handleCopySize}
+                    >
+                      <Copy size={15} strokeWidth={2.25} />
+                      <span>Copy</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="studio-statusbar__action"
+                      title="Duplicate layer"
+                      aria-label="Duplicate"
+                      onClick={() => handleDuplicateLayer(selected.id)}
+                    >
+                      <CopyPlus size={15} strokeWidth={2.25} />
+                      <span>Dup</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="studio-statusbar__action"
+                      title="Fit to screen"
+                      aria-label="Fit"
+                      onClick={fitToScreen}
+                    >
+                      <Maximize2 size={15} strokeWidth={2.25} />
+                      <span>Fit</span>
+                    </button>
+                  </div>
+                ) : null}
                 <span className="studio-statusbar__meta">
                   {project?.name ?? 'Studio'} · {boardItems.length} boards
                 </span>

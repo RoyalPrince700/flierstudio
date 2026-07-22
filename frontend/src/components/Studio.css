@@ -428,6 +428,175 @@
   font-size: 11px;
 }
 
+.studio-statusbar__primary {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--studio-text-soft);
+  font-weight: 600;
+}
+
+.studio-statusbar__quick {
+  display: none;
+}
+
+.studio-statusbar__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--studio-border-soft);
+  border-radius: 8px;
+  background: var(--studio-panel-2);
+  color: var(--studio-text);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.studio-statusbar__action:hover:not(:disabled) {
+  background: var(--studio-hover);
+}
+
+.studio-statusbar__action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.studio-statusbar__action span {
+  line-height: 1;
+}
+
+/* Live theme swatches — mobile only (shown via JSX when isNarrow) */
+.studio-theme-rail {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--studio-panel) 88%, transparent);
+  border: 1px solid var(--studio-border-soft);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  transform: translateY(-50%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.studio-theme-rail__swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, #fff 35%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.studio-theme-rail__swatch.is-active {
+  border-color: var(--studio-accent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--studio-accent) 55%, transparent),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.studio-theme-rail__swatch:focus-visible {
+  outline: 2px solid var(--studio-accent);
+  outline-offset: 2px;
+}
+
+/* Mobile text dock — readable field; artboard stays visible above */
+.mobile-text-editor {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-radius: 14px;
+  background: var(--studio-panel);
+  border: 1px solid var(--studio-border-soft);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.mobile-text-editor__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--studio-muted);
+}
+
+.mobile-text-editor__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--studio-text-soft);
+}
+
+.mobile-text-editor__done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--studio-accent);
+  color: var(--studio-accent-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mobile-text-editor__input {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--studio-border);
+  background: var(--studio-bg);
+  color: var(--studio-text);
+  font: inherit;
+  /* ≥16px prevents iOS page-zoom on focus */
+  font-size: 16px;
+  line-height: 1.45;
+  outline: none;
+}
+
+.mobile-text-editor__input:focus {
+  border-color: color-mix(in srgb, var(--studio-accent) 70%, var(--studio-border));
+}
+
+.studio-editable--sheet {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.studio-app.is-mobile-text-editing .studio-theme-rail {
+  bottom: auto;
+  top: 28%;
+}
+
 /* —— Right inspector —— */
 .inspector {
   display: flex;
@@ -1734,10 +1903,50 @@
     display: none;
   }
 
+  .studio-statusbar__tool {
+    display: none;
+  }
+
+  .studio-statusbar {
+    gap: 8px;
+    min-height: 48px;
+    padding: 6px 8px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .studio-statusbar--mobile .studio-statusbar__primary {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .studio-statusbar--mobile .studio-statusbar__quick {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .studio-statusbar__action {
+    min-width: 44px;
+    min-height: 40px;
+    padding: 0 8px;
+  }
+
   .studio-statusbar__primary {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .studio-app.is-mobile-text-editing .studio-statusbar {
+    display: none;
+  }
+
+  .studio-app.is-mobile-text-editing .mobile-text-editor {
+    bottom: 10px;
   }
 
   .open-dialog {
@@ -1822,11 +2031,35 @@
     grid-column: 1;
     grid-row: 1;
     min-height: 0;
-    grid-template-rows: 1fr;
+    grid-template-rows: 1fr auto;
   }
 
   .studio-statusbar {
+    display: flex;
+    min-height: 48px;
+    padding-bottom: 6px;
+  }
+
+  .studio-statusbar__action span {
     display: none;
+  }
+
+  .studio-theme-rail {
+    right: 6px;
+    padding: 7px 5px;
+    gap: 7px;
+  }
+
+  .studio-theme-rail__swatch {
+    width: 26px;
+    height: 26px;
+  }
+
+  .mobile-text-editor {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    /* Sit above statusbar; statusbar is in-flow so absolute bottom is artboard area */
   }
 
   .tool-rail {
