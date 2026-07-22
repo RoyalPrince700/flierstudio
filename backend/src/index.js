@@ -11,7 +11,12 @@ import eventRoutes from './routes/events.js'
 import templateRoutes from './routes/templates.js'
 
 const PORT = Number(process.env.PORT) || 8080
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'
+
+/** Comma-separated allowed browser origins for CORS (credentials). Prefer one canonical. */
+const CLIENT_ORIGINS = String(process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim().replace(/\/$/, ''))
+  .filter(Boolean)
 
 function requireEnv(name) {
   if (!process.env[name]) {
@@ -29,7 +34,14 @@ const app = express()
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin(origin, callback) {
+      // Non-browser / same-origin tooling may omit Origin
+      if (!origin || CLIENT_ORIGINS.includes(origin)) {
+        callback(null, true)
+        return
+      }
+      callback(null, false)
+    },
     credentials: true,
   }),
 )
@@ -57,7 +69,7 @@ async function start() {
 
   app.listen(PORT, () => {
     console.log(`API listening on http://localhost:${PORT}`)
-    console.log(`CORS origin: ${CLIENT_URL}`)
+    console.log(`CORS origins: ${CLIENT_ORIGINS.join(', ')}`)
   })
 }
 

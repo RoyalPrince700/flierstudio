@@ -59,3 +59,33 @@ See `frontend/DESIGN_PRINCIPLES.md` for composition, type, color, and prompting 
 ## Auth
 
 Google Sign-In is required to open the studio. See `backend/.env.example` and `frontend/.env.example`.
+
+### Production (`https://www.flierstudio.com`)
+
+The frontend does **not** need a public site URL env var for routing — it *is* the client. Brand copy like `flierstudio.design` is display-only and is not the deploy domain.
+
+**Backend host env (required):**
+
+| Variable | Value |
+|---|---|
+| `CLIENT_URL` | `https://www.flierstudio.com` (canonical). Optionally comma-add `https://flierstudio.com` until apex→www redirects are solid. |
+| `GOOGLE_CLIENT_ID` | Same Web client ID as frontend |
+| `MONGODB_URI` / `JWT_SECRET` / `ADMIN_EMAIL` | Production values |
+| `NODE_ENV` | `production` (auth cookies use `Secure` + `SameSite=None`) |
+
+**Frontend Vercel env (required):**
+
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | Production API origin, e.g. `https://api.flierstudio.com` (no trailing slash) |
+| `VITE_GOOGLE_CLIENT_ID` | Same Web client ID as backend |
+
+Rebuild/redeploy the frontend after changing any `VITE_*` var (they are baked in at build time).
+
+**Google Cloud OAuth (Web client):**
+
+- Authorized JavaScript origins: `https://www.flierstudio.com` (and apex if used)
+- Authorized redirect URIs: `https://www.flierstudio.com` (GIS button/token flow; add apex if used)
+- Also keep local origins (`http://localhost:5173`) for development
+
+**DNS / hosting:** Prefer one canonical origin. Redirect `https://flierstudio.com` → `https://www.flierstudio.com` at the host/CDN so CORS and Google only need the www origin long-term.
