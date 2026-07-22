@@ -29,9 +29,9 @@ const CARDS = [
     bg: 'linear-gradient(160deg, #04211d 0%, #00C2A8 170%)',
   },
   {
-    name: 'FEMTECH',
-    meta: 'Health · 1080 × 1350',
-    bg: 'linear-gradient(160deg, #2a0d18 0%, #FF5C8A 180%)',
+    name: 'TESTMANCER',
+    meta: 'QA · 1080 × 1350',
+    bg: 'linear-gradient(160deg, #12081f 0%, #7B5CFF 180%)',
   },
 ]
 

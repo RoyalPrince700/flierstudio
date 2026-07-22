@@ -51,18 +51,22 @@ export default function CtaFooter() {
             Flier Studio
           </div>
           <nav className="landing-footer__links" aria-label="Footer">
-            <a href="/#boards">Boards</a>
-            <a href="/#editing">Editing</a>
-            <a href="/#templates">Templates</a>
-            <a href="/#export">Export</a>
-            <Link to="/about">About</Link>
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/terms">Terms</Link>
-            <Link to="/contact">Contact</Link>
-            <Link to="/templates">Sign in</Link>
+            <div className="landing-footer__link-group">
+              <a href="/#boards">Boards</a>
+              <a href="/#editing">Editing</a>
+              <a href="/#templates">Templates</a>
+              <a href="/#export">Export</a>
+              <Link to="/templates">Sign in</Link>
+            </div>
+            <div className="landing-footer__link-group landing-footer__link-group--legal">
+              <Link to="/about">About</Link>
+              <Link to="/privacy">Privacy</Link>
+              <Link to="/terms">Terms</Link>
+              <Link to="/contact">Contact</Link>
+            </div>
           </nav>
           <span className="landing-footer__note">
-            © {new Date().getFullYear()} Flier Studio. Designed at native pixels.
+            © {new Date().getFullYear()} Flier Studio · Start with a template. Make it yours.
           </span>
         </div>
       </footer>

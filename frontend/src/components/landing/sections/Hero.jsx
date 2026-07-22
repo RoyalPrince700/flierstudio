@@ -94,7 +94,7 @@ function StudioMock() {
           <motion.div {...flierIn(0.8)} style={{ marginTop: 26 }}>
             <div className="mini-flier mini-flier--emergence mini-flier--selected">
               <span className="mini-flier__label">emergence / classic</span>
-              <div className="mf-kicker">KINESIS · 2026</div>
+              <div className="mf-kicker">Emerge · 2026</div>
               <div className="mf-title">
                 EMERG
                 <br />

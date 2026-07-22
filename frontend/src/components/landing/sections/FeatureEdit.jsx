@@ -48,7 +48,7 @@ export default function FeatureEdit() {
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="edit-card">
-            <div className="edit-card__kicker">KINESIS · 2026</div>
+            <div className="edit-card__kicker">Emerge · 2026</div>
             <div className="edit-card__headline">
               <span className="edit-card__tag">Editing headline</span>
               {headline}

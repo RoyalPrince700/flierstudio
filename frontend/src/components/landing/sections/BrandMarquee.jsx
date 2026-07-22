@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 const BRANDS = [
   { name: 'Emergence', color: '#3A8DFF' },
   { name: 'Smipay', color: '#00C2A8' },
-  { name: 'Femtech', color: '#FF5C8A' },
+  { name: 'Testmancer', color: '#7B5CFF' },
   { name: 'Orbit Gadgets', color: '#0b5fff' },
   { name: 'OxygenFM', color: '#2f6dff' },
   { name: 'Royal Prince', color: '#d8d8d8' },
