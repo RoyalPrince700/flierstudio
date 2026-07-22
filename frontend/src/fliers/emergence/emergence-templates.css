@@ -1,4 +1,4 @@
-.e-flier {
+﻿.e-flier {
   position: relative;
   overflow: hidden;
   display: flex;
@@ -23,7 +23,7 @@
   width: min(900px, 100%);
 }
 
-/* Signature tilt lives on the plate only — speaker names stay crisp on export */
+/* Signature tilt lives on the plate only â€” speaker names stay crisp on export */
 .e-classic__plate {
   position: absolute;
   inset: -10px -14px -14px -10px;
@@ -84,179 +84,6 @@
   right: 52px;
   bottom: 220px;
   z-index: 4;
-}
-
-/* —— Ribbon —— */
-.e-ribbon__band {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin: 22px 48px 0;
-  min-height: 48px;
-  padding: 0 20px;
-  border-radius: 999px;
-  background: var(--e-lime);
-  color: var(--e-lime-ink);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-
-.e-ribbon__card {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  gap: 26px;
-  margin: 28px 48px 0;
-  padding: 32px 36px 40px;
-  border-radius: 24px;
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--e-card-light) 95%, transparent),
-    color-mix(in srgb, var(--e-card-deep) 95%, transparent)
-  );
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
-}
-
-.e-ribbon__heading {
-  margin: 0 0 14px;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  color: color-mix(in srgb, var(--e-ink-dark) 80%, transparent);
-}
-
-.e-ribbon__speakers {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-.e-ribbon__panelists {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.e-ribbon__convener {
-  right: 28px;
-  bottom: 255px;
-  z-index: 4;
-}
-
-/* —— Split —— */
-.e-split__body {
-  position: relative;
-  z-index: 2;
-  flex: 1;
-  display: grid;
-  grid-template-columns: 0.9fr 1.2fr;
-  gap: 28px;
-  padding: 20px 48px 24px;
-}
-
-.e-split__rail {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 28px 24px;
-  border-radius: 24px;
-  background: color-mix(in srgb, var(--e-navy-deep) 72%, transparent);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.e-split__kicker {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  color: var(--e-lime);
-}
-
-.e-split__title {
-  margin: 0;
-  font-family: var(--e-display);
-  font-size: 54px;
-  line-height: 0.95;
-  letter-spacing: 0.02em;
-}
-
-.e-split__title span {
-  display: inline-block;
-  margin-top: 14px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: var(--e-lime);
-  color: var(--e-lime-ink);
-  font-family: var(--e-body);
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.e-split__points {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
-}
-
-.e-split__points li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-
-.e-split__points svg {
-  color: var(--e-lime);
-}
-
-.e-split__note {
-  margin-top: auto;
-  padding-top: 16px;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--e-ink-soft);
-}
-
-.e-split__grid {
-  display: grid;
-  gap: 22px;
-  padding: 24px 24px 40px;
-  border-radius: 28px;
-  background: linear-gradient(150deg, var(--e-card-light), var(--e-card-deep));
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
-}
-
-.e-split__speakers {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
-.e-split__panelists {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  /* Same small slot size as a 4-up row; leave the 4th column for convener */
-  width: 68%;
-}
-
-.e-split__convener {
-  right: 16px;
-  bottom: 260px;
-  z-index: 4;
-  width: 210px;
-}
-
-.e-split__convener .e-convener__frame {
-  height: 330px;
 }
 
 /* —— Cascade —— */

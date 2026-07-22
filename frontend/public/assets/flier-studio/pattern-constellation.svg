@@ -1,0 +1,16 @@
+<svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <!-- Corner constellation - repeating Liftoff corner device -->
+  <g fill="#141310">
+    <path d="M29 3 L36 3 Q45 3 45 12 L45 19 Z" transform="translate(8 18) scale(1.35)"/>
+    <path d="M29 3 L36 3 Q45 3 45 12 L45 19 Z" transform="translate(68 42) scale(1.35)" opacity="0.85"/>
+    <path d="M29 3 L36 3 Q45 3 45 12 L45 19 Z" transform="translate(128 12) scale(1.35)" opacity="0.7"/>
+    <path d="M29 3 L36 3 Q45 3 45 12 L45 19 Z" transform="translate(188 48) scale(1.35)" opacity="0.9"/>
+  </g>
+  <g fill="#FF4A1D">
+    <path d="M29 3 L36 3 Q45 3 45 12 L45 19 Z" transform="translate(48 72) scale(1.35)"/>
+    <path d="M29 3 L36 3 Q45 3 45 12 L45 19 Z" transform="translate(158 68) scale(1.35)"/>
+  </g>
+  <g fill="#2545D9">
+    <path d="M29 3 L36 3 Q45 3 45 12 L45 19 Z" transform="translate(98 22) scale(1.35)"/>
+  </g>
+</svg>

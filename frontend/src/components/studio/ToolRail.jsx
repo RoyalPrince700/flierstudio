@@ -1,7 +1,5 @@
 import {
   Download,
-  FolderOpen,
-  Frame,
   Hand,
   LayoutGrid,
   Maximize2,
@@ -14,6 +12,8 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
+import { LiftoffMark } from '../../fliers/flier-studio/FSLogo'
+import { fsTokens } from '../../design/flierStudioTokens'
 
 const TOOLS = [
   { id: 'select', label: 'Move / Select (V)', icon: MousePointer2 },
@@ -35,9 +35,8 @@ export default function ToolRail({
   onAction,
   onExport,
   onToggleTheme,
-  onOpenDialog,
-  onOpenSamples,
-  samplesActive = false,
+  onOpenTemplates,
+  templatesActive = false,
   showLabels,
   onToggleLabels,
   showGrid,
@@ -51,26 +50,21 @@ export default function ToolRail({
   return (
     <aside className="tool-rail" aria-label="Tools">
       <div className="tool-rail__brand" title="Flier Studio">
-        <Frame size={18} strokeWidth={2.25} />
+        <LiftoffMark
+          size={22}
+          base={theme === 'dark' ? fsTokens.colors.paper : fsTokens.colors.ink}
+          corner={fsTokens.colors.signal}
+        />
       </div>
 
       <div className="tool-rail__group">
         <button
           type="button"
-          className="tool-btn"
-          title="Open design (Ctrl+O)"
-          aria-label="Open design"
-          onClick={onOpenDialog}
-        >
-          <FolderOpen size={18} strokeWidth={2} />
-        </button>
-        <button
-          type="button"
-          className={`tool-btn${samplesActive ? ' is-active' : ''}`}
-          title="Samples"
-          aria-label="Samples"
-          aria-pressed={samplesActive}
-          onClick={onOpenSamples}
+          className={`tool-btn${templatesActive ? ' is-active' : ''}`}
+          title="Templates (Ctrl+O)"
+          aria-label="Templates"
+          aria-pressed={templatesActive}
+          onClick={onOpenTemplates}
         >
           <LayoutGrid size={18} strokeWidth={2} />
         </button>

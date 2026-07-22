@@ -1,6 +1,6 @@
 import { toJpeg, toPng } from 'html-to-image'
 
-/** Default 3× — e.g. 1080×1350 → 3240×4050 */
+/** Default 3× — e.g. 1080×1080 → 3240×3240 */
 export const HD_SCALES = {
   '2x': { id: '2x', label: '2× HD', scale: 2 },
   '3x': { id: '3x', label: '3× Ultra', scale: 3 },

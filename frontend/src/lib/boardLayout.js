@@ -1,6 +1,9 @@
 import { layoutBoardItems } from '../projects/layout'
+import { getTemplate } from '../samples/registry'
 
 const STORAGE_KEY = 'flier-studio-board-layouts'
+
+export const TEMPLATE_WORKSPACE_ID = 'starter'
 
 /** Snapshot of a project's default layer list (ids only — Components stay on the project). */
 export function seedBoardLayout(project) {
@@ -36,6 +39,25 @@ export function resolveProjectBoard(project, layout) {
     .map((id) => {
       const entry = active.entries[id]
       if (!entry) return null
+
+      if (entry.templateId) {
+        const template = getTemplate(entry.templateId)
+        if (!template?.Component) return null
+        return {
+          id,
+          name: entry.name || template.name,
+          description: template.description,
+          width: template.width,
+          height: template.height,
+          Component: template.Component,
+          props: template.props ?? {},
+          filename: `template-${template.id}`,
+          sourceId: entry.templateId,
+          templateId: entry.templateId,
+          editKind: 'props',
+        }
+      }
+
       const source = catalog.get(entry.sourceId)
       if (!source) return null
       return {
@@ -56,27 +78,62 @@ export function duplicateBoardLayer(layout, project, itemId, newId) {
   const entry = base.entries[itemId]
   if (!entry) return { layout: base, newId: null }
 
-  const catalog = sourceCatalog(project)
-  const source = catalog.get(entry.sourceId)
-  if (!source) return { layout: base, newId: null }
+  let baseName = entry.name || 'Design'
+  if (entry.templateId) {
+    const template = getTemplate(entry.templateId)
+    if (!template) return { layout: base, newId: null }
+    baseName = entry.name || template.name
+  } else {
+    const catalog = sourceCatalog(project)
+    const source = catalog.get(entry.sourceId)
+    if (!source) return { layout: base, newId: null }
+    baseName = entry.name || source.name
+  }
 
   const id =
     newId ||
-    `${entry.sourceId}__copy_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
-  const copyName = nextCopyName(base, entry.name || source.name)
+    `${entry.templateId || entry.sourceId}__copy_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
+  const copyName = nextCopyName(base, baseName)
 
   const index = base.order.indexOf(itemId)
   const order = [...base.order]
   order.splice(index < 0 ? order.length : index + 1, 0, id)
+
+  const nextEntry = entry.templateId
+    ? { templateId: entry.templateId, name: copyName }
+    : { sourceId: entry.sourceId, name: copyName }
 
   return {
     layout: {
       order,
       entries: {
         ...base.entries,
+        [id]: nextEntry,
+      },
+    },
+    newId: id,
+  }
+}
+
+/** Add a style-library template as a new layer on the workspace project. */
+export function addTemplateLayer(layout, project, template, newId) {
+  if (!template?.id || !template?.Component) {
+    return { layout: layout || seedBoardLayout(project), newId: null }
+  }
+
+  const base = layout || seedBoardLayout(project)
+  const id =
+    newId ||
+    `tpl_${template.id}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
+
+  return {
+    layout: {
+      order: [...base.order, id],
+      entries: {
+        ...base.entries,
         [id]: {
-          sourceId: entry.sourceId,
-          name: copyName,
+          templateId: template.id,
+          name: template.name,
         },
       },
     },

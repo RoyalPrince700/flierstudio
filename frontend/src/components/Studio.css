@@ -15,12 +15,12 @@
   --studio-chip: #3a3a3a;
   --studio-chip-border: #444;
   --studio-chip-hover: #474747;
-  --studio-accent: #0d66d0;
-  --studio-accent-hover: #0b5abb;
+  --studio-accent: #ff4a1d;
+  --studio-accent-hover: #e23a0e;
   --studio-accent-ink: #ffffff;
   --studio-danger: #ff8e8e;
-  --studio-badge-bg: rgba(13, 102, 208, 0.25);
-  --studio-badge-text: #8ec0ff;
+  --studio-badge-bg: rgba(255, 74, 29, 0.22);
+  --studio-badge-text: #ff9877;
   --studio-grid-line: rgba(255, 255, 255, 0.035);
   --studio-frame-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
   --studio-label: #cfcfcf;
@@ -42,6 +42,54 @@
   padding: 24px;
 }
 
+.studio-empty-state {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  padding: 32px 24px;
+  text-align: center;
+  background:
+    radial-gradient(ellipse 70% 42% at 50% 0%, rgba(255, 74, 29, 0.1), transparent 58%),
+    var(--studio-bg);
+}
+
+.studio-empty-state__title {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+
+.studio-empty-state__copy {
+  margin: 0;
+  max-width: 420px;
+  color: var(--studio-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.studio-empty-state__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--studio-accent) 45%, var(--studio-chip-border));
+  background: var(--studio-accent);
+  color: var(--studio-accent-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.studio-empty-state__cta:hover {
+  background: var(--studio-accent-hover);
+  border-color: var(--studio-accent-hover);
+}
+
 .studio-app[data-theme='light'] {
   --studio-bg: #e8e8e8;
   --studio-panel: #f3f3f3;
@@ -59,12 +107,12 @@
   --studio-chip: #ffffff;
   --studio-chip-border: #cfcfcf;
   --studio-chip-hover: #f0f0f0;
-  --studio-accent: #0d66d0;
-  --studio-accent-hover: #0b5abb;
+  --studio-accent: #ff4a1d;
+  --studio-accent-hover: #e23a0e;
   --studio-accent-ink: #ffffff;
   --studio-danger: #c62828;
-  --studio-badge-bg: rgba(13, 102, 208, 0.12);
-  --studio-badge-text: #0d66d0;
+  --studio-badge-bg: rgba(255, 74, 29, 0.12);
+  --studio-badge-text: #c93007;
   --studio-grid-line: rgba(0, 0, 0, 0.06);
   --studio-frame-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
   --studio-label: #2a2a2a;
@@ -141,6 +189,12 @@
   color: var(--studio-text);
   font-size: 12px;
   font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  cursor: pointer;
 }
 
 .studio-topbar__chip--wide {
@@ -167,6 +221,11 @@
   display: grid;
   grid-template-columns: 48px 1fr 300px;
   min-height: 0;
+  transition: grid-template-columns 160ms ease;
+}
+
+.studio-body--inspector-collapsed {
+  grid-template-columns: 48px 1fr 48px;
 }
 
 /* —— Left tool rail —— */
@@ -385,6 +444,113 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.inspector__collapse-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--studio-muted);
+  cursor: pointer;
+}
+
+.inspector__collapse-btn:hover {
+  background: var(--studio-hover);
+  color: var(--studio-text);
+}
+
+.inspector--collapsed {
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+.inspector__rail-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--studio-icon);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.inspector__rail-btn:hover:not(:disabled) {
+  background: var(--studio-hover);
+}
+
+.inspector__rail-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.inspector__rail-btn--accent {
+  background: var(--studio-accent);
+  color: var(--studio-accent-ink);
+}
+
+.inspector__rail-btn--accent:hover:not(:disabled) {
+  background: var(--studio-accent-hover);
+}
+
+.inspector__rail-divider {
+  width: 24px;
+  height: 1px;
+  margin: 4px 0;
+  background: var(--studio-divider);
+  flex-shrink: 0;
+}
+
+.inspector__rail-layers {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.inspector__rail-swatch {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.inspector__rail-swatch:hover {
+  background: var(--studio-hover);
+}
+
+.inspector__rail-swatch.is-active {
+  background: color-mix(in srgb, var(--studio-accent) 28%, transparent);
+}
+
+.inspector__rail-swatch .inspector__swatch {
+  width: 18px;
+  height: 22px;
+}
+
+.inspector__rail-spacer {
+  flex: 1;
+  min-height: 8px;
 }
 
 .inspector__layers {
@@ -1051,44 +1217,7 @@
   color: var(--studio-text);
 }
 
-.project-tabs__add {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1px dashed var(--studio-border-soft);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--studio-muted);
-  flex: 0 0 auto;
-}
-
-.project-tabs__add:hover {
-  border-color: var(--studio-accent);
-  color: var(--studio-accent);
-}
-
-.project-tabs__open {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid var(--studio-border-soft);
-  border-radius: 6px;
-  background: var(--studio-panel-2);
-  color: var(--studio-text);
-  font-size: 11px;
-  font-weight: 700;
-  flex: 0 0 auto;
-}
-
-.project-tabs__open:hover {
-  border-color: var(--studio-accent);
-  color: var(--studio-accent);
-}
-
-/* —— Open design dialog —— */
+/* —— Modal shell (confirm dialog) —— */
 .open-dialog {
   position: fixed;
   inset: 0;
@@ -1360,10 +1489,6 @@
 
   .project-tabs {
     padding-left: 8px;
-  }
-
-  .project-tabs__open span {
-    display: none;
   }
 }
 

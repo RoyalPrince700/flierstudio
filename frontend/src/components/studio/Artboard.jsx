@@ -23,20 +23,35 @@ export default function Artboard({
 
     function onWheel(e) {
       e.preventDefault()
-      const rect = node.getBoundingClientRect()
-      const cursorX = e.clientX - rect.left
-      const cursorY = e.clientY - rect.top
-      const delta = -e.deltaY
-      const factor = delta > 0 ? 1.08 : 1 / 1.08
-      const nextZoom = Math.min(2.5, Math.max(0.08, zoom * factor))
 
-      const worldX = (cursorX - pan.x) / zoom
-      const worldY = (cursorY - pan.y) / zoom
+      // Ctrl/Cmd + scroll zooms; plain scroll pans the canvas
+      if (e.ctrlKey || e.metaKey) {
+        const rect = node.getBoundingClientRect()
+        const cursorX = e.clientX - rect.left
+        const cursorY = e.clientY - rect.top
+        const factor = e.deltaY < 0 ? 1.08 : 1 / 1.08
+        const nextZoom = Math.min(2.5, Math.max(0.08, zoom * factor))
 
-      onZoomChange(nextZoom)
+        const worldX = (cursorX - pan.x) / zoom
+        const worldY = (cursorY - pan.y) / zoom
+
+        onZoomChange(nextZoom)
+        onPanChange({
+          x: cursorX - worldX * nextZoom,
+          y: cursorY - worldY * nextZoom,
+        })
+        return
+      }
+
+      let dx = e.deltaX
+      let dy = e.deltaY
+      if (e.shiftKey && dx === 0) {
+        dx = dy
+        dy = 0
+      }
       onPanChange({
-        x: cursorX - worldX * nextZoom,
-        y: cursorY - worldY * nextZoom,
+        x: pan.x - dx,
+        y: pan.y - dy,
       })
     }
 

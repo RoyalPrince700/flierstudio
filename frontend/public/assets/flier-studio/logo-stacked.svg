@@ -1,0 +1,8 @@
+<svg width="240" height="180" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Flier Studio stacked lockup. Mark only is path-based; wordmark uses system font fallback. -->
+  <g transform="translate(72 0)">
+    <path d="M48 12 L84 48 L84 66 Q84 84 66 84 L30 84 Q12 84 12 66 L12 30 Q12 12 30 12 Z" fill="#141310"/>
+    <path d="M59 6 L72 6 Q90 6 90 24 L90 37 Z" fill="#FF4A1D"/>
+  </g>
+  <text x="120" y="150" text-anchor="middle" font-family="Space Grotesk, Manrope, sans-serif" font-size="34" font-weight="700" letter-spacing="-1" fill="#141310">Flier<tspan font-weight="500"> Studio</tspan></text>
+</svg>

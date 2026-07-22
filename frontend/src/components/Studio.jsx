@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LogOut, Moon, Sun } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import AdminBoard from './admin/AdminBoard'
+import { trackEvent } from '../lib/trackEvent'
+import { LiftoffMark } from '../fliers/flier-studio/FSLogo'
+import { fsTokens } from '../design/flierStudioTokens'
 import {
   DEFAULT_HD_SCALE,
   HD_SCALES,
@@ -23,11 +25,13 @@ import {
   setArtboardAlignment,
 } from '../lib/flierDraft'
 import {
+  addTemplateLayer,
   deleteBoardLayer,
   duplicateBoardLayer,
   loadBoardLayouts,
   resolveProjectBoard,
   saveBoardLayouts,
+  TEMPLATE_WORKSPACE_ID,
 } from '../lib/boardLayout'
 import {
   cloneStudioSnapshot,
@@ -37,21 +41,26 @@ import {
   undoStudioHistory,
 } from '../lib/studioHistory'
 import {
-  DEFAULT_PROJECT_ID,
   getProject,
   PROJECT_MAP,
 } from '../projects/registry'
-import { getSampleCollection, listSampleCollections } from '../samples/registry'
-import SamplesBoard from './SamplesBoard'
+import {
+  filterTemplateCollections,
+  getTemplate,
+  getTemplateCollection,
+  listTemplateCollections,
+} from '../samples/registry'
+import { useTemplatePublish } from '../lib/templatePublish'
+import TemplatesBoard from './TemplatesBoard'
 import Artboard from './studio/Artboard'
 import ConfirmDialog from './studio/ConfirmDialog'
 import Inspector from './studio/Inspector'
-import OpenDesignDialog from './studio/OpenDesignDialog'
 import ProjectTabs from './studio/ProjectTabs'
 import ToolRail from './studio/ToolRail'
 import './Studio.css'
 
 const TABS_KEY = 'flier-studio-open-tabs'
+const INSPECTOR_COLLAPSED_KEY = 'flier-studio-inspector-collapsed'
 
 function getInitialTabs() {
   try {
@@ -63,7 +72,11 @@ function getInitialTabs() {
   } catch {
     // ignore
   }
-  return [DEFAULT_PROJECT_ID]
+  return []
+}
+
+function getInitialActiveProjectId() {
+  return getInitialTabs()[0] ?? null
 }
 
 function createTabState(projectId) {
@@ -82,14 +95,14 @@ export default function Studio({
   const { user, logout, isAdmin } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const frameRefs = useRef({})
   const shellRef = useRef(null)
 
-  const samplesOpen = location.pathname === '/samples'
-  const adminOpen = location.pathname === '/admin'
+  const templatesOpen = location.pathname === '/templates'
 
   const [openTabIds, setOpenTabIds] = useState(getInitialTabs)
-  const [activeProjectId, setActiveProjectId] = useState(() => getInitialTabs()[0])
+  const [activeProjectId, setActiveProjectId] = useState(getInitialActiveProjectId)
   const [tabState, setTabState] = useState(() => {
     const initial = {}
     getInitialTabs().forEach((id) => {
@@ -97,9 +110,8 @@ export default function Studio({
     })
     return initial
   })
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [openSampleCollectionId, setOpenSampleCollectionId] = useState(null)
-  const [selectedSampleTemplateId, setSelectedSampleTemplateId] = useState(null)
+  const [openTemplateCollectionId, setOpenTemplateCollectionId] = useState(null)
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null)
 
   const [primaryTool, setPrimaryTool] = useState('select')
   const [spaceHandActive, setSpaceHandActive] = useState(false)
@@ -107,6 +119,13 @@ export default function Studio({
   const [hdScaleId, setHdScaleId] = useState(DEFAULT_HD_SCALE)
   const [showLabels, setShowLabels] = useState(true)
   const [showGrid, setShowGrid] = useState(true)
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(INSPECTOR_COLLAPSED_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [drafts, setDrafts] = useState({})
@@ -157,9 +176,12 @@ export default function Studio({
     applyHistorySnapshot(next)
   }, [applyHistorySnapshot])
 
-  const project = getProject(activeProjectId)
+  const project = activeProjectId ? getProject(activeProjectId) : null
   const resolvedBoard = useMemo(
-    () => resolveProjectBoard(project, boardLayouts[activeProjectId]),
+    () =>
+      project
+        ? resolveProjectBoard(project, boardLayouts[activeProjectId])
+        : { items: [], bounds: { width: 1000, height: 1000 } },
     [activeProjectId, boardLayouts, project],
   )
   const baseBoardItems = resolvedBoard.items
@@ -198,6 +220,8 @@ export default function Studio({
     [drafts],
   )
 
+  const trackEditRef = useRef(null)
+
   const patchDraft = useCallback(
     (projectId, itemId, path, value) => {
       const layout = boardLayouts[projectId]
@@ -206,6 +230,16 @@ export default function Studio({
       const editKind = getItemEditKind(item, projectId)
       recordHistory(`${projectId}:${itemId}:${path}`)
       setDrafts((prev) => patchArtboardDraft(prev, projectId, itemId, path, value, editKind))
+
+      if (trackEditRef.current) window.clearTimeout(trackEditRef.current)
+      trackEditRef.current = window.setTimeout(() => {
+        trackEvent({
+          action: 'edit',
+          projectId,
+          designId: item?.sourceId || itemId,
+          meta: { path },
+        })
+      }, 1200)
     },
     [boardLayouts, recordHistory],
   )
@@ -488,28 +522,45 @@ export default function Studio({
     setPrimaryTool((prev) => (prev === 'text' ? 'select' : prev))
   }, [activeProjectId])
 
-  const sampleCollections = useMemo(() => listSampleCollections(), [])
-  const openSampleCollection = openSampleCollectionId
-    ? getSampleCollection(openSampleCollectionId)
+  const { collectionPublishMap, includeUnpublished, loading: publishLoading } = useTemplatePublish()
+  const templateCollections = useMemo(
+    () =>
+      filterTemplateCollections(listTemplateCollections(), {
+        collectionPublishMap,
+        includeUnpublished,
+      }),
+    [includeUnpublished, collectionPublishMap],
+  )
+  const openTemplateCollection = openTemplateCollectionId
+    ? getTemplateCollection(openTemplateCollectionId)
     : null
+  const openTemplateCollectionFiltered =
+    openTemplateCollection &&
+    (includeUnpublished ||
+      (collectionPublishMap[openTemplateCollection.id] ?? 'draft') === 'published')
+      ? {
+          ...openTemplateCollection,
+          publishStatus: collectionPublishMap[openTemplateCollection.id] ?? 'draft',
+        }
+      : null
 
-  const samplesInspectorItems = useMemo(() => {
-    if (openSampleCollection) {
-      return openSampleCollection.templates.map((template) => ({
+  const templatesInspectorItems = useMemo(() => {
+    if (openTemplateCollectionFiltered) {
+      return openTemplateCollectionFiltered.templates.map((template) => ({
         id: template.id,
         name: template.name,
         meta: template.sizeLabel,
         group: template.sizeLabel,
       }))
     }
-    return sampleCollections.map((collection) => ({
+    return templateCollections.map((collection) => ({
       id: collection.id,
       name: collection.name,
       meta: `${collection.templateCount} templates`,
       group: collection.brand,
       color: collection.color,
     }))
-  }, [openSampleCollection, sampleCollections])
+  }, [openTemplateCollectionFiltered, templateCollections])
 
   useEffect(() => {
     try {
@@ -521,43 +572,58 @@ export default function Studio({
 
   useEffect(() => {
     const hash = window.location.hash
-    if (hash === '#/samples' || hash === '#samples') {
-      navigate('/samples', { replace: true })
+    if (hash === '#/samples' || hash === '#samples' || hash === '#/templates' || hash === '#templates') {
+      navigate('/templates', { replace: true })
       return
     }
     if (hash === '#/admin' || hash === '#admin') {
-      navigate(isAdmin ? '/admin' : '/', { replace: true })
+      navigate(isAdmin ? '/admin/overview' : '/templates', { replace: true })
       return
     }
     if (hash === '#/' || hash === '#') {
-      navigate('/', { replace: true })
+      navigate('/templates', { replace: true })
     }
   }, [navigate, isAdmin])
 
+  /* Non-admins only restore tabs they can access: starter workspace or published collections. */
   useEffect(() => {
-    if (adminOpen && !isAdmin) {
-      navigate('/', { replace: true })
-    }
-  }, [adminOpen, isAdmin, navigate])
+    if (isAdmin || publishLoading) return
+    setOpenTabIds((prev) => {
+      const next = prev.filter((id) => {
+        if (id === TEMPLATE_WORKSPACE_ID) return true
+        return (collectionPublishMap[id] ?? 'draft') === 'published'
+      })
+      return next.length === prev.length ? prev : next
+    })
+  }, [isAdmin, publishLoading, collectionPublishMap])
 
   useEffect(() => {
-    if (!samplesOpen) {
-      setOpenSampleCollectionId(null)
-      setSelectedSampleTemplateId(null)
+    if (isAdmin || publishLoading) return
+    if (!activeProjectId) return
+    const allowed =
+      activeProjectId === TEMPLATE_WORKSPACE_ID ||
+      (collectionPublishMap[activeProjectId] ?? 'draft') === 'published'
+    if (allowed && openTabIds.includes(activeProjectId)) return
+    setActiveProjectId(openTabIds[0] ?? null)
+  }, [activeProjectId, collectionPublishMap, isAdmin, openTabIds, publishLoading])
+
+  useEffect(() => {
+    if (!templatesOpen) {
+      setOpenTemplateCollectionId(null)
+      setSelectedTemplateId(null)
     }
-  }, [samplesOpen])
+  }, [templatesOpen])
 
   function toggleTheme() {
     onThemeChange?.(theme === 'dark' ? 'light' : 'dark')
   }
 
-  function toggleSamples() {
-    navigate(samplesOpen ? '/' : '/samples')
-  }
-
-  function toggleAdmin() {
-    if (!isAdmin) return
-    navigate(adminOpen ? '/' : '/admin')
+  function toggleTemplates() {
+    if (templatesOpen) {
+      navigate(openTabIds.length ? '/studio' : '/templates')
+      return
+    }
+    navigate('/templates')
   }
 
   function patchTab(projectId, patch) {
@@ -599,42 +665,110 @@ export default function Studio({
     return () => window.removeEventListener('resize', onResize)
   }, [fitToScreen])
 
-  const openProject = useCallback((projectId) => {
-    const next = getProject(projectId)
-    if (!next) return
+  const openTemplateInStudio = useCallback(
+    (template) => {
+      const full = getTemplate(template.id) || template
+      if (!full?.Component) return
 
-    navigate('/')
-    setOpenSampleCollectionId(null)
-    setSelectedSampleTemplateId(null)
-    setOpenTabIds((prev) => (prev.includes(projectId) ? prev : [...prev, projectId]))
-    setTabState((prev) =>
-      prev[projectId] ? prev : { ...prev, [projectId]: createTabState(projectId) },
-    )
-    setActiveProjectId(projectId)
-    frameRefs.current = {}
-    setDialogOpen(false)
-    setError('')
-  }, [navigate])
+      const publishStatus = collectionPublishMap[full.collectionId] ?? 'draft'
+      if (!isAdmin && publishStatus !== 'published') {
+        setError('This template group is not available yet.')
+        return
+      }
 
-  function handleSamplesInspectorSelect(id) {
-    if (openSampleCollection) {
-      setSelectedSampleTemplateId(id)
+      trackEvent({
+        action: 'select',
+        projectId: full.collectionId || '',
+        designId: full.id,
+        meta: { source: full.source, from: 'templates' },
+      })
+
+      navigate('/studio')
+      setOpenTemplateCollectionId(null)
+      setSelectedTemplateId(null)
+      frameRefs.current = {}
+      setError('')
+
+      if (full.source === 'project') {
+        const projectId = full.collectionId
+        setOpenTabIds((prev) => (prev.includes(projectId) ? prev : [...prev, projectId]))
+        setTabState((prev) => ({
+          ...prev,
+          [projectId]: {
+            ...(prev[projectId] ?? createTabState(projectId)),
+            selectedId: full.id,
+          },
+        }))
+        setActiveProjectId(projectId)
+        return
+      }
+
+      const workspaceId = TEMPLATE_WORKSPACE_ID
+      const projectRef = getProject(workspaceId)
+      if (!projectRef) return
+
+      const currentLayout = boardLayoutsRef.current[workspaceId]
+      const { layout, newId } = addTemplateLayer(currentLayout, projectRef, full)
+      if (!newId) return
+
+      recordHistory()
+      setBoardLayouts((prev) => ({ ...prev, [workspaceId]: layout }))
+      setOpenTabIds((prev) => (prev.includes(workspaceId) ? prev : [...prev, workspaceId]))
+      setTabState((prev) => ({
+        ...prev,
+        [workspaceId]: {
+          ...(prev[workspaceId] ?? createTabState(workspaceId)),
+          selectedId: newId,
+        },
+      }))
+      setActiveProjectId(workspaceId)
+    },
+    [isAdmin, navigate, collectionPublishMap, recordHistory],
+  )
+
+  useEffect(() => {
+    const collectionId = searchParams.get('collection')
+    if (!collectionId || !templatesOpen) return
+    setOpenTemplateCollectionId(collectionId)
+    setSelectedTemplateId(null)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('collection')
+      return next
+    }, { replace: true })
+  }, [searchParams, setSearchParams, templatesOpen])
+
+  useEffect(() => {
+    const templateId = searchParams.get('template')
+    if (!templateId || !draftsReady) return
+    const template = getTemplate(templateId)
+    if (!template) return
+    openTemplateInStudio(template)
+    setSearchParams({}, { replace: true })
+  }, [draftsReady, openTemplateInStudio, searchParams, setSearchParams])
+
+  function handleTemplatesInspectorSelect(id) {
+    if (openTemplateCollectionFiltered) {
+      const template = openTemplateCollectionFiltered.templates.find((entry) => entry.id === id)
+      if (template) openTemplateInStudio(template)
       return
     }
-    setOpenSampleCollectionId(id)
-    setSelectedSampleTemplateId(null)
+    setOpenTemplateCollectionId(id)
+    setSelectedTemplateId(null)
   }
 
   const closeProject = useCallback(
     (projectId) => {
       setOpenTabIds((prev) => {
-        if (prev.length <= 1) return prev
         const next = prev.filter((id) => id !== projectId)
         if (activeProjectId === projectId) {
           const index = prev.indexOf(projectId)
-          const fallback = next[Math.max(0, index - 1)]
+          const fallback = next.length ? next[Math.max(0, index - 1)] : null
           setActiveProjectId(fallback)
           frameRefs.current = {}
+        }
+        if (!next.length) {
+          navigate('/templates')
         }
         return next
       })
@@ -644,7 +778,7 @@ export default function Studio({
         return next
       })
     },
-    [activeProjectId],
+    [activeProjectId, navigate],
   )
 
   const handleExport = useCallback(async () => {
@@ -667,13 +801,19 @@ export default function Studio({
         scale,
         quality: 1,
       })
+      trackEvent({
+        action: 'download',
+        projectId: activeProjectId,
+        designId: selected.sourceId || selected.id,
+        meta: { format, hdScaleId },
+      })
     } catch (err) {
       console.error(err)
       setError('Export failed. Check the console.')
     } finally {
       setBusy(false)
     }
-  }, [selected, format, hdScaleId])
+  }, [selected, format, hdScaleId, activeProjectId])
 
   const handleAction = useCallback(
     (actionId) => {
@@ -687,7 +827,6 @@ export default function Studio({
       if (actionId === 'zoom100') {
         patchTab(activeProjectId, { zoom: 1, pan: { x: 48, y: 48 } })
       }
-      if (actionId === 'open') setDialogOpen(true)
     },
     [activeProjectId, fitToScreen, zoom],
   )
@@ -747,11 +886,11 @@ export default function Studio({
       }
       if ((e.ctrlKey || e.metaKey) && (e.key === 'o' || e.key === 'O')) {
         e.preventDefault()
-        setDialogOpen(true)
+        navigate('/templates')
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
         e.preventDefault()
-        closeProject(activeProjectId)
+        if (activeProjectId) closeProject(activeProjectId)
       }
     }
 
@@ -767,7 +906,7 @@ export default function Studio({
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [activeProjectId, closeProject, handleAction, handleExport, primaryTool, redoChange, undoChange])
+  }, [activeProjectId, closeProject, handleAction, handleExport, navigate, primaryTool, redoChange, undoChange])
 
   async function handleCopySize() {
     if (!selected) return
@@ -779,21 +918,23 @@ export default function Studio({
     }
   }
 
-  if (!project) {
-    return (
-      <div className="studio-app" data-theme={theme}>
-        <p className="studio-empty">No project open. Use Open design to start.</p>
-        <button type="button" onClick={() => setDialogOpen(true)}>
-          Open design
-        </button>
-        <OpenDesignDialog
-          open={dialogOpen}
-          openTabIds={openTabIds}
-          onClose={() => setDialogOpen(false)}
-          onOpen={openProject}
-        />
-      </div>
-    )
+  if (!project && !templatesOpen) {
+    if (searchParams.get('template')) {
+      return (
+        <div className="studio-app" data-theme={theme}>
+          <div className="studio-empty-state">
+            <LiftoffMark
+              size={40}
+              base={theme === 'dark' ? fsTokens.colors.paper : fsTokens.colors.ink}
+              corner={fsTokens.colors.signal}
+            />
+            <h1 className="studio-empty-state__title">Opening template…</h1>
+            <p className="studio-empty-state__copy">Loading your design into the studio.</p>
+          </div>
+        </div>
+      )
+    }
+    return <Navigate to="/templates" replace />
   }
 
   return (
@@ -802,36 +943,29 @@ export default function Studio({
         <div className="studio-topbar__left">
           <strong>Flier Studio</strong>
           <span className="studio-topbar__sep" />
-          <span>{adminOpen ? 'Admin' : samplesOpen ? 'Samples' : project.name}</span>
+          <span>{templatesOpen ? 'Templates' : project?.name ?? 'Studio'}</span>
           <button
             type="button"
-            className={`studio-topbar__chip${samplesOpen ? ' is-active' : ''}`}
-            onClick={toggleSamples}
-            title="Browse design samples"
+            className={`studio-topbar__chip${templatesOpen ? ' is-active' : ''}`}
+            onClick={toggleTemplates}
+            title="Browse design templates"
           >
-            Samples
+            Templates
           </button>
           {isAdmin ? (
-            <button
-              type="button"
-              className={`studio-topbar__chip${adminOpen ? ' is-active' : ''}`}
-              onClick={toggleAdmin}
-              title="Admin dashboard"
-            >
+            <Link to="/admin/overview" className="studio-topbar__chip" title="Admin console">
               Admin
-            </button>
+            </Link>
           ) : null}
         </div>
         <div className="studio-topbar__center">
-          {adminOpen
-            ? 'Users & activity'
-            : samplesOpen
-              ? openSampleCollection
-                ? openSampleCollection.name
-                : 'Sample library'
-              : selected
-                ? selected.name
-                : 'No selection'}
+          {templatesOpen
+            ? openTemplateCollectionFiltered
+              ? openTemplateCollectionFiltered.name
+              : 'Template library'
+            : selected
+              ? selected.name
+              : 'No selection'}
         </div>
         <div className="studio-topbar__right">
           <div className="studio-topbar__user" title={user?.email || ''}>
@@ -861,7 +995,7 @@ export default function Studio({
           >
             {theme === 'dark' ? <Sun size={14} strokeWidth={2.25} /> : <Moon size={14} strokeWidth={2.25} />}
           </button>
-          {!samplesOpen && !adminOpen ? (
+          {!templatesOpen ? (
             <>
               <button type="button" className="studio-topbar__chip" onClick={() => handleAction('zoomOut')}>
                 −
@@ -879,20 +1013,21 @@ export default function Studio({
 
       <ProjectTabs
         openTabs={openTabs}
-        activeProjectId={samplesOpen || adminOpen ? null : activeProjectId}
+        activeProjectId={templatesOpen ? null : activeProjectId}
         onSelect={(id) => {
-          navigate('/')
-          setOpenSampleCollectionId(null)
-          setSelectedSampleTemplateId(null)
+          navigate('/studio')
+          setOpenTemplateCollectionId(null)
+          setSelectedTemplateId(null)
           setActiveProjectId(id)
           frameRefs.current = {}
           setError('')
         }}
         onClose={closeProject}
-        onOpenDialog={() => setDialogOpen(true)}
       />
 
-      <div className="studio-body">
+      <div
+        className={`studio-body${inspectorCollapsed ? ' studio-body--inspector-collapsed' : ''}`}
+      >
         <ToolRail
           tool={tool}
           theme={theme}
@@ -903,34 +1038,32 @@ export default function Studio({
           onAction={handleAction}
           onExport={handleExport}
           onToggleTheme={toggleTheme}
-          onOpenDialog={() => setDialogOpen(true)}
-          onOpenSamples={toggleSamples}
-          samplesActive={samplesOpen}
+          onOpenTemplates={toggleTemplates}
+          templatesActive={templatesOpen}
           showLabels={showLabels}
           onToggleLabels={() => setShowLabels((v) => !v)}
           showGrid={showGrid}
           onToggleGrid={() => setShowGrid((v) => !v)}
-          canExport={!samplesOpen && !adminOpen && Boolean(selected)}
+          canExport={!templatesOpen && Boolean(selected)}
           busy={busy}
         />
 
         <div className="studio-shell" ref={shellRef}>
-          {adminOpen && isAdmin ? (
-            <AdminBoard />
-          ) : samplesOpen ? (
-            <SamplesBoard
+          {templatesOpen ? (
+            <TemplatesBoard
               showGrid={showGrid}
-              openCollectionId={openSampleCollectionId}
+              openCollectionId={openTemplateCollectionId}
               onOpenCollection={(id) => {
-                setOpenSampleCollectionId(id)
-                setSelectedSampleTemplateId(null)
+                setOpenTemplateCollectionId(id)
+                setSelectedTemplateId(null)
               }}
               onCloseCollection={() => {
-                setOpenSampleCollectionId(null)
-                setSelectedSampleTemplateId(null)
+                setOpenTemplateCollectionId(null)
+                setSelectedTemplateId(null)
               }}
-              selectedTemplateId={selectedSampleTemplateId}
-              onSelectTemplate={setSelectedSampleTemplateId}
+              selectedTemplateId={selectedTemplateId}
+              onSelectTemplate={setSelectedTemplateId}
+              onUseTemplate={openTemplateInStudio}
             />
           ) : (
             <Artboard
@@ -950,21 +1083,15 @@ export default function Studio({
           )}
 
           <footer className="studio-statusbar">
-            {adminOpen ? (
+            {templatesOpen ? (
               <>
-                <span>Admin</span>
-                <span>Users, logins, and design activity</span>
-                <span>Admin only</span>
-              </>
-            ) : samplesOpen ? (
-              <>
-                <span>Samples</span>
+                <span>Templates</span>
                 <span>
-                  {openSampleCollection
-                    ? `${openSampleCollection.name} · ${openSampleCollection.templateCount} templates`
-                    : 'Click a sample to preview or open templates'}
+                  {openTemplateCollectionFiltered
+                    ? `${openTemplateCollectionFiltered.name} · ${openTemplateCollectionFiltered.templateCount} templates`
+                    : 'Click a template to open it in the studio editor'}
                 </span>
-                <span>{sampleCollections.length} collections</span>
+                <span>{templateCollections.length} collections</span>
                 <span>{showGrid ? 'Grid on' : 'Grid off'}</span>
               </>
             ) : (
@@ -978,7 +1105,7 @@ export default function Studio({
                     : 'Click an artboard'}
                 </span>
                 <span>
-                  {project.name} · {boardItems.length} boards
+                  {project?.name ?? 'Studio'} · {boardItems.length} boards
                 </span>
                 <span>{Math.round(zoom * 100)}%</span>
               </>
@@ -987,7 +1114,19 @@ export default function Studio({
         </div>
 
         <Inspector
-          mode={adminOpen ? 'admin' : samplesOpen ? 'samples' : 'board'}
+          mode={templatesOpen ? 'templates' : 'board'}
+          collapsed={inspectorCollapsed}
+          onToggleCollapsed={() => {
+            setInspectorCollapsed((prev) => {
+              const next = !prev
+              try {
+                localStorage.setItem(INSPECTOR_COLLAPSED_KEY, next ? '1' : '0')
+              } catch {
+                /* ignore */
+              }
+              return next
+            })
+          }}
           items={boardItems}
           selectedId={selectedId}
           selected={selected}
@@ -1004,19 +1143,17 @@ export default function Studio({
           onDuplicateLayer={handleDuplicateLayer}
           onDeleteLayer={handleDeleteLayer}
           canDeleteLayer={boardItems.length > 1}
-          samplesItems={samplesInspectorItems}
-          samplesSelectedId={
-            openSampleCollection ? selectedSampleTemplateId : openSampleCollectionId
+          templatesItems={templatesInspectorItems}
+          templatesSelectedId={
+            openTemplateCollectionFiltered ? selectedTemplateId : openTemplateCollectionId
           }
-          onSamplesSelect={handleSamplesInspectorSelect}
-          samplesHint={
-            adminOpen
-              ? 'Admin view — manage users and review activity.'
-              : openSampleCollection
-                ? 'Click a template to preview full-screen and download for your phone.'
-                : 'Open a sample collection to browse its template variations.'
+          onTemplatesSelect={handleTemplatesInspectorSelect}
+          templatesHint={
+            openTemplateCollectionFiltered
+              ? 'Click a template to open it in the studio editor.'
+              : 'Open a template collection, then pick a layout to edit.'
           }
-          editEnabled={!samplesOpen && !adminOpen && editEnabled}
+          editEnabled={!templatesOpen && editEnabled}
           editContent={editContent}
           focusedPath={focusedPath}
           focusedKind={focusedKind}
@@ -1039,13 +1176,6 @@ export default function Studio({
         accept="image/png,image/jpeg,.png,.jpg,.jpeg"
         hidden
         onChange={handleFileChange}
-      />
-
-      <OpenDesignDialog
-        open={dialogOpen}
-        openTabIds={openTabIds}
-        onClose={() => setDialogOpen(false)}
-        onOpen={openProject}
       />
 
       <ConfirmDialog

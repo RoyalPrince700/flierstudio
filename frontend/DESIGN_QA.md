@@ -21,7 +21,7 @@ If the flier could answer two different questions, cut until one remains.
 
 ## 1. Virtual inspection (required)
 
-1. Open / render the flier at **native export size** (e.g. 1080×1350), not a tiny preview mental model.
+1. Open / render the flier at its **native export size** (whatever `width`×`height` the board uses — e.g. 1080×1080 post, 1080×1920 story, 1600×900 X), not a tiny preview mental model.
 2. If the studio is running, prefer a fresh look at the board; if you can capture or read export/preview images, **read the image** and inspect pixels — do not QA from JSX alone.
 3. Scan in this order: **whole → zones → elements → type → color → edges**.
 

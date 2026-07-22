@@ -1,7 +1,7 @@
 export const emergence = {
   event: {
-    wordmark: "KINESIS '26",
-    series: 'CLOUDDE GROWTH CONFERENCE',
+    wordmark: 'EMERGE',
+    series: 'EMERGE SUMMIT',
     theme: 'Emergence',
     capsule: 'Beyond Limit',
     keywords: ['DISRUPTION', '1M+ GRANT', 'GROWTH', 'NETWORKING'],
@@ -12,9 +12,9 @@ export const emergence = {
     date: '15TH',
     dateNote: 'AUGUST 2026',
     ticketLabel: 'Get Ticket:',
-    url: 'cgc.thecloudde.com/kinesis/',
+    url: 'www.emerge.xyz',
     qrSrc: '',
-    convenerLabel: 'CONVENER SLOT — Convener CGC',
+    convenerLabel: 'CONVENER SLOT — Emerge',
   },
   size: {
     width: 1080,

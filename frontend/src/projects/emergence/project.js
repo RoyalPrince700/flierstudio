@@ -12,15 +12,15 @@ const fliers = Object.values(EMERGENCE_TEMPLATES).map((template) => ({
   filename: `emergence-${template.id}`,
   Component: template.Component,
   editKind: 'emergence',
-  props: {},
+  props: template.props || {},
 }))
 
-/** Kinesis / Emergence conference fliers only */
+/** Emerge / Emergence conference flier templates */
 export default createProject({
   id: 'emergence',
   name: 'Emergence',
-  brand: 'Kinesis · Cloudde',
-  description: 'Kinesis ’26 conference flier set — classic, ribbon, split, cascade.',
+  brand: 'Emerge',
+  description: 'Emerge conference flier set — Classic Tilt and Cascade Hero.',
   color: '#3A8DFF',
   fliers,
 })

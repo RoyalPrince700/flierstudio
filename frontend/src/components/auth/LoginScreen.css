@@ -1,40 +1,46 @@
 .login-screen {
-  --login-bg: #141414;
-  --login-panel: #1f1f1f;
-  --login-border: #2e2e2e;
-  --login-text: #f2f2f2;
-  --login-muted: #9a9a9a;
-  --login-danger: #ff8e8e;
-  --login-accent: #6ea8ff;
+  /* Warm Ink / Paper / Signal — matched to flierStudioTokens */
+  --login-bg: #141310;
+  --login-panel: #26241f;
+  --login-border: #3a372f;
+  --login-text: #f5f1e8;
+  --login-muted: #8f8a7e;
+  --login-danger: #d64530;
+  --login-accent: #ff4a1d;
 
   min-height: 100%;
   display: grid;
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(110, 168, 255, 0.18), transparent 55%),
-    var(--login-bg);
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(255, 74, 29, 0.18), transparent 55%),
+    linear-gradient(165deg, #1a1814 0%, var(--login-bg) 48%, #0e0d0b 100%);
   color: var(--login-text);
   font-family: var(--font-ui);
 }
 
 .login-screen[data-theme='light'] {
-  --login-bg: #eceff3;
+  --login-bg: #f5f1e8;
   --login-panel: #ffffff;
-  --login-border: #d7dbe2;
-  --login-text: #171717;
-  --login-muted: #5c6570;
-  --login-danger: #c62828;
-  --login-accent: #0d66d0;
+  --login-border: #e4ded2;
+  --login-text: #141310;
+  --login-muted: #4b473f;
+  --login-danger: #d64530;
+  --login-accent: #c93007;
 }
 
 .login-screen__card {
   width: min(100%, 420px);
   padding: 36px 32px;
   border: 1px solid var(--login-border);
-  border-radius: 16px;
+  border-radius: 20px;
   background: var(--login-panel);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.login-screen__mark {
+  display: block;
+  margin-bottom: 14px;
 }
 
 .login-screen__eyebrow {
@@ -48,9 +54,11 @@
 
 .login-screen__title {
   margin: 0 0 10px;
+  font-family: var(--font-display);
   font-size: 28px;
+  font-weight: 700;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .login-screen__copy {
@@ -66,8 +74,7 @@
   min-height: 44px;
 }
 
-.login-screen__status,
-.login-screen__hint {
+.login-screen__status {
   margin: 16px 0 0;
   font-size: 12px;
   color: var(--login-muted);
@@ -79,4 +86,26 @@
   font-size: 13px;
   color: var(--login-danger);
   text-align: center;
+}
+
+.login-screen__legal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 28px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--login-border);
+  font-size: 12.5px;
+  color: var(--login-muted);
+}
+
+.login-screen__legal a {
+  color: var(--login-muted);
+  text-decoration: none;
+}
+
+.login-screen__legal a:hover {
+  color: var(--login-text);
 }

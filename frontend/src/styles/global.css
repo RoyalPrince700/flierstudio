@@ -4,12 +4,12 @@
   --panel-border: #111;
   --text: #e8e8e8;
   --muted: #9a9a9a;
-  --accent: #0d66d0;
+  --accent: #ff4a1d;
   --accent-ink: #ffffff;
   --danger: #ff8e8e;
   --radius: 8px;
   --font-ui: 'Manrope', 'DM Sans', sans-serif;
-  --font-display: 'Orbitron', 'Bebas Neue', sans-serif;
+  --font-display: 'Space Grotesk', 'Manrope', sans-serif;
 }
 
 *,

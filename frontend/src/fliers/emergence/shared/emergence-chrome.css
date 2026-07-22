@@ -109,29 +109,110 @@
   color: var(--e-lime);
 }
 
-.e-header__partners {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 6px;
+/* Upper-right abstract mark — rising twin wings + cyan core + lime vector */
+.e-header__mark {
+  position: relative;
+  width: 92px;
+  height: 72px;
+  justify-self: end;
+  margin-top: 2px;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.28));
 }
 
-.e-header__partner {
-  display: inline-grid;
-  place-items: center;
-  min-width: 64px;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1.5px solid rgba(255, 255, 255, 0.55);
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+.e-header__mark-orbit {
+  position: absolute;
+  inset: 6px 4px 10px 10px;
+  border: 2px solid color-mix(in srgb, var(--e-card-light) 55%, transparent);
+  border-radius: 55% 45% 60% 40% / 50% 55% 45% 50%;
+  transform: rotate(-18deg);
+  opacity: 0.9;
 }
 
-.e-header__partner--soft {
-  border-color: color-mix(in srgb, var(--e-lime) 65%, transparent);
-  color: var(--e-lime);
+.e-header__mark-wing {
+  position: absolute;
+  display: block;
+  border-radius: 60% 40% 55% 45%;
+  transform-origin: 70% 80%;
+}
+
+.e-header__mark-wing--a {
+  left: 8px;
+  top: 10px;
+  width: 54px;
+  height: 34px;
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, var(--e-card-light) 85%, white) 0%,
+    var(--e-card) 55%,
+    color-mix(in srgb, var(--e-card) 70%, var(--e-navy-deep)) 100%
+  );
+  clip-path: polygon(8% 70%, 0% 28%, 42% 0%, 88% 18%, 100% 55%, 62% 100%, 28% 92%);
+  transform: rotate(-12deg);
+}
+
+.e-header__mark-wing--b {
+  right: 2px;
+  top: 4px;
+  width: 48px;
+  height: 40px;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--e-lime) 55%, white) 0%,
+    var(--e-lime) 42%,
+    color-mix(in srgb, var(--e-lime) 45%, var(--e-navy-deep)) 100%
+  );
+  clip-path: polygon(18% 100%, 0% 48%, 28% 0%, 72% 8%, 100% 42%, 78% 100%, 42% 88%);
+  transform: rotate(22deg);
+  opacity: 0.95;
+}
+
+.e-header__mark-core {
+  position: absolute;
+  left: 34px;
+  top: 26px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #fff 0%,
+      color-mix(in srgb, var(--e-card-light) 80%, white) 28%,
+      var(--e-card) 62%,
+      color-mix(in srgb, var(--e-navy) 70%, var(--e-card)) 100%
+    );
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--e-card-light) 35%, transparent),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.e-header__mark-slash {
+  position: absolute;
+  left: 18px;
+  top: 38px;
+  width: 58px;
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--e-lime) 70%, white) 18%,
+    var(--e-lime) 55%,
+    color-mix(in srgb, var(--e-amber) 60%, var(--e-lime)) 100%
+  );
+  transform: rotate(-28deg);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--e-lime) 40%, transparent);
+}
+
+.e-header__mark-spark {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 10px;
+  height: 10px;
+  background: var(--e-lime);
+  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--e-lime) 70%, transparent));
 }
 
 .e-keywords {

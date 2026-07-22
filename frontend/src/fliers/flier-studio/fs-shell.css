@@ -1,0 +1,169 @@
+/* ============================================================
+   Flier Studio identity boards — shared shell
+   Native size 1080×1350. One header/footer rhythm across all 21.
+   ============================================================ */
+
+.fsb {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--fs-bg);
+  color: var(--fs-ink);
+  font-family: var(--fs-body);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- header ---- */
+.fsb__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 44px 84px 0;
+  flex: none;
+}
+
+.fsb__head-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.fsb__head-name {
+  font-family: var(--fs-display);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.fsb__head-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 22px;
+  font-size: 15px;
+}
+
+.fsb__head-chapter {
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 13px;
+  color: var(--fs-accent);
+}
+
+.fsb--signal .fsb__head-chapter {
+  color: var(--fs-ink);
+}
+
+.fsb__head-index {
+  font-family: var(--fs-display);
+  font-weight: 500;
+  color: var(--fs-muted);
+}
+
+/* ---- body ---- */
+.fsb__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 84px;
+  min-height: 0;
+  position: relative;
+}
+
+/* ---- footer ---- */
+.fsb__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 84px;
+  padding: 26px 0 40px;
+  border-top: 1.5px solid var(--fs-line);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--fs-muted);
+  letter-spacing: 0.02em;
+}
+
+.fsb__foot-url {
+  font-family: var(--fs-display);
+  font-weight: 600;
+  color: var(--fs-ink);
+}
+
+/* ============================================================
+   Shared vocabulary used across boards
+   ============================================================ */
+
+/* Section eyebrow */
+.fsb-eyebrow {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fs-accent);
+  margin: 0 0 18px;
+}
+
+.fsb--signal .fsb-eyebrow {
+  color: var(--fs-ink);
+}
+
+/* Big display headline */
+.fsb-display {
+  font-family: var(--fs-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+  margin: 0;
+}
+
+/* Body copy */
+.fsb-copy {
+  font-size: 21px;
+  line-height: 1.55;
+  font-weight: 500;
+  margin: 0;
+  color: var(--fs-ink);
+}
+
+.fsb-copy--muted {
+  color: var(--fs-muted);
+}
+
+/* "Peel" card — top-right corner sliced, echoing the mark */
+.fsb-peel {
+  position: relative;
+  background: var(--fs-card);
+  border-radius: 20px;
+  clip-path: polygon(0 0, calc(100% - 44px) 0, 100% 44px, 100% 100%, 0 100%);
+}
+
+/* Hairline divider */
+.fsb-rule {
+  border: none;
+  border-top: 1.5px solid var(--fs-line);
+  margin: 0;
+}
+
+/* Small caps label */
+.fsb-label {
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fs-muted);
+}
+
+/* Diagonal texture device (45° lines, echoes the liftoff diagonal) */
+.fsb-diag {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    currentColor 0,
+    currentColor 1.5px,
+    transparent 1.5px,
+    transparent 14px
+  );
+  opacity: 0.14;
+}

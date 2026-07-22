@@ -1,11 +1,12 @@
 import EditableText from '../../components/studio/EditableText'
 import { editableTextProps } from '../../components/studio/editableTextProps'
+import { DEFAULT_SIZE } from '../../lib/sizes'
 import './blank-brand-flier.css'
 
 /** Placeholder artboard for a brand project until real fliers are designed */
 export default function BlankBrandFlier({
-  width = 1080,
-  height = 1350,
+  width = DEFAULT_SIZE.width,
+  height = DEFAULT_SIZE.height,
   brand = 'Brand',
   title = 'New Flier',
   note = 'Prompt Cursor to design this board. Assets go in public/assets/<brand>/',

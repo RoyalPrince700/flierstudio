@@ -1,11 +1,10 @@
-import { FolderOpen, Plus, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 export default function ProjectTabs({
   openTabs,
   activeProjectId,
   onSelect,
   onClose,
-  onOpenDialog,
 }) {
   return (
     <div className="project-tabs" role="tablist" aria-label="Open projects">
@@ -47,27 +46,7 @@ export default function ProjectTabs({
             </div>
           )
         })}
-
-        <button
-          type="button"
-          className="project-tabs__add"
-          title="Open design"
-          aria-label="Open design"
-          onClick={onOpenDialog}
-        >
-          <Plus size={14} strokeWidth={2.5} />
-        </button>
       </div>
-
-      <button
-        type="button"
-        className="project-tabs__open"
-        onClick={onOpenDialog}
-        title="Open design (Ctrl+O)"
-      >
-        <FolderOpen size={14} strokeWidth={2.25} />
-        <span>Open design</span>
-      </button>
     </div>
   )
 }

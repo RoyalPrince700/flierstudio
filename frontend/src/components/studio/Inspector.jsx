@@ -4,6 +4,8 @@ import {
   FileImage,
   Layers,
   Link2,
+  PanelRightClose,
+  PanelRightOpen,
   Pencil,
   CopyPlus,
   Trash2,
@@ -29,10 +31,10 @@ export default function Inspector({
   onDeleteLayer,
   canDeleteLayer = true,
   mode = 'board',
-  samplesItems = [],
-  samplesSelectedId = null,
-  onSamplesSelect,
-  samplesHint = '',
+  templatesItems = [],
+  templatesSelectedId = null,
+  onTemplatesSelect,
+  templatesHint = '',
   editEnabled = false,
   editContent = null,
   focusedPath = null,
@@ -44,13 +46,103 @@ export default function Inspector({
   onAlignChange,
   onResetDraft,
   hasSavedEdits = false,
+  collapsed = false,
+  onToggleCollapsed,
 }) {
   const scale = HD_SCALES[hdScaleId]?.scale ?? 3
   const outW = selected ? selected.width * scale : 0
   const outH = selected ? selected.height * scale : 0
-  const samplesMode = mode === 'samples'
+  const templatesMode = mode === 'templates'
   const adminMode = mode === 'admin'
-  const layerItems = samplesMode ? samplesItems : items
+  const layerItems = templatesMode ? templatesItems : items
+
+  if (collapsed) {
+    return (
+      <aside className="inspector inspector--collapsed" aria-label="Inspector">
+        <button
+          type="button"
+          className="inspector__rail-btn"
+          title="Expand sidebar"
+          aria-label="Expand sidebar"
+          aria-expanded={false}
+          onClick={onToggleCollapsed}
+        >
+          <PanelRightOpen size={16} strokeWidth={2.25} />
+        </button>
+
+        <div className="inspector__rail-divider" />
+
+        <button
+          type="button"
+          className="inspector__rail-btn"
+          title={templatesMode ? 'Templates' : adminMode ? 'Admin' : 'Layers'}
+          aria-label={templatesMode ? 'Templates' : adminMode ? 'Admin' : 'Layers'}
+          onClick={onToggleCollapsed}
+        >
+          <Layers size={16} strokeWidth={2.25} />
+        </button>
+
+        {!adminMode ? (
+          <ul className="inspector__rail-layers">
+            {layerItems.map((item) => {
+              const active =
+                (templatesMode ? templatesSelectedId : selectedId) === item.id
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className={`inspector__rail-swatch${active ? ' is-active' : ''}`}
+                    title={item.name}
+                    aria-label={item.name}
+                    aria-pressed={active}
+                    onClick={() =>
+                      templatesMode ? onTemplatesSelect?.(item.id) : onSelect(item.id)
+                    }
+                  >
+                    <span
+                      className="inspector__swatch"
+                      style={item.color ? { background: item.color } : undefined}
+                    />
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        ) : null}
+
+        <div className="inspector__rail-spacer" />
+
+        {editEnabled ? (
+          <button
+            type="button"
+            className="inspector__rail-btn"
+            title="Edit — expand sidebar"
+            aria-label="Edit — expand sidebar"
+            onClick={onToggleCollapsed}
+          >
+            <Pencil size={16} strokeWidth={2.25} />
+          </button>
+        ) : null}
+
+        {!templatesMode && !adminMode ? (
+          <button
+            type="button"
+            className="inspector__rail-btn inspector__rail-btn--accent"
+            title={
+              selected
+                ? `Export ${outW}×${outH} ${format.toUpperCase()}`
+                : 'Select an artboard to export'
+            }
+            aria-label="Export"
+            disabled={busy || !selected}
+            onClick={onExport}
+          >
+            <Download size={16} strokeWidth={2.25} />
+          </button>
+        ) : null}
+      </aside>
+    )
+  }
 
   if (adminMode) {
     return (
@@ -58,10 +150,20 @@ export default function Inspector({
         <header className="inspector__head">
           <Layers size={14} strokeWidth={2.25} />
           <span>Admin</span>
+          <button
+            type="button"
+            className="inspector__collapse-btn"
+            title="Collapse sidebar"
+            aria-label="Collapse sidebar"
+            aria-expanded={true}
+            onClick={onToggleCollapsed}
+          >
+            <PanelRightClose size={14} strokeWidth={2.25} />
+          </button>
         </header>
         <div className="inspector__block">
           <p className="inspector__note">
-            {samplesHint || 'Review users and activity. Only admins can open this tab.'}
+            {templatesHint || 'Review users and activity. Only admins can open this tab.'}
           </p>
         </div>
       </aside>
@@ -72,19 +174,29 @@ export default function Inspector({
     <aside className="inspector" aria-label="Inspector">
       <header className="inspector__head">
         <Layers size={14} strokeWidth={2.25} />
-        <span>{samplesMode ? 'Samples' : 'Layers'}</span>
+        <span>{templatesMode ? 'Templates' : 'Layers'}</span>
+        <button
+          type="button"
+          className="inspector__collapse-btn"
+          title="Collapse sidebar"
+          aria-label="Collapse sidebar"
+          aria-expanded={true}
+          onClick={onToggleCollapsed}
+        >
+          <PanelRightClose size={14} strokeWidth={2.25} />
+        </button>
       </header>
 
       <ul className="inspector__layers">
         {layerItems.map((item) => {
           const active =
-            (samplesMode ? samplesSelectedId : selectedId) === item.id
+            (templatesMode ? templatesSelectedId : selectedId) === item.id
           return (
             <li key={item.id} className={`inspector__layer-row${active ? ' is-active' : ''}`}>
               <button
                 type="button"
                 className={`inspector__layer${active ? ' is-active' : ''}`}
-                onClick={() => (samplesMode ? onSamplesSelect?.(item.id) : onSelect(item.id))}
+                onClick={() => (templatesMode ? onTemplatesSelect?.(item.id) : onSelect(item.id))}
               >
                 <span
                   className="inspector__swatch"
@@ -96,7 +208,7 @@ export default function Inspector({
                 </span>
               </button>
 
-              {!samplesMode ? (
+              {!templatesMode ? (
                 <div className="inspector__layer-actions">
                   <button
                     type="button"
@@ -130,16 +242,16 @@ export default function Inspector({
         })}
       </ul>
 
-      {samplesMode ? (
+      {templatesMode ? (
         <>
           <div className="inspector__block">
             <p className="inspector__note">
-              {samplesHint ||
-                'Click a sample to preview full-screen, download, or copy its id for chat.'}
+              {templatesHint ||
+                'Click a template to open it in the studio editor.'}
             </p>
           </div>
           <div className="inspector__tips">
-            <p>Samples stay inside the studio canvas.</p>
+            <p>Templates stay inside the studio canvas.</p>
             <p>Use the grid icon again to return to boards.</p>
           </div>
         </>
@@ -266,6 +378,9 @@ export default function Inspector({
           <div className="inspector__tips">
             <p>
               <kbd>V</kbd> Move · <kbd>T</kbd> Text · <kbd>H</kbd> Hand
+            </p>
+            <p>
+              Scroll to pan · <kbd>Ctrl</kbd>+scroll to zoom
             </p>
             <p>
               <kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> Redo

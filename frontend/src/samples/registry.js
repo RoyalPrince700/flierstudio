@@ -103,7 +103,7 @@ function templateFromBoardItem(item, project) {
 }
 
 /**
- * Collections shown on Samples:
+ * Collections shown in Templates:
  * 1) Project boards (Emergence, Smipay, …)
  * 2) Analyzed inbox collections (each folder = its own card)
  */
@@ -138,7 +138,12 @@ export function getSample(id) {
   for (const collection of listSampleCollections()) {
     const match = collection.templates.find((template) => template.id === id)
     if (match) {
-      return { ...match, collectionId: collection.id, collectionName: collection.name }
+      return {
+        ...match,
+        collectionId: collection.id,
+        collectionName: collection.name,
+        source: collection.source,
+      }
     }
   }
   return null
@@ -153,4 +158,26 @@ export function listSamples() {
       collectionId: collection.id,
     })),
   )
+}
+
+/** User-facing template API (aliases over sample registry data). */
+export const listTemplateCollections = listSampleCollections
+export const getTemplateCollection = getSampleCollection
+export const getTemplate = getSample
+export const listTemplates = listSamples
+
+/**
+ * Filter collections by Mongo collection-level publish state.
+ * Collections without a DB record are treated as draft (hidden from users).
+ */
+export function filterTemplateCollections(
+  collections,
+  { collectionPublishMap = {}, includeUnpublished = false } = {},
+) {
+  return collections
+    .map((collection) => ({
+      ...collection,
+      publishStatus: collectionPublishMap[collection.id] ?? 'draft',
+    }))
+    .filter((collection) => includeUnpublished || collection.publishStatus === 'published')
 }

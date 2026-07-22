@@ -1,29 +1,45 @@
 import { useMemo, useState } from 'react'
-import { ArrowLeft, Check, Copy, Search } from 'lucide-react'
-import { getSampleCollection, listSampleCollections } from '../samples/registry'
+import { ArrowLeft, Search } from 'lucide-react'
+import {
+  filterTemplateCollections,
+  getTemplateCollection,
+  listTemplateCollections,
+} from '../samples/registry'
+import { useTemplatePublish } from '../lib/templatePublish'
 import SamplePreview from './SamplePreview'
-import SampleViewerModal from './SampleViewerModal'
 import './SamplesBoard.css'
 
+const THUMB_WIDTH = 220
+const THUMB_HEIGHT = 200
+
 /**
- * Samples content for the studio canvas — uses the same shell/grid as the artboard.
+ * Templates browser for the studio canvas — click a template to open it in the editor.
  */
-export default function SamplesBoard({
+export default function TemplatesBoard({
   showGrid = true,
   openCollectionId,
   onOpenCollection,
   onCloseCollection,
   selectedTemplateId,
   onSelectTemplate,
+  onUseTemplate,
 }) {
-  const collections = useMemo(() => listSampleCollections(), [])
+  const { collectionPublishMap, loading, error, includeUnpublished, isAdmin } =
+    useTemplatePublish()
+  const allCollections = useMemo(() => listTemplateCollections(), [])
+  const collections = useMemo(
+    () =>
+      filterTemplateCollections(allCollections, {
+        collectionPublishMap,
+        includeUnpublished,
+      }),
+    [allCollections, collectionPublishMap, includeUnpublished],
+  )
   const [query, setQuery] = useState('')
-  const [copied, setCopied] = useState(false)
-  const [viewerTemplate, setViewerTemplate] = useState(null)
 
-  function openTemplate(template) {
+  function useTemplate(template) {
     onSelectTemplate?.(template.id)
-    setViewerTemplate(template)
+    onUseTemplate?.(template)
   }
 
   const filtered = collections.filter((collection) => {
@@ -45,17 +61,16 @@ export default function SamplesBoard({
     )
   })
 
-  const openCollection = openCollectionId ? getSampleCollection(openCollectionId) : null
-
-  async function copyId(id) {
-    try {
-      await navigator.clipboard.writeText(id)
-      setCopied(id)
-      window.setTimeout(() => setCopied(false), 1400)
-    } catch {
-      // ignore
-    }
-  }
+  const openCollectionRaw = openCollectionId ? getTemplateCollection(openCollectionId) : null
+  const openCollection =
+    openCollectionRaw &&
+    (includeUnpublished ||
+      (collectionPublishMap[openCollectionRaw.id] ?? 'draft') === 'published')
+      ? {
+          ...openCollectionRaw,
+          publishStatus: collectionPublishMap[openCollectionRaw.id] ?? 'draft',
+        }
+      : null
 
   return (
     <div className={`samples-board${showGrid ? ' samples-board--grid' : ''}`}>
@@ -63,15 +78,15 @@ export default function SamplesBoard({
         {openCollection ? (
           <button type="button" className="samples-board__chip" onClick={onCloseCollection}>
             <ArrowLeft size={14} strokeWidth={2.25} />
-            All samples
+            All templates
           </button>
         ) : null}
         <div className="samples-board__title">
-          <strong>{openCollection ? openCollection.name : 'Samples'}</strong>
+          <strong>{openCollection ? openCollection.name : 'Templates'}</strong>
           <span>
             {openCollection
               ? `${openCollection.templateCount} template${openCollection.templateCount === 1 ? '' : 's'}`
-              : `${collections.length} sample${collections.length === 1 ? '' : 's'}`}
+              : `${collections.length} collection${collections.length === 1 ? '' : 's'}`}
           </span>
         </div>
         {!openCollection ? (
@@ -80,51 +95,43 @@ export default function SamplesBoard({
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search samples…"
+              placeholder="Search templates…"
             />
           </label>
         ) : (
-          <p className="samples-board__hint">
-            Click a template for full preview · <code>{openCollection.principlesPath}</code>
-          </p>
+          <p className="samples-board__hint">Click a template to open it in the studio editor</p>
         )}
       </div>
+
+      {error ? <p className="samples-board__hint samples-board__hint--error">{error}</p> : null}
+      {loading ? <p className="samples-board__hint">Loading published templates…</p> : null}
 
       <div className="samples-board__scroll">
         {openCollection ? (
           <div className="samples-board__grid samples-board__grid--detail">
             {openCollection.templates.map((template) => (
-              <article
+              <button
                 key={template.id}
+                type="button"
                 className={`samples-card samples-card--template${
                   selectedTemplateId === template.id ? ' is-selected' : ''
                 }`}
-                onClick={() => openTemplate(template)}
+                onClick={() => useTemplate(template)}
               >
                 <div className="samples-card__art">
-                  <SamplePreview template={template} frameWidth={220} />
+                  <SamplePreview
+                    template={template}
+                    frameWidth={THUMB_WIDTH}
+                    frameHeight={THUMB_HEIGHT}
+                    fit="contain"
+                  />
                 </div>
                 <div className="samples-card__body">
                   <strong>{template.name}</strong>
-                  <code>{template.id}</code>
                   <small>{template.sizeLabel}</small>
-                  <button
-                    type="button"
-                    className="samples-board__copy"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      copyId(template.id)
-                    }}
-                  >
-                    {copied === template.id ? (
-                      <Check size={14} strokeWidth={2.5} />
-                    ) : (
-                      <Copy size={14} strokeWidth={2.25} />
-                    )}
-                    {copied === template.id ? 'Copied' : 'Copy id'}
-                  </button>
+                  <span className="samples-board__open">Open in studio</span>
                 </div>
-              </article>
+              </button>
             ))}
           </div>
         ) : filtered.length ? (
@@ -136,8 +143,7 @@ export default function SamplesBoard({
                 className="samples-card"
                 onClick={() => {
                   if (collection.templateCount === 1 && collection.cover) {
-                    onOpenCollection(collection.id)
-                    openTemplate(collection.cover)
+                    useTemplate(collection.cover)
                     return
                   }
                   onOpenCollection(collection.id)
@@ -146,7 +152,12 @@ export default function SamplesBoard({
               >
                 <div className="samples-card__art">
                   {collection.cover ? (
-                    <SamplePreview template={collection.cover} frameWidth={240} />
+                    <SamplePreview
+                      template={collection.cover}
+                      frameWidth={THUMB_WIDTH}
+                      frameHeight={THUMB_HEIGHT}
+                      fit="contain"
+                    />
                   ) : (
                     <div className="samples-card__empty">No templates</div>
                   )}
@@ -154,6 +165,9 @@ export default function SamplesBoard({
                     <span className="samples-card__badge">
                       {collection.templateCount} templates
                     </span>
+                  ) : null}
+                  {isAdmin && collection.publishStatus !== 'published' ? (
+                    <span className="samples-card__badge samples-card__badge--draft">Draft</span>
                   ) : null}
                 </div>
                 <div className="samples-card__body">
@@ -172,18 +186,15 @@ export default function SamplesBoard({
           </div>
         ) : (
           <div className="samples-board__blank">
-            <h2>No samples match</h2>
-            <p>Try another search, or add designs under a project / sample inbox.</p>
+            <h2>{loading ? 'Loading templates…' : 'No published template groups yet'}</h2>
+            <p>
+              {isAdmin
+                ? 'Publish template groups from Admin → Templates to make them visible here for all users.'
+                : 'Check back soon — new template groups are added regularly.'}
+            </p>
           </div>
         )}
       </div>
-
-      {viewerTemplate ? (
-        <SampleViewerModal
-          template={viewerTemplate}
-          onClose={() => setViewerTemplate(null)}
-        />
-      ) : null}
     </div>
   )
 }

@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../auth/AuthContext'
+import { LiftoffMark } from '../../fliers/flier-studio/FSLogo'
+import { fsTokens } from '../../design/flierStudioTokens'
 import './LoginScreen.css'
 
 const googleConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
@@ -12,6 +15,12 @@ export default function LoginScreen({ theme = 'dark' }) {
   return (
     <div className="login-screen" data-theme={theme}>
       <div className="login-screen__card">
+        <LiftoffMark
+          className="login-screen__mark"
+          size={34}
+          base={theme === 'dark' ? fsTokens.colors.paper : fsTokens.colors.ink}
+          corner={fsTokens.colors.signal}
+        />
         <p className="login-screen__eyebrow">Flier Studio</p>
         <h1 className="login-screen__title">Sign in to design</h1>
         <p className="login-screen__copy">
@@ -54,9 +63,13 @@ export default function LoginScreen({ theme = 'dark' }) {
         {busy ? <p className="login-screen__status">Signing you in…</p> : null}
         {error ? <p className="login-screen__error">{error}</p> : null}
 
-        <p className="login-screen__hint">
-          Run the API with <code>npm run dev:api</code> from the repo root (MongoDB + Google Client ID required).
-        </p>
+        <nav className="login-screen__legal" aria-label="Legal">
+          <Link to="/about">About</Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/privacy">Privacy</Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/terms">Terms</Link>
+        </nav>
       </div>
     </div>
   )

@@ -11,8 +11,6 @@ const RECORD_ID = 'all'
 
 const EMERGENCE_ITEM_IDS = [
   'emergence-classic',
-  'emergence-ribbon',
-  'emergence-split',
   'emergence-cascade',
 ]
 

@@ -50,9 +50,13 @@ export function EmergenceHeader({ event = emergence.event, showZap = true, studi
         {showZap ? <Zap className="e-header__zap" strokeWidth={2.25} /> : null}
       </div>
 
-      <div className="e-header__partners">
-        <span className="e-header__partner">CGC</span>
-        <span className="e-header__partner e-header__partner--soft">Cloudde</span>
+      <div className="e-header__mark" aria-hidden>
+        <span className="e-header__mark-orbit" />
+        <span className="e-header__mark-wing e-header__mark-wing--a" />
+        <span className="e-header__mark-wing e-header__mark-wing--b" />
+        <span className="e-header__mark-core" />
+        <span className="e-header__mark-slash" />
+        <span className="e-header__mark-spark" />
       </div>
     </header>
   )

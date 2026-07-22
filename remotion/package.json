@@ -1,0 +1,30 @@
+{
+  "name": "flier-studio-motion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Flier Studio logo motion — Remotion pipeline",
+  "scripts": {
+    "dev": "remotion studio",
+    "start": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render FlierStudioLogoFilm out/flier-studio-logo-film.mp4",
+    "render:reel": "remotion render FlierStudioLogoFilmReel out/flier-studio-logo-film-reel.mp4",
+    "render:reveal": "remotion render FlierStudioLogoReveal out/flier-studio-logo-reveal.mp4",
+    "render:square": "remotion render FlierStudioLogoRevealSquare out/flier-studio-logo-reveal-square.mp4",
+    "still": "remotion still FlierStudioLogoFilm out/flier-studio-logo-film-still.png --frame=1040",
+    "still:reel": "remotion still FlierStudioLogoFilmReel out/flier-studio-logo-film-reel-still.png --frame=1040",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.463",
+    "@remotion/google-fonts": "^4.0.463",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.463"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.8.0"
+  }
+}

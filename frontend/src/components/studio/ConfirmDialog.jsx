@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 
 /**
- * Studio-matched confirm / notice dialog (same chrome as Open design).
+ * Studio-matched confirm / notice dialog.
  * tone: 'danger' | 'default'
  */
 export default function ConfirmDialog({

@@ -3,8 +3,8 @@
   overflow: auto;
   padding: 28px 32px 48px;
   background:
-    radial-gradient(ellipse 70% 40% at 0% 0%, rgba(13, 102, 208, 0.12), transparent 55%),
-    var(--studio-panel-3);
+    radial-gradient(ellipse 70% 42% at 0% 0%, rgba(255, 74, 29, 0.1), transparent 58%),
+    linear-gradient(180deg, var(--studio-panel-3), var(--studio-bg));
 }
 
 .admin-board__header {
@@ -31,6 +31,7 @@
   margin: 0 0 6px;
   font-size: 24px;
   letter-spacing: -0.02em;
+  font-family: var(--font-display);
 }
 
 .admin-board__copy {
@@ -45,18 +46,24 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 32px;
+  height: 34px;
   padding: 0 12px;
   border: 1px solid var(--studio-chip-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--studio-chip);
   color: var(--studio-text);
   font-size: 12px;
   font-weight: 700;
+  transition: background 140ms ease, border-color 140ms ease;
 }
 
-.admin-board__refresh:hover {
+.admin-board__refresh:hover:not(:disabled) {
   background: var(--studio-chip-hover);
+}
+
+.admin-board__refresh:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--studio-accent) 55%, transparent);
+  outline-offset: 2px;
 }
 
 .admin-board__refresh:disabled {
@@ -88,6 +95,11 @@
   border: 1px solid var(--studio-border-soft);
   border-radius: 10px;
   background: var(--studio-panel);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 4%, transparent);
+}
+
+.admin-board__stat:first-child {
+  border-top: 2px solid var(--studio-accent);
 }
 
 .admin-board__stat-label {
@@ -103,6 +115,8 @@
 .admin-board__stat strong {
   font-size: 28px;
   letter-spacing: -0.03em;
+  font-family: var(--font-display);
+  color: var(--studio-text);
 }
 
 .admin-board__grid {
@@ -116,12 +130,14 @@
   border: 1px solid var(--studio-border-soft);
   border-radius: 12px;
   background: var(--studio-panel);
+  box-shadow: var(--studio-frame-shadow);
 }
 
 .admin-board__panel h2 {
   margin: 0 0 12px;
   font-size: 14px;
   font-weight: 700;
+  color: var(--studio-text);
 }
 
 .admin-board__subhead {
@@ -197,6 +213,7 @@
 
 .admin-board__role--admin {
   background: var(--studio-badge-bg);
+  border: 1px solid color-mix(in srgb, var(--studio-accent) 35%, transparent);
   color: var(--studio-badge-text);
 }
 
@@ -206,19 +223,51 @@
 }
 
 .admin-board__mini {
-  height: 26px;
-  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 0 10px;
   border: 1px solid var(--studio-chip-border);
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--studio-chip);
   color: var(--studio-text);
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
-.admin-board__mini:hover {
+.admin-board__mini:hover:not(:disabled) {
   background: var(--studio-chip-hover);
+}
+
+.admin-board__mini:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--studio-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.admin-board__mini--primary {
+  border-color: color-mix(in srgb, var(--studio-accent) 55%, var(--studio-chip-border));
+  background: var(--studio-accent);
+  color: var(--studio-accent-ink);
+}
+
+.admin-board__mini--primary:hover:not(:disabled) {
+  background: var(--studio-accent-hover);
+  border-color: var(--studio-accent-hover);
+}
+
+.admin-board__mini--ghost {
+  border-color: var(--studio-border-soft);
+  background: transparent;
+  color: var(--studio-text-soft);
+}
+
+.admin-board__mini--ghost:hover:not(:disabled) {
+  background: var(--studio-chip);
+  color: var(--studio-text);
 }
 
 .admin-board__mini:disabled {
@@ -256,6 +305,16 @@
   margin: 0;
   color: var(--studio-muted);
   font-size: 12px;
+}
+
+.admin-board__empty a {
+  color: var(--studio-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-board__empty a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 1100px) {

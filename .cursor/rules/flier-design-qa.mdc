@@ -10,7 +10,7 @@ After **every** new or revised flier (and after applying a sample), you must run
 ## Procedure (do not skip)
 
 1. **Intent** — State the one question the flier answers. Cut anything that answers a different question.
-2. **Virtual inspection** — Judge at native export size. Prefer reading a rendered/preview image of the flier; do not QA from JSX alone when an image is available.
+2. **Virtual inspection** — Judge at the board’s native export size (from the brief / `sizes.js`). Prefer reading a rendered/preview image of the flier; do not QA from JSX alone when an image is available.
 3. **Unity** — One composition, one hero, shared rhythm/chrome, every element needed and visually connected (not stuck-on).
 4. **Detail** — Hierarchy, bold enough display type, contrast, safe inset, alignment, image fit, consistent icons, CTA/footer integrity.
 5. **Relation** — Eye path (headline → hero → CTA), color/radius/weight echoes, no orphan blocks.

@@ -15,7 +15,7 @@ This repo is a React flier design studio (`frontend/`) plus optional MERN API (`
 - Use `lucide-react` for icons (one consistent set).
 - Put flier components in `frontend/src/fliers/<brand-or-platform>/`.
 - Put user media in `frontend/public/assets/<brand>/` and reference as `/assets/<brand>/...`.
-- Design at native export size (e.g. Instagram post 1080×1080, Emergence 1080×1350). Preview scaling stays in `Studio.jsx` only.
+- Design at the **brief’s** native export size from `frontend/src/lib/sizes.js` (Instagram post/portrait/story, X, LinkedIn, YouTube, etc.). Never default every board to 1080×1350 — pick the format that fits the platform. Add a size entry if missing. Preview scaling stays in `Studio.jsx` only.
 - Keep the export root as a single DOM node the studio can capture.
 - Prefer CSS + React over canvas drawing unless the brief needs canvas.
 - When the user sends a reference flier, analyze layout, type, color, spacing, and mood first, then update tokens + the matching flier component / project board.
@@ -31,8 +31,9 @@ This repo is a React flier design studio (`frontend/`) plus optional MERN API (`
 
 ## When starting a new flier
 
-1. Confirm platform + size from `frontend/src/lib/sizes.js` (add size if missing).
-2. Update copy/props or hardcode brief-specific content in the flier component.
-3. Wire assets from `frontend/public/assets`.
-4. Run the mandatory QA pass in `frontend/DESIGN_QA.md` (unity, detail, relation, fix loop). Fix until it passes.
-5. Tell the user to run `npm run dev` (from repo root or `frontend/`) and download from the studio panel.
+1. Confirm platform + size from the user brief, then `frontend/src/lib/sizes.js` (`getFlierSize` / `boardSize`). If the user did not specify, ask or use the platform’s common format — do **not** assume Instagram portrait. Add a size entry if missing.
+2. Set the board’s `width` / `height` (and component props) to that size in `project.js`.
+3. Update copy/props or hardcode brief-specific content in the flier component.
+4. Wire assets from `frontend/public/assets`.
+5. Run the mandatory QA pass in `frontend/DESIGN_QA.md` (unity, detail, relation, fix loop). Fix until it passes.
+6. Tell the user to run `npm run dev` (from repo root or `frontend/`) and download from the studio panel.
