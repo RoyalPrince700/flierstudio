@@ -535,3 +535,57 @@
     flex-wrap: wrap;
   }
 }
+
+@media (max-width: 640px) {
+  .admin-shell__topbar {
+    flex-wrap: wrap;
+    gap: 10px;
+    height: auto;
+    min-height: 48px;
+    padding: 10px 12px;
+  }
+
+  .admin-shell__brand strong {
+    font-size: 13px;
+  }
+
+  .admin-shell__badge {
+    display: none;
+  }
+
+  .admin-shell__top-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .admin-shell__user {
+    max-width: 140px;
+  }
+
+  .admin-shell__link,
+  .admin-shell__icon-btn {
+    min-height: 40px;
+  }
+
+  .admin-sidebar {
+    padding: 10px 12px;
+  }
+
+  .admin-sidebar__nav a,
+  .admin-sidebar__link {
+    min-height: 40px;
+  }
+
+  .admin-shell__main {
+    padding: 12px;
+  }
+
+  .admin-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+

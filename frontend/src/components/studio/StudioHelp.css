@@ -1,0 +1,116 @@
+.studio-help__panel {
+  width: min(440px, 100%);
+  max-height: min(84vh, 640px);
+  grid-template-rows: auto 1fr auto;
+}
+
+.studio-help__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 14px 8px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.studio-help__item {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 10px 8px;
+  border-radius: 10px;
+}
+
+.studio-help__item:hover {
+  background: var(--studio-hover, rgba(255, 255, 255, 0.04));
+}
+
+.studio-help__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 74, 29, 0.12);
+  color: #ff7048;
+}
+
+.studio-help__item strong {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.studio-help__item p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--studio-muted, #a39e92);
+}
+
+.studio-help__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid var(--studio-border-soft, rgba(255, 255, 255, 0.1));
+}
+
+.studio-help__replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--studio-border-soft, rgba(255, 255, 255, 0.12));
+  border-radius: 9px;
+  background: transparent;
+  color: var(--studio-text, #f5f1e8);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.studio-help__replay:hover {
+  background: var(--studio-hover, rgba(255, 255, 255, 0.06));
+}
+
+.studio-help__done {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9px;
+  background: #ff4a1d;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.studio-help__done:hover {
+  background: #ff6038;
+}
+
+@media (max-width: 900px) {
+  .studio-help.open-dialog {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .studio-help__panel {
+    width: 100%;
+    max-height: min(78vh, 640px);
+    border-radius: 16px 16px 0 0;
+  }
+}

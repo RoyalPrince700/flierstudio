@@ -1,5 +1,20 @@
 import { useEffect, useRef } from 'react'
 
+function touchPair(touches) {
+  return [
+    { x: touches[0].clientX, y: touches[0].clientY },
+    { x: touches[1].clientX, y: touches[1].clientY },
+  ]
+}
+
+function distance(a, b) {
+  return Math.hypot(b.x - a.x, b.y - a.y)
+}
+
+function midpoint(a, b) {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+}
+
 export default function Artboard({
   items,
   selectedId,
@@ -16,6 +31,9 @@ export default function Artboard({
 }) {
   const viewportRef = useRef(null)
   const dragRef = useRef(null)
+  const gestureRef = useRef(null)
+  const panZoomRef = useRef({ pan, zoom })
+  panZoomRef.current = { pan, zoom }
 
   useEffect(() => {
     const node = viewportRef.current
@@ -59,6 +77,65 @@ export default function Artboard({
     return () => node.removeEventListener('wheel', onWheel)
   }, [zoom, pan, onPanChange, onZoomChange])
 
+  // Pinch-zoom + two-finger pan (mobile). Desktop wheel/keyboard untouched.
+  useEffect(() => {
+    const node = viewportRef.current
+    if (!node) return undefined
+
+    function onTouchStart(e) {
+      if (e.touches.length < 2) return
+      e.preventDefault()
+      const [a, b] = touchPair(e.touches)
+      const rect = node.getBoundingClientRect()
+      const mid = midpoint(a, b)
+      const { pan: currentPan, zoom: currentZoom } = panZoomRef.current
+      const localX = mid.x - rect.left
+      const localY = mid.y - rect.top
+      gestureRef.current = {
+        startDist: Math.max(distance(a, b), 1),
+        startZoom: currentZoom,
+        worldX: (localX - currentPan.x) / currentZoom,
+        worldY: (localY - currentPan.y) / currentZoom,
+      }
+      dragRef.current = null
+    }
+
+    function onTouchMove(e) {
+      const gesture = gestureRef.current
+      if (!gesture || e.touches.length < 2) return
+      e.preventDefault()
+      const [a, b] = touchPair(e.touches)
+      const rect = node.getBoundingClientRect()
+      const mid = midpoint(a, b)
+      const localX = mid.x - rect.left
+      const localY = mid.y - rect.top
+      const nextZoom = Math.min(
+        2.5,
+        Math.max(0.08, gesture.startZoom * (distance(a, b) / gesture.startDist)),
+      )
+      onZoomChange(nextZoom)
+      onPanChange({
+        x: localX - gesture.worldX * nextZoom,
+        y: localY - gesture.worldY * nextZoom,
+      })
+    }
+
+    function onTouchEnd(e) {
+      if (e.touches.length < 2) gestureRef.current = null
+    }
+
+    node.addEventListener('touchstart', onTouchStart, { passive: false })
+    node.addEventListener('touchmove', onTouchMove, { passive: false })
+    node.addEventListener('touchend', onTouchEnd)
+    node.addEventListener('touchcancel', onTouchEnd)
+    return () => {
+      node.removeEventListener('touchstart', onTouchStart)
+      node.removeEventListener('touchmove', onTouchMove)
+      node.removeEventListener('touchend', onTouchEnd)
+      node.removeEventListener('touchcancel', onTouchEnd)
+    }
+  }, [onPanChange, onZoomChange])
+
   function beginPan(e) {
     dragRef.current = {
       mode: 'pan',
@@ -71,6 +148,7 @@ export default function Artboard({
 
   function onPointerDown(e) {
     if (e.button !== 0 && e.button !== 1) return
+    if (gestureRef.current) return
     const wantsPan = tool === 'hand' || e.button === 1
     if (wantsPan) {
       e.preventDefault()

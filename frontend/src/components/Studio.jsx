@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { LogOut, Moon, Sun } from 'lucide-react'
+import { CircleHelp, LogOut, Moon, MoreHorizontal, PanelBottom, Sun } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { trackEvent } from '../lib/trackEvent'
+import { useMediaQuery } from '../lib/useMediaQuery'
 import { LiftoffMark } from '../fliers/flier-studio/FSLogo'
 import { fsTokens } from '../design/flierStudioTokens'
 import {
@@ -51,11 +52,14 @@ import {
   listTemplateCollections,
 } from '../samples/registry'
 import { useTemplatePublish } from '../lib/templatePublish'
+import { hasSeenStudioTour } from '../lib/studioTour'
 import TemplatesBoard from './TemplatesBoard'
 import Artboard from './studio/Artboard'
 import ConfirmDialog from './studio/ConfirmDialog'
 import Inspector from './studio/Inspector'
 import ProjectTabs from './studio/ProjectTabs'
+import StudioHelp from './studio/StudioHelp'
+import StudioTour from './studio/StudioTour'
 import ToolRail from './studio/ToolRail'
 import './Studio.css'
 
@@ -98,6 +102,10 @@ export default function Studio({
   const [searchParams, setSearchParams] = useSearchParams()
   const frameRefs = useRef({})
   const shellRef = useRef(null)
+  const topbarMenuRef = useRef(null)
+
+  const isNarrow = useMediaQuery('(max-width: 900px)')
+  const isPhone = useMediaQuery('(max-width: 640px)')
 
   const templatesOpen = location.pathname === '/templates'
 
@@ -126,6 +134,10 @@ export default function Studio({
       return false
     }
   })
+  const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false)
+  const [topbarMenuOpen, setTopbarMenuOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [tourOpen, setTourOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [drafts, setDrafts] = useState({})
@@ -852,6 +864,17 @@ export default function Studio({
         return
       }
 
+      if (e.key === 'Escape') {
+        if (mobileInspectorOpen) {
+          setMobileInspectorOpen(false)
+          return
+        }
+        if (topbarMenuOpen) {
+          setTopbarMenuOpen(false)
+          return
+        }
+      }
+
       if (inFormField || inContentEditable) return
 
       if (e.code === 'Space') {
@@ -906,7 +929,71 @@ export default function Studio({
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [activeProjectId, closeProject, handleAction, handleExport, navigate, primaryTool, redoChange, undoChange])
+  }, [
+    activeProjectId,
+    closeProject,
+    handleAction,
+    handleExport,
+    mobileInspectorOpen,
+    navigate,
+    primaryTool,
+    redoChange,
+    topbarMenuOpen,
+    undoChange,
+  ])
+
+  useEffect(() => {
+    if (!isNarrow) {
+      setMobileInspectorOpen(false)
+      setTopbarMenuOpen(false)
+    }
+  }, [isNarrow])
+
+  useEffect(() => {
+    if (!topbarMenuOpen) return undefined
+    function onPointerDown(e) {
+      if (topbarMenuRef.current && !topbarMenuRef.current.contains(e.target)) {
+        setTopbarMenuOpen(false)
+      }
+    }
+    window.addEventListener('pointerdown', onPointerDown)
+    return () => window.removeEventListener('pointerdown', onPointerDown)
+  }, [topbarMenuOpen])
+
+  useEffect(() => {
+    if (hasSeenStudioTour()) return undefined
+    const timer = window.setTimeout(() => setTourOpen(true), 600)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  function openHelp() {
+    setTopbarMenuOpen(false)
+    setTourOpen(false)
+    setHelpOpen(true)
+  }
+
+  function startTour() {
+    setTopbarMenuOpen(false)
+    setHelpOpen(false)
+    setTourOpen(true)
+  }
+
+  function toggleInspectorCollapsed() {
+    setInspectorCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem(INSPECTOR_COLLAPSED_KEY, next ? '1' : '0')
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }
+
+  function toggleMobileInspector() {
+    setMobileInspectorOpen((open) => !open)
+    setTopbarMenuOpen(false)
+  }
 
   async function handleCopySize() {
     if (!selected) return
@@ -917,6 +1004,15 @@ export default function Studio({
       setError('Clipboard unavailable.')
     }
   }
+
+  const studioAppClass = [
+    'studio-app',
+    isNarrow ? 'studio-app--narrow' : '',
+    isPhone ? 'studio-app--phone' : '',
+    isNarrow && mobileInspectorOpen ? 'is-inspector-sheet-open' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   if (!project && !templatesOpen) {
     if (searchParams.get('template')) {
@@ -938,24 +1034,46 @@ export default function Studio({
   }
 
   return (
-    <div className="studio-app" data-theme={theme}>
+    <div className={studioAppClass} data-theme={theme}>
       <header className="studio-topbar">
         <div className="studio-topbar__left">
-          <strong>Flier Studio</strong>
-          <span className="studio-topbar__sep" />
-          <span>{templatesOpen ? 'Templates' : project?.name ?? 'Studio'}</span>
+          <strong className="studio-topbar__brand">Flier Studio</strong>
+          <span className="studio-topbar__sep studio-topbar__sep--brand" />
+          <span className="studio-topbar__context">
+            {templatesOpen ? 'Templates' : project?.name ?? 'Studio'}
+          </span>
           <button
             type="button"
             className={`studio-topbar__chip${templatesOpen ? ' is-active' : ''}`}
             onClick={toggleTemplates}
             title="Browse design templates"
+            data-tour="templates"
           >
             Templates
           </button>
           {isAdmin ? (
-            <Link to="/admin/overview" className="studio-topbar__chip" title="Admin console">
+            <Link
+              to="/admin/overview"
+              className="studio-topbar__chip studio-topbar__chip--desktop-only"
+              title="Admin console"
+            >
               Admin
             </Link>
+          ) : null}
+          {isNarrow ? (
+            <button
+              type="button"
+              className={`studio-topbar__chip studio-topbar__chip--panel${
+                mobileInspectorOpen ? ' is-active' : ''
+              }`}
+              onClick={toggleMobileInspector}
+              title="Layers, edit & export"
+              aria-pressed={mobileInspectorOpen}
+              data-tour="panel"
+            >
+              <PanelBottom size={14} strokeWidth={2.25} />
+              <span>Panel</span>
+            </button>
           ) : null}
         </div>
         <div className="studio-topbar__center">
@@ -968,7 +1086,7 @@ export default function Studio({
               : 'No selection'}
         </div>
         <div className="studio-topbar__right">
-          <div className="studio-topbar__user" title={user?.email || ''}>
+          <div className="studio-topbar__user studio-topbar__chip--desktop-only" title={user?.email || ''}>
             {user?.avatar ? (
               <img className="studio-topbar__avatar" src={user.avatar} alt="" referrerPolicy="no-referrer" />
             ) : null}
@@ -979,7 +1097,16 @@ export default function Studio({
           </div>
           <button
             type="button"
-            className="studio-topbar__chip studio-topbar__chip--icon"
+            className="studio-topbar__chip studio-topbar__chip--icon studio-topbar__chip--desktop-only"
+            onClick={openHelp}
+            title="Studio guide"
+            aria-label="Studio guide"
+          >
+            <CircleHelp size={14} strokeWidth={2.25} />
+          </button>
+          <button
+            type="button"
+            className="studio-topbar__chip studio-topbar__chip--icon studio-topbar__chip--desktop-only"
             onClick={() => logout()}
             title="Sign out"
             aria-label="Sign out"
@@ -988,7 +1115,7 @@ export default function Studio({
           </button>
           <button
             type="button"
-            className="studio-topbar__chip studio-topbar__chip--icon"
+            className="studio-topbar__chip studio-topbar__chip--icon studio-topbar__chip--desktop-only"
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -996,7 +1123,7 @@ export default function Studio({
             {theme === 'dark' ? <Sun size={14} strokeWidth={2.25} /> : <Moon size={14} strokeWidth={2.25} />}
           </button>
           {!templatesOpen ? (
-            <>
+            <div className="studio-topbar__zoom studio-topbar__chip--desktop-only">
               <button type="button" className="studio-topbar__chip" onClick={() => handleAction('zoomOut')}>
                 −
               </button>
@@ -1006,8 +1133,102 @@ export default function Studio({
               <button type="button" className="studio-topbar__chip" onClick={() => handleAction('zoomIn')}>
                 +
               </button>
-            </>
+            </div>
           ) : null}
+
+          <div className="studio-topbar__menu" ref={topbarMenuRef}>
+            <button
+              type="button"
+              className={`studio-topbar__chip studio-topbar__chip--icon studio-topbar__menu-btn${
+                topbarMenuOpen ? ' is-active' : ''
+              }`}
+              onClick={() => setTopbarMenuOpen((open) => !open)}
+              title="More"
+              aria-label="More actions"
+              aria-expanded={topbarMenuOpen}
+            >
+              <MoreHorizontal size={16} strokeWidth={2.25} />
+            </button>
+            {topbarMenuOpen ? (
+              <div className="studio-topbar__menu-panel" role="menu">
+                <div className="studio-topbar__menu-user">
+                  {user?.avatar ? (
+                    <img
+                      className="studio-topbar__avatar"
+                      src={user.avatar}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : null}
+                  <div>
+                    <strong>{user?.name || 'Signed in'}</strong>
+                    <small>{user?.email || (isAdmin ? 'Admin' : 'Member')}</small>
+                  </div>
+                </div>
+                {isAdmin ? (
+                  <Link
+                    to="/admin/overview"
+                    className="studio-topbar__menu-item"
+                    role="menuitem"
+                    onClick={() => setTopbarMenuOpen(false)}
+                  >
+                    Admin console
+                  </Link>
+                ) : null}
+                {!templatesOpen ? (
+                  <button
+                    type="button"
+                    className="studio-topbar__menu-item"
+                    role="menuitem"
+                    onClick={() => {
+                      fitToScreen()
+                      setTopbarMenuOpen(false)
+                    }}
+                  >
+                    Fit canvas · {Math.round(zoom * 100)}%
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="studio-topbar__menu-item"
+                  role="menuitem"
+                  onClick={openHelp}
+                >
+                  Studio guide
+                </button>
+                <button
+                  type="button"
+                  className="studio-topbar__menu-item"
+                  role="menuitem"
+                  onClick={startTour}
+                >
+                  Replay quick tour
+                </button>
+                <button
+                  type="button"
+                  className="studio-topbar__menu-item"
+                  role="menuitem"
+                  onClick={() => {
+                    toggleTheme()
+                    setTopbarMenuOpen(false)
+                  }}
+                >
+                  {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                </button>
+                <button
+                  type="button"
+                  className="studio-topbar__menu-item studio-topbar__menu-item--danger"
+                  role="menuitem"
+                  onClick={() => {
+                    setTopbarMenuOpen(false)
+                    logout()
+                  }}
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -1026,7 +1247,9 @@ export default function Studio({
       />
 
       <div
-        className={`studio-body${inspectorCollapsed ? ' studio-body--inspector-collapsed' : ''}`}
+        className={`studio-body${
+          !isNarrow && inspectorCollapsed ? ' studio-body--inspector-collapsed' : ''
+        }`}
       >
         <ToolRail
           tool={tool}
@@ -1046,9 +1269,11 @@ export default function Studio({
           onToggleGrid={() => setShowGrid((v) => !v)}
           canExport={!templatesOpen && Boolean(selected)}
           busy={busy}
+          onToggleInspector={isNarrow ? toggleMobileInspector : undefined}
+          inspectorOpen={mobileInspectorOpen}
         />
 
-        <div className="studio-shell" ref={shellRef}>
+        <div className="studio-shell" ref={shellRef} data-tour="canvas">
           {templatesOpen ? (
             <TemplatesBoard
               showGrid={showGrid}
@@ -1086,47 +1311,50 @@ export default function Studio({
             {templatesOpen ? (
               <>
                 <span>Templates</span>
-                <span>
+                <span className="studio-statusbar__primary">
                   {openTemplateCollectionFiltered
                     ? `${openTemplateCollectionFiltered.name} · ${openTemplateCollectionFiltered.templateCount} templates`
                     : 'Click a template to open it in the studio editor'}
                 </span>
-                <span>{templateCollections.length} collections</span>
-                <span>{showGrid ? 'Grid on' : 'Grid off'}</span>
+                <span className="studio-statusbar__meta">{templateCollections.length} collections</span>
+                <span className="studio-statusbar__meta">{showGrid ? 'Grid on' : 'Grid off'}</span>
               </>
             ) : (
               <>
                 <span>
                   {tool === 'hand' ? 'Hand' : tool === 'text' ? 'Text' : editEnabled ? 'Move' : 'Select'}
                 </span>
-                <span>
+                <span className="studio-statusbar__primary">
                   {selected
                     ? `${selected.name} · artboard ${selected.width}×${selected.height} · export ${selected.width * (HD_SCALES[hdScaleId]?.scale ?? 3)}×${selected.height * (HD_SCALES[hdScaleId]?.scale ?? 3)}`
                     : 'Click an artboard'}
                 </span>
-                <span>
+                <span className="studio-statusbar__meta">
                   {project?.name ?? 'Studio'} · {boardItems.length} boards
                 </span>
-                <span>{Math.round(zoom * 100)}%</span>
+                <span className="studio-statusbar__meta">{Math.round(zoom * 100)}%</span>
               </>
             )}
           </footer>
         </div>
 
+        {isNarrow && mobileInspectorOpen ? (
+          <button
+            type="button"
+            className="studio-sheet-backdrop"
+            aria-label="Close panel"
+            onClick={() => setMobileInspectorOpen(false)}
+          />
+        ) : null}
+
         <Inspector
           mode={templatesOpen ? 'templates' : 'board'}
-          collapsed={inspectorCollapsed}
-          onToggleCollapsed={() => {
-            setInspectorCollapsed((prev) => {
-              const next = !prev
-              try {
-                localStorage.setItem(INSPECTOR_COLLAPSED_KEY, next ? '1' : '0')
-              } catch {
-                /* ignore */
-              }
-              return next
-            })
-          }}
+          sheet={isNarrow}
+          sheetOpen={mobileInspectorOpen}
+          collapsed={isNarrow ? false : inspectorCollapsed}
+          onToggleCollapsed={
+            isNarrow ? () => setMobileInspectorOpen(false) : toggleInspectorCollapsed
+          }
           items={boardItems}
           selectedId={selectedId}
           selected={selected}
@@ -1204,6 +1432,22 @@ export default function Studio({
         tone="default"
         onConfirm={() => setNoticePrompt(null)}
         onClose={() => setNoticePrompt(null)}
+      />
+
+      <StudioHelp
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        onReplayTour={startTour}
+      />
+
+      <StudioTour
+        open={tourOpen}
+        isNarrow={isNarrow}
+        isPhone={isPhone}
+        onClose={() => setTourOpen(false)}
+        onEnsurePanelOpen={() => {
+          if (isNarrow) setMobileInspectorOpen(true)
+        }}
       />
     </div>
   )

@@ -5,6 +5,7 @@ import {
   Maximize2,
   Moon,
   MousePointer2,
+  PanelBottom,
   Scan,
   Scaling,
   Sun,
@@ -43,6 +44,8 @@ export default function ToolRail({
   onToggleGrid,
   canExport,
   busy,
+  onToggleInspector,
+  inspectorOpen = false,
 }) {
   const ThemeIcon = theme === 'dark' ? Sun : Moon
   const themeLabel = theme === 'dark' ? 'Light mode' : 'Dark mode'
@@ -57,22 +60,36 @@ export default function ToolRail({
         />
       </div>
 
-      <div className="tool-rail__group">
+      <div className="tool-rail__group" data-tour="templates-group">
         <button
           type="button"
           className={`tool-btn${templatesActive ? ' is-active' : ''}`}
           title="Templates (Ctrl+O)"
           aria-label="Templates"
           aria-pressed={templatesActive}
+          data-tour="templates-rail"
           onClick={onOpenTemplates}
         >
           <LayoutGrid size={18} strokeWidth={2} />
         </button>
+        {onToggleInspector ? (
+          <button
+            type="button"
+            className={`tool-btn tool-btn--mobile-panel${inspectorOpen ? ' is-active' : ''}`}
+            title="Layers, edit & export"
+            aria-label="Layers, edit and export"
+            aria-pressed={inspectorOpen}
+            data-tour="panel"
+            onClick={onToggleInspector}
+          >
+            <PanelBottom size={18} strokeWidth={2} />
+          </button>
+        ) : null}
       </div>
 
       <div className="tool-rail__divider" />
 
-      <div className="tool-rail__group">
+      <div className="tool-rail__group" data-tour="tools">
         {TOOLS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -90,7 +107,7 @@ export default function ToolRail({
 
       <div className="tool-rail__divider" />
 
-      <div className="tool-rail__group">
+      <div className="tool-rail__group tool-rail__group--zoom">
         {ACTIONS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -105,9 +122,9 @@ export default function ToolRail({
         ))}
       </div>
 
-      <div className="tool-rail__divider" />
+      <div className="tool-rail__divider tool-rail__divider--view" />
 
-      <div className="tool-rail__group">
+      <div className="tool-rail__group tool-rail__group--view">
         <button
           type="button"
           className={`tool-btn${showLabels ? ' is-active' : ''}`}
@@ -134,7 +151,7 @@ export default function ToolRail({
 
       <button
         type="button"
-        className="tool-btn"
+        className="tool-btn tool-rail__theme-btn"
         title={themeLabel}
         aria-label={themeLabel}
         onClick={onToggleTheme}
@@ -147,6 +164,7 @@ export default function ToolRail({
         className="tool-btn tool-btn--accent"
         title={busy ? 'Exporting…' : 'Export selection (Ctrl+E)'}
         aria-label="Export selection"
+        data-tour="export"
         disabled={!canExport || busy}
         onClick={onExport}
       >

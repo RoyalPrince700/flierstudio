@@ -8,6 +8,7 @@ import {
   signUserToken,
 } from '../lib/tokens.js'
 import { requireAuth } from '../middleware/auth.js'
+import { sendWelcomeEmailSafe } from '../mailtrap/emails.js'
 
 const router = Router()
 
@@ -45,7 +46,7 @@ async function upsertGoogleUser(payload) {
       role: shouldBeAdmin ? 'admin' : 'user',
       lastLoginAt: new Date(),
     })
-    return user
+    return { user, isNew: true }
   }
 
   user.googleId = user.googleId || googleId
@@ -56,7 +57,7 @@ async function upsertGoogleUser(payload) {
     user.role = 'admin'
   }
   await user.save()
-  return user
+  return { user, isNew: false }
 }
 
 router.post('/google', async (req, res) => {
@@ -76,15 +77,20 @@ router.post('/google', async (req, res) => {
       return res.status(401).json({ error: 'Invalid Google token' })
     }
 
-    const user = await upsertGoogleUser(payload)
+    const { user, isNew } = await upsertGoogleUser(payload)
     const token = signUserToken(user)
     setAuthCookie(res, token)
 
     Event.create({
       userId: user._id,
       action: 'login',
-      meta: { provider: 'google' },
+      meta: { provider: 'google', isNew },
     }).catch((err) => console.error('Failed to log login event', err))
+
+    // First-time Google sign-in only — never block auth on mail failure
+    if (isNew) {
+      sendWelcomeEmailSafe(user)
+    }
 
     return res.json({ user: user.toSafeJSON() })
   } catch (err) {

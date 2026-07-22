@@ -172,3 +172,20 @@
     align-items: flex-start;
   }
 }
+
+@media (max-width: 640px) {
+  .pub-main {
+    padding: 28px 0 64px;
+  }
+
+  .pub-doc__title {
+    font-size: 32px;
+  }
+
+  .pub-doc__lead,
+  .pub-section p,
+  .pub-section li {
+    font-size: 15px;
+  }
+}
+

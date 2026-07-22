@@ -323,3 +323,24 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .admin-board__table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-board__table {
+    min-width: 560px;
+  }
+
+  .admin-board__actions {
+    flex-wrap: wrap;
+  }
+
+  .admin-board__actions button,
+  .admin-board__refresh {
+    min-height: 40px;
+  }
+}
+

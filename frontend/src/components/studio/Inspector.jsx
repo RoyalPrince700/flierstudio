@@ -9,6 +9,7 @@ import {
   Pencil,
   CopyPlus,
   Trash2,
+  X,
 } from 'lucide-react'
 import { HD_SCALES } from '../../lib/exportFlier'
 import EditPanel from './EditPanel'
@@ -48,6 +49,8 @@ export default function Inspector({
   hasSavedEdits = false,
   collapsed = false,
   onToggleCollapsed,
+  sheet = false,
+  sheetOpen = false,
 }) {
   const scale = HD_SCALES[hdScaleId]?.scale ?? 3
   const outW = selected ? selected.width * scale : 0
@@ -55,8 +58,20 @@ export default function Inspector({
   const templatesMode = mode === 'templates'
   const adminMode = mode === 'admin'
   const layerItems = templatesMode ? templatesItems : items
+  const closeLabel = sheet ? 'Close panel' : 'Collapse sidebar'
+  const CloseIcon = sheet ? X : PanelRightClose
+  const sheetHidden = sheet && !sheetOpen
 
-  if (collapsed) {
+  function sheetHandle() {
+    if (!sheet) return null
+    return (
+      <div className="inspector__sheet-handle" aria-hidden>
+        <span />
+      </div>
+    )
+  }
+
+  if (collapsed && !sheet) {
     return (
       <aside className="inspector inspector--collapsed" aria-label="Inspector">
         <button
@@ -146,19 +161,24 @@ export default function Inspector({
 
   if (adminMode) {
     return (
-      <aside className="inspector" aria-label="Inspector">
+      <aside
+        className={`inspector${sheet ? ' inspector--sheet' : ''}`}
+        aria-label="Inspector"
+        aria-hidden={sheetHidden || undefined}
+      >
+        {sheetHandle()}
         <header className="inspector__head">
           <Layers size={14} strokeWidth={2.25} />
           <span>Admin</span>
           <button
             type="button"
             className="inspector__collapse-btn"
-            title="Collapse sidebar"
-            aria-label="Collapse sidebar"
+            title={closeLabel}
+            aria-label={closeLabel}
             aria-expanded={true}
             onClick={onToggleCollapsed}
           >
-            <PanelRightClose size={14} strokeWidth={2.25} />
+            <CloseIcon size={14} strokeWidth={2.25} />
           </button>
         </header>
         <div className="inspector__block">
@@ -171,19 +191,25 @@ export default function Inspector({
   }
 
   return (
-    <aside className="inspector" aria-label="Inspector">
+    <aside
+      className={`inspector${sheet ? ' inspector--sheet' : ''}`}
+      aria-label="Inspector"
+      aria-hidden={sheetHidden || undefined}
+      data-tour="inspector"
+    >
+      {sheetHandle()}
       <header className="inspector__head">
         <Layers size={14} strokeWidth={2.25} />
         <span>{templatesMode ? 'Templates' : 'Layers'}</span>
         <button
           type="button"
           className="inspector__collapse-btn"
-          title="Collapse sidebar"
-          aria-label="Collapse sidebar"
+          title={closeLabel}
+          aria-label={closeLabel}
           aria-expanded={true}
           onClick={onToggleCollapsed}
         >
-          <PanelRightClose size={14} strokeWidth={2.25} />
+          <CloseIcon size={14} strokeWidth={2.25} />
         </button>
       </header>
 
@@ -375,7 +401,7 @@ export default function Inspector({
             <p className="inspector__empty">Select an artboard to export.</p>
           )}
 
-          <div className="inspector__tips">
+          <div className="inspector__tips inspector__tips--desktop">
             <p>
               <kbd>V</kbd> Move · <kbd>T</kbd> Text · <kbd>H</kbd> Hand
             </p>
@@ -389,6 +415,10 @@ export default function Inspector({
             <p>
               <kbd>+</kbd> <kbd>-</kbd> Zoom · <kbd>⌘/Ctrl</kbd>+<kbd>0</kbd> Fit
             </p>
+          </div>
+          <div className="inspector__tips inspector__tips--mobile">
+            <p>Pinch to zoom · two-finger drag to pan · Hand tool for one-finger pan</p>
+            <p>Tap text on the board to edit · use Export above for format &amp; HD</p>
           </div>
         </>
       )}
