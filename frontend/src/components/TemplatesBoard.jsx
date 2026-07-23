@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { ArrowLeft, Search } from 'lucide-react'
 import {
   filterTemplateCollections,
-  getTemplateCollection,
   listTemplateCollections,
 } from '../samples/registry'
 import { useTemplatePublish } from '../lib/templatePublish'
@@ -24,16 +23,23 @@ export default function TemplatesBoard({
   onSelectTemplate,
   onUseTemplate,
 }) {
-  const { collectionPublishMap, loading, error, includeUnpublished, isAdmin } =
-    useTemplatePublish()
+  const {
+    collectionPublishMap,
+    unpublishedDesignsMap,
+    loading,
+    error,
+    includeUnpublished,
+    isAdmin,
+  } = useTemplatePublish()
   const allCollections = useMemo(() => listTemplateCollections(), [])
   const collections = useMemo(
     () =>
       filterTemplateCollections(allCollections, {
         collectionPublishMap,
+        unpublishedDesignsMap,
         includeUnpublished,
       }),
-    [allCollections, collectionPublishMap, includeUnpublished],
+    [allCollections, collectionPublishMap, unpublishedDesignsMap, includeUnpublished],
   )
   const [query, setQuery] = useState('')
 
@@ -61,16 +67,9 @@ export default function TemplatesBoard({
     )
   })
 
-  const openCollectionRaw = openCollectionId ? getTemplateCollection(openCollectionId) : null
-  const openCollection =
-    openCollectionRaw &&
-    (includeUnpublished ||
-      (collectionPublishMap[openCollectionRaw.id] ?? 'draft') === 'published')
-      ? {
-          ...openCollectionRaw,
-          publishStatus: collectionPublishMap[openCollectionRaw.id] ?? 'draft',
-        }
-      : null
+  const openCollection = openCollectionId
+    ? collections.find((collection) => collection.id === openCollectionId) || null
+    : null
 
   return (
     <div className={`samples-board${showGrid ? ' samples-board--grid' : ''}`}>
@@ -125,6 +124,9 @@ export default function TemplatesBoard({
                     frameHeight={THUMB_HEIGHT}
                     fit="contain"
                   />
+                  {isAdmin && template.designPublished === false ? (
+                    <span className="samples-card__badge samples-card__badge--draft">Draft</span>
+                  ) : null}
                 </div>
                 <div className="samples-card__body">
                   <strong>{template.name}</strong>

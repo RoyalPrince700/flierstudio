@@ -10,22 +10,50 @@ import {
   KeywordStrip,
 } from './shared/EmergenceChrome'
 import { resolveEmergenceData } from './shared/emergenceData'
+import {
+  stagePeopleLayoutClass,
+  stagePeopleRowGroups,
+} from './stagePeopleLayout'
 import './emergence-templates.css'
 
 /**
- * Template — Cascade Hero section + Stage Grid speaker card (composited as-is).
- * Reuses `.e-cascade__*` hero and `.e-grid__*` card classes; spacing tweaks only under this root.
+ * Cascade Stage Flex — same chrome as Cascade Stage, dynamic stagePeople 1–10.
+ * Original `EmergenceCascadeStage` stays fixed 3+3; this board owns the flex layout.
  */
-export default function EmergenceCascadeStage(props) {
-  const { event, speakers, panelists, convener, studioEdit, rootStyle, personProps } =
-    resolveEmergenceData(props)
+export default function EmergenceCascadeStageFlex(props) {
+  const {
+    event,
+    stagePeople,
+    stagePeopleCount,
+    includeConvener,
+    convener,
+    studioEdit,
+    rootStyle,
+    personProps,
+  } = resolveEmergenceData(props)
+
+  const count = stagePeopleCount
+  const people = stagePeople
+  const showConvener = includeConvener !== false
+  const rows = stagePeopleRowGroups(people, { includeConvener: showConvener })
 
   return (
-    <article className="e-flier e-flier--cascade-stage" style={rootStyle}>
+    <article
+      className={[
+        'e-flier',
+        'e-flier--cascade-stage',
+        'e-flier--cascade-stage-flex',
+        showConvener ? '' : 'e-flier--cascade-stage-flex-solo',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      style={rootStyle}
+      data-people-count={count}
+      data-include-convener={showConvener ? '1' : '0'}
+    >
       <EmergenceBackground />
       <EmergenceHeader event={event} studioEdit={studioEdit} />
 
-      {/* Exact Cascade Hero section */}
       <div className="e-cascade__hero">
         <p className="e-cascade__eyebrow">
           <Zap size={18} strokeWidth={2.4} />
@@ -62,7 +90,6 @@ export default function EmergenceCascadeStage(props) {
         </div>
       </div>
 
-      {/* Exact Stage Grid speaker card */}
       <div className="e-grid__stage">
         <div className="e-grid__card">
           <div className="e-grid__layout">
@@ -75,22 +102,42 @@ export default function EmergenceCascadeStage(props) {
                 />
               </h2>
 
-              <div className="e-grid__people" role="group" aria-label="Speakers and panelists">
-                {speakers.map((person, i) => (
-                  <PortraitSlot key={`s-${i}`} {...personProps('speakers', person, i)} />
-                ))}
-                {panelists.map((person, i) => (
-                  <PortraitSlot key={`p-${i}`} {...personProps('panelists', person, i)} />
+              <div
+                className={`e-flex-people ${stagePeopleLayoutClass(count)}`}
+                role="group"
+                aria-label="People on stage"
+              >
+                {rows.map((row, rowIndex) => (
+                  <div
+                    key={`row-${rowIndex}`}
+                    className="e-flex-people__row"
+                    style={{ '--row-cols': String(row.cols) }}
+                    data-cols={row.cols}
+                  >
+                    {row.people.map((person, i) => {
+                      const index = rows
+                        .slice(0, rowIndex)
+                        .reduce((sum, r) => sum + r.people.length, 0) + i
+                      return (
+                        <PortraitSlot
+                          key={`sp-${index}`}
+                          {...personProps('stagePeople', person, index)}
+                        />
+                      )
+                    })}
+                  </div>
                 ))}
               </div>
             </div>
 
-            <ConvenerSlot
-              className="e-grid__convener"
-              label={convener.label}
-              src={convener.photoSrc}
-              studioEdit={studioEdit}
-            />
+            {showConvener ? (
+              <ConvenerSlot
+                className="e-grid__convener"
+                label={convener.label}
+                src={convener.photoSrc}
+                studioEdit={studioEdit}
+              />
+            ) : null}
           </div>
 
           <KeywordStrip event={event} studioEdit={studioEdit} />

@@ -5,6 +5,7 @@ import {
   listTemplateCollectionRecords,
   serializeTemplateCollection,
   setTemplateCollectionStatus,
+  setTemplateDesignPublished,
   syncTemplateCollectionCatalog,
   dedupeTemplateCollections,
   ensureTemplateIndexes,
@@ -135,6 +136,36 @@ router.patch('/templates/collections/:collectionId', async (req, res) => {
   } catch (err) {
     console.error(err)
     return res.status(500).json({ error: 'Could not update collection' })
+  }
+})
+
+/** Per-design publish inside a collection (deny-list override; group status unchanged). */
+router.patch('/templates/collections/:collectionId/designs/:templateId', async (req, res) => {
+  try {
+    const published = req.body?.published
+    if (typeof published !== 'boolean') {
+      return res.status(400).json({ error: 'published must be true or false' })
+    }
+
+    const record = await setTemplateDesignPublished(
+      req.params.collectionId,
+      req.params.templateId,
+      published,
+    )
+
+    if (!record) {
+      return res.status(404).json({ error: 'Collection not found — sync catalog first' })
+    }
+
+    return res.json({
+      collection: serializeTemplateCollection(record),
+    })
+  } catch (err) {
+    if (err?.status === 400) {
+      return res.status(400).json({ error: err.message })
+    }
+    console.error(err)
+    return res.status(500).json({ error: 'Could not update design publish state' })
   }
 })
 

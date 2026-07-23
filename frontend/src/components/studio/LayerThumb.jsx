@@ -23,6 +23,9 @@ export function layerThumbSignature(item) {
     const panelists = Array.isArray(content.panelists)
       ? content.panelists.map((p) => p?.photoSrc || '').join(',')
       : ''
+    const stagePeople = Array.isArray(content.stagePeople)
+      ? content.stagePeople.map((p) => p?.photoSrc || '').join(',')
+      : ''
     return [
       item.id,
       content.colorTheme || '',
@@ -31,8 +34,11 @@ export function layerThumbSignature(item) {
       content.event?.wordmark || '',
       content.event?.qrSrc || '',
       content.convener?.photoSrc || '',
+      content.stagePeopleCount ?? '',
+      content.includeConvener === false ? '0' : '1',
       speakers,
       panelists,
+      stagePeople,
       JSON.stringify(content.fonts || null),
       JSON.stringify(content.event?.logoLayout || null),
       JSON.stringify(content.imageFits || null),

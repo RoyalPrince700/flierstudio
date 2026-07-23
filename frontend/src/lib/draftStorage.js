@@ -9,17 +9,11 @@ const DB_VERSION = 1
 const STORE = 'drafts'
 const RECORD_ID = 'all'
 
-const EMERGENCE_ITEM_IDS = [
-  'emergence-classic',
-  'emergence-cascade',
-  'emergence-stage-grid',
-  'emergence-cascade-grid',
-  'emergence-cascade-stage',
-]
+const EMERGENCE_ITEM_IDS = ['emergence-cascade-stage', 'emergence-cascade-stage-flex']
 
 function isArtboardDraftMap(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false
-  if (value.event || value.speakers || value.panelists) return false
+  if (value.event || value.speakers || value.panelists || value.stagePeople) return false
   const keys = Object.keys(value)
   if (!keys.length) return true
   return keys.every(

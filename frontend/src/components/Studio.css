@@ -669,6 +669,19 @@
   filter: brightness(1.06);
 }
 
+/* Status toast: secondary “Switch back” — not a primary CTA */
+.tool-coach__action--ghost {
+  background: transparent;
+  color: var(--studio-text);
+  border: 1px solid var(--studio-border);
+  font-weight: 500;
+}
+
+.tool-coach__action--ghost:hover {
+  filter: none;
+  background: var(--studio-hover);
+}
+
 .tool-coach__dismiss {
   display: grid;
   place-items: center;
@@ -1590,6 +1603,27 @@
   color: var(--studio-muted);
 }
 
+.edit-panel__field--inline {
+  flex: 1;
+  min-width: 0;
+}
+
+.edit-panel__check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--studio-text);
+}
+
+.edit-panel__check input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--studio-accent, #3a8dff);
+}
+
 .edit-panel__field input,
 .edit-panel__field select,
 .edit-panel__field textarea {
@@ -1786,8 +1820,23 @@
 
 .studio-image-slot {
   position: relative;
+  display: block;
   width: 100%;
+  min-width: 0;
+  min-height: 0;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Empty placeholders: stretch to the frame width; height comes from children
+   (or from flex parents like convener / QR that size the slot). */
+.studio-image-slot--empty {
+  align-self: stretch;
+}
+
+.studio-image-slot--empty > :not([data-studio-chrome]) {
+  pointer-events: none;
 }
 
 .studio-image-slot.is-focused {
@@ -1841,7 +1890,8 @@
 }
 
 .studio-image-slot:hover .studio-image-slot__hint,
-.studio-image-slot.is-focused .studio-image-slot__hint {
+.studio-image-slot.is-focused .studio-image-slot__hint,
+.studio-image-slot--empty .studio-image-slot__hint {
   opacity: 1;
 }
 
@@ -1900,7 +1950,30 @@
 }
 
 .e-convener > .studio-image-slot {
-  width: auto;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.e-convener > .studio-image-slot > .e-convener__frame {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.e-footer__qr > .studio-image-slot {
+  width: 100%;
+  display: block;
+}
+
+.e-slot > .studio-image-slot {
+  width: 100%;
+}
+
+.e-slot > .studio-image-slot > .e-slot__stack {
+  width: 100%;
 }
 
 .e-header__brand > .studio-image-slot.is-focused {
@@ -1913,10 +1986,6 @@
   bottom: calc(100% + 6px);
   right: 0;
   left: auto;
-}
-
-.e-footer__qr > .studio-image-slot {
-  width: 100%;
 }
 
 .e-footer__qr > .studio-image-slot.is-focused {

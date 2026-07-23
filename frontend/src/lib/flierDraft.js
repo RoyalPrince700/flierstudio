@@ -1,5 +1,11 @@
 import { DEFAULT_BRAND_LOGO_SRC, normalizeLogoMode } from '../design/defaultBrandLogo'
 import { emergence } from '../design/emergenceTokens'
+import {
+  DEFAULT_STAGE_PEOPLE_COUNT,
+  clampStagePeopleCount,
+  resolveStagePeople,
+  seedStagePeopleFromLists,
+} from '../fliers/emergence/stagePeopleLayout'
 import { clampLogoLayout, DEFAULT_LOGO_LAYOUT } from './logoLayout'
 
 export {
@@ -33,6 +39,8 @@ function clonePerson(person) {
 
 /** Full editable content tree for Emergence boards (defaults from tokens). */
 export function createEmergenceContent() {
+  const speakers = emergence.speakers.map(clonePerson)
+  const panelists = emergence.panelists.map(clonePerson)
   return {
     event: {
       ...emergence.event,
@@ -40,8 +48,12 @@ export function createEmergenceContent() {
       logoMode: normalizeLogoMode(emergence.event.logoMode || 'image'),
       logoLayout: clampLogoLayout(emergence.event.logoLayout || DEFAULT_LOGO_LAYOUT),
     },
-    speakers: emergence.speakers.map(clonePerson),
-    panelists: emergence.panelists.map(clonePerson),
+    speakers,
+    panelists,
+    /** Cascade Stage Flex — unified stage cast (classic boards ignore these). */
+    stagePeopleCount: DEFAULT_STAGE_PEOPLE_COUNT,
+    stagePeople: seedStagePeopleFromLists(speakers, panelists),
+    includeConvener: true,
     convener: {
       label: emergence.event.convenerLabel,
       photoSrc: '',
@@ -149,16 +161,37 @@ export function mergeEmergenceDraft(draft) {
     ...(draft.event?.logoLayout || {}),
   })
 
+  const speakers = base.speakers.map((person, i) => ({
+    ...person,
+    ...(draft.speakers?.[i] || {}),
+  }))
+  const panelists = base.panelists.map((person, i) => ({
+    ...person,
+    ...(draft.panelists?.[i] || {}),
+  }))
+
+  // Flex: merge by index over selected count (not locked to token length 3+3).
+  // Keep full draft.stagePeople in storage via setByPath; resolve trims/pads for render.
+  const stagePeopleCount = clampStagePeopleCount(
+    draft.stagePeopleCount ?? base.stagePeopleCount ?? DEFAULT_STAGE_PEOPLE_COUNT,
+  )
+  const stagePeople = resolveStagePeople(
+    draft.stagePeople,
+    stagePeopleCount,
+    base.stagePeople,
+  )
+  const includeConvener =
+    typeof draft.includeConvener === 'boolean'
+      ? draft.includeConvener
+      : base.includeConvener !== false
+
   return {
     event,
-    speakers: base.speakers.map((person, i) => ({
-      ...person,
-      ...(draft.speakers?.[i] || {}),
-    })),
-    panelists: base.panelists.map((person, i) => ({
-      ...person,
-      ...(draft.panelists?.[i] || {}),
-    })),
+    speakers,
+    panelists,
+    stagePeopleCount,
+    stagePeople,
+    includeConvener,
     convener: { ...base.convener, ...draft.convener },
     fonts: { ...base.fonts, ...draft.fonts },
     alignments: { ...base.alignments, ...(draft.alignments || {}) },
@@ -183,6 +216,11 @@ export function createPropsDraft(props = {}) {
   return draft
 }
 
+/**
+ * Merge props-style artboard drafts onto template defaults.
+ * Strings and nested object/array patches (e.g. speakers.0.photoSrc) must survive —
+ * same path reliability Emergence gets from mergeEmergenceDraft.
+ */
 export function mergePropsDraft(baseProps = {}, draft) {
   const merged = { ...baseProps }
   if (!draft) {
@@ -197,7 +235,37 @@ export function mergePropsDraft(baseProps = {}, draft) {
     ) {
       return
     }
-    if (typeof value === 'string') merged[key] = value
+    if (value == null) return
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      merged[key] = value
+      return
+    }
+    if (Array.isArray(value)) {
+      const baseArr = Array.isArray(baseProps[key]) ? baseProps[key] : []
+      const length = Math.max(baseArr.length, value.length)
+      merged[key] = Array.from({ length }, (_, i) => {
+        const baseItem = baseArr[i]
+        const draftItem = value[i]
+        if (draftItem == null) return baseItem
+        if (
+          draftItem &&
+          typeof draftItem === 'object' &&
+          !Array.isArray(draftItem) &&
+          (baseItem == null || (typeof baseItem === 'object' && !Array.isArray(baseItem)))
+        ) {
+          return { ...(baseItem || {}), ...draftItem }
+        }
+        return draftItem
+      })
+      return
+    }
+    if (typeof value === 'object') {
+      const baseObj =
+        baseProps[key] && typeof baseProps[key] === 'object' && !Array.isArray(baseProps[key])
+          ? baseProps[key]
+          : {}
+      merged[key] = { ...baseObj, ...value }
+    }
   })
   return {
     ...merged,
@@ -277,7 +345,16 @@ export function buildEditViewModel(item, draft, projectId) {
   if (!item) return null
   const editKind = getItemEditKind(item, projectId)
   if (editKind === 'emergence') {
-    return { kind: 'emergence', ...mergeEmergenceDraft(draft) }
+    const merged = mergeEmergenceDraft(draft)
+    return {
+      kind: 'emergence',
+      boardId: item.id,
+      stageFlex:
+        item.id === 'emergence-cascade-stage-flex' ||
+        item.props?.stageFlex === true ||
+        item.id?.includes('cascade-stage-flex'),
+      ...merged,
+    }
   }
   const merged = mergePropsDraft(item.props || {}, draft)
   return {

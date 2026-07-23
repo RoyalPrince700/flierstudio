@@ -35,7 +35,9 @@ import {
 
 /**
  * Clickable image placeholder — select-first crop UX.
- * Empty: click opens picker (or onEmptyClick for logo brand chooser).
+ * Empty: tap/click anywhere on the slot opens the picker (or onEmptyClick for
+ * logo brand chooser). On mobile, pick runs on pointerup so it is not lost when
+ * focus opens the Edit sheet.
  * Filled: click focuses only (no modal). Focused chrome:
  *   Photo: − / + / reset | Replace / Remove
  *   Logo:  size −/+ · ← → · reset | text | Flier Studio | Replace / Remove
@@ -67,6 +69,7 @@ export default function EditableImageSlot({
 }) {
   const ignoreSlotClickUntil = useRef(0)
   const dragRef = useRef(null)
+  const emptyTapRef = useRef(null)
   const slotRef = useRef(null)
   const fitRef = useRef(DEFAULT_IMAGE_FIT)
   const logoRef = useRef(DEFAULT_LOGO_LAYOUT)
@@ -116,6 +119,17 @@ export default function EditableImageSlot({
 
   const armClickThroughGuard = () => {
     ignoreSlotClickUntil.current = Date.now() + 450
+  }
+
+  const activateEmptySlot = () => {
+    if (typeof onEmptyClick === 'function') {
+      onFocusField?.(path, 'image')
+      onEmptyClick()
+      return
+    }
+    // Pick first while the user gesture is still active; focus/sheet can follow.
+    onPickImage?.(path)
+    onFocusField?.(path, 'image')
   }
 
   const commitFit = (next) => {
@@ -168,6 +182,12 @@ export default function EditableImageSlot({
   }
 
   const onPointerMoveDrag = (e) => {
+    const emptyTap = emptyTapRef.current
+    if (emptyTap && emptyTap.pointerId === e.pointerId) {
+      const dist = Math.hypot(e.clientX - emptyTap.startX, e.clientY - emptyTap.startY)
+      if (dist > 10) emptyTap.moved = true
+    }
+
     const drag = dragRef.current
     if (!drag || drag.pointerId !== e.pointerId) return
     const dx = e.clientX - drag.lastX
@@ -204,6 +224,22 @@ export default function EditableImageSlot({
     if (moved) armClickThroughGuard()
   }
 
+  const endEmptyTap = (e) => {
+    const emptyTap = emptyTapRef.current
+    if (!emptyTap || emptyTap.pointerId !== e.pointerId) return
+    emptyTapRef.current = null
+    try {
+      e.currentTarget.releasePointerCapture?.(e.pointerId)
+    } catch {
+      /* already released */
+    }
+    if (emptyTap.moved) return
+    // Pick while still in the user gesture — before/without depending on click,
+    // which mobile loses when focus opens the Edit sheet.
+    activateEmptySlot()
+    armClickThroughGuard()
+  }
+
   const fitVars = canFit ? imageFitCssVars(fit) : undefined
 
   let title = emptyTitle
@@ -220,25 +256,54 @@ export default function EditableImageSlot({
   return (
     <div
       ref={slotRef}
-      className={`studio-image-slot${focused ? ' is-focused' : ''}${canFit ? ' studio-image-slot--fitted' : ''}${canFit && focused ? ' is-fitting' : ''}${canLogoLayout && focused ? ' is-logo-editing' : ''} ${className}`.trim()}
+      className={`studio-image-slot${hasImage ? '' : ' studio-image-slot--empty'}${focused ? ' is-focused' : ''}${canFit ? ' studio-image-slot--fitted' : ''}${canFit && focused ? ' is-fitting' : ''}${canLogoLayout && focused ? ' is-logo-editing' : ''} ${className}`.trim()}
       data-edit-path={path}
       style={fitVars}
       onPointerDown={(e) => {
+        if (e.button !== 0 && e.button !== -1) return
         e.stopPropagation()
+        if (e.target.closest('[data-studio-chrome]')) return
+
+        if (!hasImage) {
+          // Do not focus yet — opening the mobile Edit sheet on pointerdown
+          // swallows the subsequent click and blocks the file picker gesture.
+          emptyTapRef.current = {
+            pointerId: e.pointerId,
+            startX: e.clientX,
+            startY: e.clientY,
+            moved: false,
+          }
+          try {
+            e.currentTarget.setPointerCapture?.(e.pointerId)
+          } catch {
+            /* ignore */
+          }
+          return
+        }
+
         onFocusField?.(path, 'image')
         onPointerDownDrag(e)
       }}
       onPointerMove={onPointerMoveDrag}
-      onPointerUp={endPointerDrag}
-      onPointerCancel={endPointerDrag}
+      onPointerUp={(e) => {
+        endEmptyTap(e)
+        endPointerDrag(e)
+      }}
+      onPointerCancel={(e) => {
+        emptyTapRef.current = null
+        endPointerDrag(e)
+      }}
       onClick={(e) => {
         e.stopPropagation()
-        onFocusField?.(path, 'image')
+        if (e.target.closest('[data-studio-chrome]')) return
         if (Date.now() < ignoreSlotClickUntil.current) return
         if (!hasImage) {
-          if (typeof onEmptyClick === 'function') onEmptyClick()
-          else onPickImage?.(path)
+          // Desktop / browsers that synthesize click without our pointerup path.
+          activateEmptySlot()
+          armClickThroughGuard()
+          return
         }
+        onFocusField?.(path, 'image')
       }}
       title={title}
     >

@@ -3,11 +3,23 @@ import { Hand, MousePointer2, X } from 'lucide-react'
 /**
  * Short-lived, non-blocking tool coach toast.
  * Does not trap focus or block canvas interaction.
+ *
+ * Modes:
+ * - suggest: primary “Switch to …” CTA (desktop)
+ * - status: informational after mobile auto-switch; optional Switch back
+ *
+ * Tool coach toast — temporarily disabled; auto-switch only.
+ * Studio.jsx + useToolCoach toast path are commented out. Uncomment if we want gesture explanations again.
  */
 export default function ToolCoachToast({ suggestion, onAccept, onDismiss }) {
   if (!suggestion) return null
 
+  const isStatus = suggestion.mode === 'status'
   const Icon = suggestion.switchTo === 'hand' ? Hand : MousePointer2
+  const primaryLabel = isStatus
+    ? suggestion.secondaryLabel
+    : suggestion.actionLabel
+  const showPrimary = Boolean(primaryLabel)
 
   return (
     <div className="tool-coach" role="status" aria-live="polite">
@@ -18,9 +30,15 @@ export default function ToolCoachToast({ suggestion, onAccept, onDismiss }) {
         <p className="tool-coach__msg">{suggestion.message}</p>
       </div>
       <div className="tool-coach__actions">
-        <button type="button" className="tool-coach__action" onClick={onAccept}>
-          {suggestion.actionLabel}
-        </button>
+        {showPrimary ? (
+          <button
+            type="button"
+            className={`tool-coach__action${isStatus ? ' tool-coach__action--ghost' : ''}`}
+            onClick={onAccept}
+          >
+            {primaryLabel}
+          </button>
+        ) : null}
         <button
           type="button"
           className="tool-coach__dismiss"

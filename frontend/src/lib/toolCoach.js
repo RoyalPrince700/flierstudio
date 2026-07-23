@@ -4,7 +4,7 @@
  */
 
 export const TOOL_COACH = {
-  /** How many times the tool button blinks when suggested */
+  /** How many times the tool button blinks when suggested / auto-switched */
   blinkCount: 4,
   blinkPeriodMs: 320,
   /** Toast auto-hides */
@@ -17,6 +17,8 @@ export const TOOL_COACH = {
   cooldownAfterShowMs: 1800,
   /** Brief quiet after X — do not silence for minutes */
   cooldownAfterDismissMs: 2500,
+  /** After auto-switch, quiet the opposite kind briefly to avoid bounce loops */
+  cooldownAfterAutoMs: 2200,
   /** Effectively no permanent suppress (tighten later once users know the tools) */
   maxDismissesPerKind: 999,
   /** Rolling window for streak counting */
@@ -55,20 +57,55 @@ export function coachThresholds(isNarrow) {
   return isNarrow ? TOOL_COACH_MOBILE : TOOL_COACH_DESKTOP
 }
 
-export function coachCopy(kind) {
+/**
+ * @param {string} kind
+ * @param {{ auto?: boolean }} [opts] — auto: post-switch status copy (mobile)
+ */
+export function coachCopy(kind, { auto = false } = {}) {
+  if (auto) {
+    if (kind === COACH_KIND.USE_HAND) {
+      return {
+        mode: 'status',
+        message:
+          'Switched to Hand because you were swiping. Switch back to Select when you want to tap and edit.',
+        actionLabel: null,
+        secondaryLabel: 'Switch back',
+        highlightTool: 'hand',
+        switchTo: 'hand',
+        switchBackTo: 'select',
+      }
+    }
+    return {
+      mode: 'status',
+      message:
+        'Switched to Select because you tapped to edit. Switch back to Hand when you want to drag the canvas.',
+      actionLabel: null,
+      secondaryLabel: 'Switch back',
+      highlightTool: 'select',
+      switchTo: 'select',
+      switchBackTo: 'hand',
+    }
+  }
+
   if (kind === COACH_KIND.USE_HAND) {
     return {
+      mode: 'suggest',
       message: 'Trying to drag the canvas? Use the Hand tool.',
       actionLabel: 'Switch to Hand',
+      secondaryLabel: null,
       highlightTool: 'hand',
       switchTo: 'hand',
+      switchBackTo: null,
     }
   }
   return {
+    mode: 'suggest',
     message: 'Trying to edit? Switch to Select.',
     actionLabel: 'Switch to Select',
+    secondaryLabel: null,
     highlightTool: 'select',
     switchTo: 'select',
+    switchBackTo: null,
   }
 }
 

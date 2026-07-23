@@ -24,7 +24,9 @@ export function seedBoardLayout(project) {
 
 /**
  * Merge any new default project boards into a persisted layout.
- * Keeps existing order, custom names, duplicates, and template layers.
+ * Drops board entries whose sourceId no longer exists on the project
+ * (orphaned after template removal). Keeps template layers, custom names,
+ * and duplicates of still-valid sources.
  * Returns the same layout reference when nothing changed.
  */
 export function syncBoardLayoutWithProject(layout, project) {
@@ -35,8 +37,25 @@ export function syncBoardLayoutWithProject(layout, project) {
   if (!layout) return seedBoardLayout(project)
 
   let changed = false
-  const order = [...layout.order]
+  let order = [...layout.order]
   const entries = { ...layout.entries }
+  const catalogIds = new Set(items.map((item) => item.id))
+
+  for (const id of Object.keys(entries)) {
+    const entry = entries[id]
+    if (entry?.templateId) continue
+    const sourceId = entry?.sourceId
+    if (!sourceId || !catalogIds.has(sourceId)) {
+      delete entries[id]
+      changed = true
+    }
+  }
+
+  const prunedOrder = order.filter((id) => entries[id])
+  if (prunedOrder.length !== order.length) {
+    order = prunedOrder
+    changed = true
+  }
 
   for (const item of items) {
     if (!order.includes(item.id)) {
@@ -148,6 +167,16 @@ export function duplicateBoardLayer(layout, project, itemId, newId) {
   }
 }
 
+/** Find an existing board layer that already hosts this template id. */
+export function findTemplateLayer(layout, templateId) {
+  if (!templateId || !layout?.entries) return null
+  const order = Array.isArray(layout.order) ? layout.order : Object.keys(layout.entries)
+  for (const id of order) {
+    if (layout.entries[id]?.templateId === templateId) return id
+  }
+  return null
+}
+
 /** Add a style-library template as a new layer on the workspace project. */
 export function addTemplateLayer(layout, project, template, newId) {
   if (!template?.id || !template?.Component) {
@@ -155,6 +184,11 @@ export function addTemplateLayer(layout, project, template, newId) {
   }
 
   const base = syncBoardLayoutWithProject(layout, project)
+  const existingId = findTemplateLayer(base, template.id)
+  if (existingId) {
+    return { layout: base, newId: existingId }
+  }
+
   const id =
     newId ||
     `tpl_${template.id}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`

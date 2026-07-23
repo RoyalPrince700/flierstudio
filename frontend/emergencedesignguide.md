@@ -209,19 +209,15 @@ Speaker/panelist names in the reference are replaced by empty slots in studio te
 
 ## 10. Studio templates (own versions)
 
-Same design language, different composition — all leave speaker/convener image areas empty.
+Same design language — speaker/convener image areas stay empty until the user fills them.
 
 **Live in studio today**
 
 | ID | Name | Idea |
 | --- | --- | --- |
-| `classic` | Classic Tilt | Closest to reference: tilted cyan card, 3 speakers + 4-col panelist track, floating convener |
-| `cascade` | Cascade Hero | Oversized theme hero; cascading offset frames; motif-heavy footer |
-| `stage-grid` | Stage Grid | Flat cyan card; programme title band; equal 2×3 speaker/panelist grid + tall right convener spanning both rows |
-| `cascade-grid` | Cascade Grid | Cascade hero (eyebrow / theme / capsule / icon pills) + custom equal 2×3 people board |
-| `cascade-stage` | Cascade Stage | Exact Cascade Hero section + exact Stage Grid speaker card composited |
+| `cascade-stage` | Cascade Stage | Cascade Hero top (eyebrow / theme / capsule / icon pills) + Stage Grid speaker card (equal 2×3 + tall convener) |
 
-**Guide / future variants** (not registered as boards yet)
+**Guide / future variants** (not registered as boards)
 
 | ID | Name | Idea |
 | --- | --- | --- |
@@ -250,16 +246,16 @@ bg-architecture.png   (optional; CSS/SVG bg ships by default)
 ## 12. Prompt recipes
 
 ```text
-Rebuild using emergencedesignguide.md — template classic.
+Rebuild using emergencedesignguide.md — template cascade-stage.
 Keep speaker slots empty. Copy: [paste]. Assets in public/assets/emergence/.
 ```
 
 ```text
-Switch to Emergence split template, keep tokens, swap venue to [x].
+Adjust Emergence Cascade Stage copy/venue to [x], keep tokens and layout.
 ```
 
 ```text
-Match the lime capsule + tilted card from the Emergence guide on a new event flier.
+Match the lime capsule + cascade hero + stage grid card from the Emergence guide on a new event flier.
 ```
 
 ---

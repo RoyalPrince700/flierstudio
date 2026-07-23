@@ -56,6 +56,7 @@ import {
   addTemplateLayer,
   deleteBoardLayer,
   duplicateBoardLayer,
+  findTemplateLayer,
   loadBoardLayouts,
   resolveProjectBoard,
   saveBoardLayouts,
@@ -75,11 +76,11 @@ import {
 } from '../projects/registry'
 import {
   filterTemplateCollections,
+  getCollectionWorkspaceProject,
   getTemplate,
-  getTemplateCollection,
   listTemplateCollections,
 } from '../samples/registry'
-import { useTemplatePublish } from '../lib/templatePublish'
+import { isDesignPublished, useTemplatePublish } from '../lib/templatePublish'
 import { hasSeenStudioTour } from '../lib/studioTour'
 import TemplatesBoard from './TemplatesBoard'
 import Artboard from './studio/Artboard'
@@ -91,7 +92,8 @@ import ProjectTabs from './studio/ProjectTabs'
 import StudioHelp from './studio/StudioHelp'
 import StudioTour from './studio/StudioTour'
 import ThemeRail from './studio/ThemeRail'
-import ToolCoachToast from './studio/ToolCoachToast'
+// Tool coach toast — temporarily disabled; auto-switch only. Uncomment if we want gesture explanations again.
+// import ToolCoachToast from './studio/ToolCoachToast'
 import ToolRail from './studio/ToolRail'
 import { useToolCoach } from './studio/useToolCoach'
 import './Studio.css'
@@ -173,12 +175,18 @@ function clearLegacySharedTabs() {
 }
 
 function createTabState(projectId) {
-  const project = getProject(projectId)
+  const project = resolveStudioProject(projectId)
   return {
     selectedId: project?.defaultItemId ?? null,
     zoom: 0.22,
     pan: { x: 64, y: 64 },
   }
+}
+
+/** Brand project or analyzed collection workspace (Inspire, Prayer Chain, …). */
+function resolveStudioProject(id) {
+  if (!id) return null
+  return getProject(id) || getCollectionWorkspaceProject(id)
 }
 
 export default function Studio({
@@ -193,6 +201,13 @@ export default function Studio({
   const frameRefs = useRef({})
   const shellRef = useRef(null)
   const panRef = useRef({ x: 64, y: 64 })
+  const zoomRef = useRef(0.22)
+  /** Pre-edit camera — restored when mobile text dock closes (keyboard resize must not fit). */
+  const cameraBeforeTextEditRef = useRef(null)
+  /** Blocks window-resize → fitToScreen during / just after mobile text edit. */
+  const suppressAutoFitRef = useRef(false)
+  const suppressAutoFitTimerRef = useRef(null)
+  const mobileTextEditingRef = useRef(false)
   const topbarMenuRef = useRef(null)
   const tabsUserRef = useRef(null)
 
@@ -219,11 +234,12 @@ export default function Studio({
   const [spaceHandActive, setSpaceHandActive] = useState(false)
 
   const {
-    suggestion: toolCoachSuggestion,
+    // Tool coach toast — temporarily disabled; auto-switch only. Uncomment if we want gesture explanations again.
+    // suggestion: toolCoachSuggestion,
+    // dismissCoach,
+    // acceptCoach,
     highlightTool: toolCoachHighlight,
     onCoachSignal,
-    dismissCoach,
-    acceptCoach,
   } = useToolCoach({
     isNarrow,
     // Skip while Space temporarily holds Hand — user already knows the tool
@@ -268,6 +284,13 @@ export default function Studio({
   const boardLayoutsRef = useRef(boardLayouts)
   const historyRef = useRef(createStudioHistory())
 
+  const {
+    collectionPublishMap,
+    unpublishedDesignsMap,
+    includeUnpublished,
+    loading: publishLoading,
+  } = useTemplatePublish()
+
   draftsRef.current = drafts
   boardLayoutsRef.current = boardLayouts
 
@@ -303,7 +326,7 @@ export default function Studio({
     applyHistorySnapshot(next)
   }, [applyHistorySnapshot])
 
-  const project = activeProjectId ? getProject(activeProjectId) : null
+  const project = activeProjectId ? resolveStudioProject(activeProjectId) : null
   const resolvedBoard = useMemo(
     () =>
       project
@@ -311,13 +334,39 @@ export default function Studio({
         : { items: [], bounds: { width: 1000, height: 1000 } },
     [activeProjectId, boardLayouts, project],
   )
-  const baseBoardItems = resolvedBoard.items
+  const baseBoardItems = useMemo(() => {
+    const items = resolvedBoard.items
+    if (
+      includeUnpublished ||
+      publishLoading ||
+      !activeProjectId ||
+      activeProjectId === TEMPLATE_WORKSPACE_ID
+    ) {
+      return items
+    }
+    return items.filter((item) => {
+      const catalogId = item.templateId || item.sourceId || item.id
+      return isDesignPublished(activeProjectId, catalogId, {
+        collectionPublishMap,
+        unpublishedDesignsMap,
+        includeUnpublished: false,
+      })
+    })
+  }, [
+    activeProjectId,
+    collectionPublishMap,
+    includeUnpublished,
+    publishLoading,
+    resolvedBoard.items,
+    unpublishedDesignsMap,
+  ])
   const bounds = resolvedBoard.bounds ?? { width: 1000, height: 1000 }
   const currentTab = tabState[activeProjectId] ?? createTabState(activeProjectId)
   const selectedId = currentTab.selectedId
   const zoom = currentTab.zoom
   const pan = currentTab.pan
   panRef.current = pan
+  zoomRef.current = zoom
   const editEnabled = true
   const selectedBaseItem = selectedId
     ? baseBoardItems.find((item) => item.id === selectedId)
@@ -327,7 +376,7 @@ export default function Studio({
     : 'props'
 
   const openTabs = useMemo(
-    () => openTabIds.map((id) => getProject(id)).filter(Boolean),
+    () => openTabIds.map((id) => resolveStudioProject(id)).filter(Boolean),
     [openTabIds],
   )
 
@@ -351,7 +400,7 @@ export default function Studio({
   const patchDraft = useCallback(
     (projectId, itemId, path, value) => {
       const layout = boardLayouts[projectId]
-      const { items } = resolveProjectBoard(getProject(projectId), layout)
+      const { items } = resolveProjectBoard(resolveStudioProject(projectId), layout)
       const item = items.find((entry) => entry.id === itemId)
       const editKind = getItemEditKind(item, projectId)
       recordHistory(`${projectId}:${itemId}:${path}`)
@@ -367,7 +416,7 @@ export default function Studio({
   /** Persist newly registered project boards into stale saved layouts. */
   useEffect(() => {
     if (!activeProjectId) return
-    const projectRef = getProject(activeProjectId)
+    const projectRef = resolveStudioProject(activeProjectId)
     if (!projectRef) return
 
     setBoardLayouts((prev) => {
@@ -381,7 +430,7 @@ export default function Studio({
   const handleDuplicateLayer = useCallback(
     (itemId) => {
       if (!activeProjectId || !itemId) return
-      const projectRef = getProject(activeProjectId)
+      const projectRef = resolveStudioProject(activeProjectId)
       const current = boardLayouts[activeProjectId]
       const { layout, newId: createdId } = duplicateBoardLayer(current, projectRef, itemId)
       if (!createdId) return
@@ -404,7 +453,7 @@ export default function Studio({
   const handleDeleteLayer = useCallback(
     (itemId) => {
       if (!activeProjectId || !itemId) return
-      const projectRef = getProject(activeProjectId)
+      const projectRef = resolveStudioProject(activeProjectId)
       const current = boardLayouts[activeProjectId]
       const orderLen = current?.order?.length ?? projectRef?.boardItems?.length ?? 0
       if (orderLen <= 1) {
@@ -428,7 +477,7 @@ export default function Studio({
       return
     }
     const itemId = deletePrompt.itemId
-    const projectRef = getProject(activeProjectId)
+    const projectRef = resolveStudioProject(activeProjectId)
     const current = boardLayouts[activeProjectId]
     const { layout, removedId, nextSelectedId } = deleteBoardLayer(
       current,
@@ -524,6 +573,54 @@ export default function Studio({
     [activeProjectId, isNarrow, selectedId],
   )
 
+  // Mobile text edit: snapshot zoom/pan on enter; restore on exit.
+  // Keyboard open/close fires resize → must not fitToScreen and wipe the user’s view.
+  useEffect(() => {
+    const editing =
+      isNarrow && !templatesOpen && focusedKind === 'text' && Boolean(focusedPath)
+    const wasEditing = mobileTextEditingRef.current
+    mobileTextEditingRef.current = editing
+
+    if (editing && !wasEditing) {
+      cameraBeforeTextEditRef.current = {
+        projectId: activeProjectId,
+        zoom: zoomRef.current,
+        pan: { x: panRef.current.x, y: panRef.current.y },
+      }
+      if (suppressAutoFitTimerRef.current) {
+        window.clearTimeout(suppressAutoFitTimerRef.current)
+        suppressAutoFitTimerRef.current = null
+      }
+      suppressAutoFitRef.current = true
+      return undefined
+    }
+
+    if (!editing && wasEditing) {
+      const snap = cameraBeforeTextEditRef.current
+      cameraBeforeTextEditRef.current = null
+      if (snap?.projectId === activeProjectId) {
+        patchTab(activeProjectId, {
+          zoom: snap.zoom,
+          pan: { x: snap.pan.x, y: snap.pan.y },
+        })
+      }
+      // Soft keyboard close often resizes after Done — keep suppressing briefly.
+      // Do not clear this timer in effect cleanup on dep changes (would stick suppress on).
+      suppressAutoFitRef.current = true
+      if (suppressAutoFitTimerRef.current) {
+        window.clearTimeout(suppressAutoFitTimerRef.current)
+      }
+      suppressAutoFitTimerRef.current = window.setTimeout(() => {
+        suppressAutoFitRef.current = false
+        suppressAutoFitTimerRef.current = null
+      }, 600)
+      return undefined
+    }
+
+    if (editing) suppressAutoFitRef.current = true
+    return undefined
+  }, [activeProjectId, focusedKind, focusedPath, isNarrow, templatesOpen])
+
   useEffect(() => {
     if (!isNarrow || focusedKind !== 'text' || !focusedPath) return
     const id = window.requestAnimationFrame(() => frameFocusedTextInView(focusedPath))
@@ -534,6 +631,7 @@ export default function Studio({
     setPrimaryTool((prev) => (prev === 'text' ? 'select' : prev))
     setFocusedPath(null)
     setFocusedKind(null)
+    // Camera restore runs in the mobile-text-edit effect above (pre-edit zoom/pan).
   }, [])
 
   const handleAlignChange = useCallback(
@@ -571,7 +669,7 @@ export default function Studio({
     (projectId, itemId, path) => {
       if (!projectId || !itemId || !path) return
       const layout = boardLayouts[projectId]
-      const { items } = resolveProjectBoard(getProject(projectId), layout)
+      const { items } = resolveProjectBoard(resolveStudioProject(projectId), layout)
       const item = items.find((entry) => entry.id === itemId)
       const editKind = getItemEditKind(item, projectId)
       const isEmergenceLogo = editKind === 'emergence' && isLogoImagePath(path)
@@ -634,7 +732,7 @@ export default function Studio({
     (projectId, itemId, { logoMode, logoSrc, wordmark, focusPath, focusKind }) => {
       if (!projectId || !itemId) return
       const layout = boardLayouts[projectId]
-      const { items } = resolveProjectBoard(getProject(projectId), layout)
+      const { items } = resolveProjectBoard(resolveStudioProject(projectId), layout)
       const item = items.find((entry) => entry.id === itemId)
       const editKind = getItemEditKind(item, projectId)
       if (editKind !== 'emergence') return
@@ -745,7 +843,7 @@ export default function Studio({
           return
         }
         const layout = boardLayouts[activeProjectId]
-        const { items } = resolveProjectBoard(getProject(activeProjectId), layout)
+        const { items } = resolveProjectBoard(resolveStudioProject(activeProjectId), layout)
         const item = items.find((entry) => entry.id === selectedId)
         const editKind = getItemEditKind(item, activeProjectId)
         recordHistory(`${activeProjectId}:${selectedId}:${path}`)
@@ -937,27 +1035,19 @@ export default function Studio({
     setPrimaryTool((prev) => (prev === 'text' ? 'select' : prev))
   }, [activeProjectId])
 
-  const { collectionPublishMap, includeUnpublished, loading: publishLoading } = useTemplatePublish()
   const templateCollections = useMemo(
     () =>
       filterTemplateCollections(listTemplateCollections(), {
         collectionPublishMap,
+        unpublishedDesignsMap,
         includeUnpublished,
       }),
-    [includeUnpublished, collectionPublishMap],
+    [includeUnpublished, collectionPublishMap, unpublishedDesignsMap],
   )
-  const openTemplateCollection = openTemplateCollectionId
-    ? getTemplateCollection(openTemplateCollectionId)
+  const openTemplateCollectionFiltered = openTemplateCollectionId
+    ? templateCollections.find((collection) => collection.id === openTemplateCollectionId) ||
+      null
     : null
-  const openTemplateCollectionFiltered =
-    openTemplateCollection &&
-    (includeUnpublished ||
-      (collectionPublishMap[openTemplateCollection.id] ?? 'draft') === 'published')
-      ? {
-          ...openTemplateCollection,
-          publishStatus: collectionPublishMap[openTemplateCollection.id] ?? 'draft',
-        }
-      : null
 
   const templatesInspectorItems = useMemo(() => {
     if (openTemplateCollectionFiltered) {
@@ -1100,11 +1190,23 @@ export default function Studio({
 
   useEffect(() => {
     function onResize() {
+      // Mobile keyboard / text-dock lifecycle must not auto-fit (wipes custom zoom/pan).
+      // Explicit Fit control still calls fitToScreen() directly.
+      if (suppressAutoFitRef.current || mobileTextEditingRef.current) return
       fitToScreen()
     }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [fitToScreen])
+
+  useEffect(
+    () => () => {
+      if (suppressAutoFitTimerRef.current) {
+        window.clearTimeout(suppressAutoFitTimerRef.current)
+      }
+    },
+    [],
+  )
 
   const openTemplateInStudio = useCallback(
     (template) => {
@@ -1116,6 +1218,16 @@ export default function Studio({
         setError('This template group is not available yet.')
         return
       }
+      if (
+        !isDesignPublished(full.collectionId, full.id, {
+          collectionPublishMap,
+          unpublishedDesignsMap,
+          includeUnpublished: isAdmin,
+        })
+      ) {
+        setError('This template is not available yet.')
+        return
+      }
 
       navigate('/studio')
       setOpenTemplateCollectionId(null)
@@ -1125,7 +1237,7 @@ export default function Studio({
 
       if (full.source === 'project') {
         const projectId = full.collectionId
-        const projectRef = getProject(projectId)
+        const projectRef = resolveStudioProject(projectId)
         if (projectRef) {
           const currentLayout = boardLayoutsRef.current[projectId]
           const synced = syncBoardLayoutWithProject(currentLayout, projectRef)
@@ -1145,11 +1257,27 @@ export default function Studio({
         return
       }
 
-      const workspaceId = TEMPLATE_WORKSPACE_ID
-      const projectRef = getProject(workspaceId)
+      // Analyzed collections (Inspire, Prayer Chain, …) get their own studio tab —
+      // never dump into Starter. Re-open focuses the existing board layer.
+      const workspaceId = full.collectionId
+      const projectRef = resolveStudioProject(workspaceId)
       if (!projectRef) return
 
       const currentLayout = boardLayoutsRef.current[workspaceId]
+      const existingId = findTemplateLayer(currentLayout, full.id)
+      if (existingId) {
+        setOpenTabIds((prev) => (prev.includes(workspaceId) ? prev : [...prev, workspaceId]))
+        setTabState((prev) => ({
+          ...prev,
+          [workspaceId]: {
+            ...(prev[workspaceId] ?? createTabState(workspaceId)),
+            selectedId: existingId,
+          },
+        }))
+        setActiveProjectId(workspaceId)
+        return
+      }
+
       const { layout, newId } = addTemplateLayer(currentLayout, projectRef, full)
       if (!newId) return
 
@@ -1165,7 +1293,7 @@ export default function Studio({
       }))
       setActiveProjectId(workspaceId)
     },
-    [isAdmin, navigate, collectionPublishMap, recordHistory],
+    [isAdmin, navigate, collectionPublishMap, unpublishedDesignsMap, recordHistory],
   )
 
   useEffect(() => {
@@ -1182,12 +1310,12 @@ export default function Studio({
 
   useEffect(() => {
     const templateId = searchParams.get('template')
-    if (!templateId || !draftsReady) return
+    if (!templateId || !draftsReady || publishLoading) return
     const template = getTemplate(templateId)
     if (!template) return
     openTemplateInStudio(template)
     setSearchParams({}, { replace: true })
-  }, [draftsReady, openTemplateInStudio, searchParams, setSearchParams])
+  }, [draftsReady, openTemplateInStudio, publishLoading, searchParams, setSearchParams])
 
   function handleTemplatesInspectorSelect(id) {
     if (openTemplateCollectionFiltered) {
@@ -1826,11 +1954,13 @@ export default function Studio({
             />
           )}
 
+          {/* Tool coach toast — temporarily disabled; auto-switch only. Uncomment if we want gesture explanations again.
           <ToolCoachToast
             suggestion={toolCoachSuggestion}
             onAccept={acceptCoach}
             onDismiss={dismissCoach}
           />
+          */}
 
           {showThemeRail ? (
             <ThemeRail

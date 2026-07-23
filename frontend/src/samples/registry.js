@@ -3,6 +3,7 @@ import malikGadget from './malik-gadget/meta'
 import radioshow from './radioshow/meta'
 import voidProfileAsk from './void-profile-ask/meta'
 import prayerChain from './prayer-chain/meta'
+import inspire from './inspire/meta'
 import { PROJECTS } from '../projects/registry'
 
 /**
@@ -57,6 +58,7 @@ export const ANALYZED_COLLECTIONS = [
     ],
   }),
   normalizeCollection(prayerChain),
+  normalizeCollection(inspire),
 ]
 
 const PRINCIPLES_BY_PROJECT = {
@@ -136,6 +138,28 @@ export function getSampleCollection(id) {
   return listSampleCollections().find((collection) => collection.id === id) || null
 }
 
+/**
+ * Studio workspace shell for an analyzed template collection.
+ * Empty boardItems — boards are template layers in boardLayouts[collectionId].
+ * Kept out of PROJECTS so Starter stays the only sandbox project.
+ */
+export function getCollectionWorkspaceProject(id) {
+  if (!id) return null
+  const collection = ANALYZED_COLLECTIONS.find((entry) => entry.id === id)
+  if (!collection || collection.source !== 'analyzed') return null
+  return {
+    id: collection.id,
+    name: collection.name,
+    brand: collection.brand || 'Style library',
+    description: collection.description,
+    color: collection.color || '#7b5cff',
+    boardItems: [],
+    defaultItemId: null,
+    flierCount: collection.templateCount || collection.templates?.length || 0,
+    source: 'analyzed',
+  }
+}
+
 /** Flat lookup by template id (e.g. malik-gadget-flagship-tray). */
 export function getSample(id) {
   for (const collection of listSampleCollections()) {
@@ -170,17 +194,43 @@ export const getTemplate = getSample
 export const listTemplates = listSamples
 
 /**
- * Filter collections by Mongo collection-level publish state.
- * Collections without a DB record are treated as draft (hidden from users).
+ * Filter collections (and designs inside them) by Mongo publish state.
+ *
+ * Group gate: status must be published (unless includeUnpublished).
+ * Design gate: template id must not be in unpublishedDesignsMap[collectionId]
+ * (deny list — missing means published). New catalog designs default visible.
+ * Collections with zero visible designs are dropped for non-admins.
  */
 export function filterTemplateCollections(
   collections,
-  { collectionPublishMap = {}, includeUnpublished = false } = {},
+  {
+    collectionPublishMap = {},
+    unpublishedDesignsMap = {},
+    includeUnpublished = false,
+  } = {},
 ) {
   return collections
-    .map((collection) => ({
-      ...collection,
-      publishStatus: collectionPublishMap[collection.id] ?? 'draft',
-    }))
-    .filter((collection) => includeUnpublished || collection.publishStatus === 'published')
+    .map((collection) => {
+      const publishStatus = collectionPublishMap[collection.id] ?? 'draft'
+      const denied = new Set(unpublishedDesignsMap[collection.id] || [])
+      const templates = (collection.templates || [])
+        .map((template) => ({
+          ...template,
+          designPublished: !denied.has(template.id),
+        }))
+        .filter((template) => includeUnpublished || template.designPublished)
+
+      return {
+        ...collection,
+        publishStatus,
+        templates,
+        cover: templates[0] || null,
+        templateCount: templates.length,
+      }
+    })
+    .filter((collection) => {
+      if (includeUnpublished) return true
+      if (collection.publishStatus !== 'published') return false
+      return collection.templateCount > 0
+    })
 }

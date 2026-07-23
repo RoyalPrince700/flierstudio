@@ -13,8 +13,14 @@ import {
   Sparkles,
   Type,
   Upload,
+  Users,
   X,
 } from 'lucide-react'
+import {
+  STAGE_PEOPLE_MAX,
+  STAGE_PEOPLE_MIN,
+  clampStagePeopleCount,
+} from '../../fliers/emergence/stagePeopleLayout'
 import { FONT_CATALOG, fontIdByStack } from '../../design/fontCatalog'
 import {
   DEFAULT_EMERGENCE_COLOR_THEME,
@@ -83,6 +89,13 @@ function fieldLabel(path) {
     if (field === 'photoSrc') return `Panelist ${n} photo`
     if (field === 'name') return `Panelist ${n} name`
     if (field === 'title') return `Panelist ${n} title`
+  }
+  if (path.startsWith('stagePeople.')) {
+    const [, index, field] = path.split('.')
+    const n = Number(index) + 1
+    if (field === 'photoSrc') return `Person ${n} photo`
+    if (field === 'name') return `Person ${n} name`
+    if (field === 'title') return `Person ${n} title`
   }
   if (path.startsWith('event.')) {
     const key = path.replace('event.', '').replace(/\.\d+$/, '')
@@ -175,6 +188,68 @@ export default function EditPanel({
       )}
     </p>
   )
+
+  const stageCount = isEmergence
+    ? clampStagePeopleCount(content.stagePeopleCount)
+    : STAGE_PEOPLE_MIN
+  const includeConvener = isEmergence ? content.includeConvener !== false : true
+
+  const stageFlexSection =
+    isEmergence && content.stageFlex ? (
+      <div key="stage-flex" className="edit-panel__section">
+        <div className="edit-panel__label">
+          <Users size={13} strokeWidth={2.25} />
+          People on stage
+        </div>
+        <div className="edit-panel__actions edit-panel__actions--crop">
+          <button
+            type="button"
+            className="edit-panel__btn edit-panel__btn--ghost"
+            disabled={stageCount <= STAGE_PEOPLE_MIN}
+            aria-label="Fewer people"
+            onClick={() => onChange('stagePeopleCount', stageCount - 1)}
+          >
+            <Minus size={14} strokeWidth={2.25} />
+          </button>
+          <label className="edit-panel__field edit-panel__field--inline">
+            <select
+              value={stageCount}
+              aria-label="People on stage"
+              onChange={(e) => onChange('stagePeopleCount', Number(e.target.value))}
+            >
+              {Array.from({ length: STAGE_PEOPLE_MAX - STAGE_PEOPLE_MIN + 1 }, (_, i) => {
+                const n = STAGE_PEOPLE_MIN + i
+                return (
+                  <option key={n} value={n}>
+                    {n} {n === 1 ? 'person' : 'people'}
+                  </option>
+                )
+              })}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="edit-panel__btn edit-panel__btn--ghost"
+            disabled={stageCount >= STAGE_PEOPLE_MAX}
+            aria-label="More people"
+            onClick={() => onChange('stagePeopleCount', stageCount + 1)}
+          >
+            <Plus size={14} strokeWidth={2.25} />
+          </button>
+        </div>
+        <label className="edit-panel__field edit-panel__check">
+          <input
+            type="checkbox"
+            checked={includeConvener}
+            onChange={(e) => onChange('includeConvener', e.target.checked)}
+          />
+          <span>Include convener column</span>
+        </label>
+        <p className="inspector__note">
+          Layout reflows for visual balance. Reducing count keeps hidden slot edits.
+        </p>
+      </div>
+    ) : null
 
   const themeSection = isEmergence ? (
     <div key="theme" className="edit-panel__section">
@@ -614,7 +689,7 @@ export default function EditPanel({
         </>
       ) : (
         <p className="inspector__note">
-          Click a speaker, panelist, convener, or QR slot to edit photos.
+          Click a person, speaker, panelist, convener, or QR slot to edit photos.
         </p>
       )}
     </div>
@@ -644,6 +719,7 @@ export default function EditPanel({
         ? [
             noteSection,
             brandSection,
+            stageFlexSection,
             textSection,
             typographySection,
             themeSection,
@@ -653,6 +729,7 @@ export default function EditPanel({
         : [
             noteSection,
             imageSection,
+            stageFlexSection,
             brandSection,
             textSection,
             typographySection,
@@ -663,6 +740,7 @@ export default function EditPanel({
     orderedSections = [
       noteSection,
       textSection,
+      stageFlexSection,
       typographySection,
       themeSection,
       brandSection,
@@ -670,9 +748,10 @@ export default function EditPanel({
       resetSection,
     ]
   } else {
-    // Nothing focused — theme + type first; image/brand lower
+    // Nothing focused — stage flex + theme first on Flex boards
     orderedSections = [
       noteSection,
+      stageFlexSection,
       themeSection,
       typographySection,
       textSection,

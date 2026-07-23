@@ -27,6 +27,12 @@ function fieldLabel(path) {
     if (field === 'name') return `Panelist ${n} name`
     if (field === 'title') return `Panelist ${n} title`
   }
+  if (path.startsWith('stagePeople.')) {
+    const [, index, field] = path.split('.')
+    const n = Number(index) + 1
+    if (field === 'name') return `Person ${n} name`
+    if (field === 'title') return `Person ${n} title`
+  }
   if (path.startsWith('event.')) {
     const key = path.replace('event.', '').replace(/\.\d+$/, '')
     return key.charAt(0).toUpperCase() + key.slice(1)

@@ -26,12 +26,26 @@ export function pickCanonicalTemplate(docs) {
   }, null)
 }
 
+export function normalizeUnpublishedDesignIds(ids) {
+  if (!Array.isArray(ids)) return []
+  const seen = new Set()
+  const out = []
+  for (const id of ids) {
+    const key = typeof id === 'string' ? id.trim() : ''
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push(key)
+  }
+  return out.sort((a, b) => a.localeCompare(b))
+}
+
 export function serializeTemplateCollection(row) {
   return {
     collectionId: row.collectionId,
     source: row.source,
     templateCount: row.templateCount,
     status: row.status,
+    unpublishedDesignIds: normalizeUnpublishedDesignIds(row.unpublishedDesignIds),
     publishedAt: row.publishedAt,
     updatedAt: row.updatedAt,
   }
@@ -106,6 +120,9 @@ export async function dedupeTemplateCollections() {
       0,
       ...docs.map((doc) => Number(doc.templateCount) || 0),
     )
+    const mergedUnpublished = normalizeUnpublishedDesignIds(
+      docs.flatMap((doc) => doc.unpublishedDesignIds || []),
+    )
     const patch = {}
     if ((Number(winner.templateCount) || 0) < mergedCount) {
       patch.templateCount = mergedCount
@@ -113,6 +130,10 @@ export async function dedupeTemplateCollections() {
     if (!winner.source) {
       const withSource = docs.find((doc) => doc.source)
       if (withSource?.source) patch.source = withSource.source
+    }
+    const winnerUnpublished = normalizeUnpublishedDesignIds(winner.unpublishedDesignIds)
+    if (mergedUnpublished.join('\0') !== winnerUnpublished.join('\0')) {
+      patch.unpublishedDesignIds = mergedUnpublished
     }
     if (Object.keys(patch).length) {
       await Template.updateOne({ _id: winner._id }, { $set: patch })
@@ -126,8 +147,9 @@ export async function dedupeTemplateCollections() {
 }
 
 /**
- * Upsert catalog rows without resetting publish status on existing docs.
+ * Upsert catalog rows without resetting publish status or per-design overrides.
  * Creates missing collections as draft only ($setOnInsert).
+ * New designs default to published (not present in unpublishedDesignIds).
  */
 export async function syncTemplateCollectionCatalog(entries) {
   const valid = (Array.isArray(entries) ? entries : []).filter(
@@ -157,6 +179,7 @@ export async function syncTemplateCollectionCatalog(entries) {
         $setOnInsert: {
           collectionId: row.collectionId,
           status: 'draft',
+          unpublishedDesignIds: [],
         },
       },
       upsert: true,
@@ -203,4 +226,33 @@ export async function setTemplateCollectionStatus(collectionId, status, userId) 
 
   await dedupeTemplateCollections()
   return Template.findOne({ collectionId })
+}
+
+/**
+ * Set per-design publish inside a collection.
+ * published:false adds templateId to the deny list; published:true removes it.
+ * Does not change group status. Sync never clears these overrides.
+ */
+export async function setTemplateDesignPublished(collectionId, templateId, published) {
+  const designId = typeof templateId === 'string' ? templateId.trim() : ''
+  if (!collectionId || !designId) {
+    const error = new Error('collectionId and templateId required')
+    error.status = 400
+    throw error
+  }
+
+  await dedupeTemplateCollections()
+  await ensureTemplateIndexes()
+
+  const row = await Template.findOne({ collectionId })
+  if (!row) return null
+
+  const current = new Set(normalizeUnpublishedDesignIds(row.unpublishedDesignIds))
+  if (published) current.delete(designId)
+  else current.add(designId)
+
+  const next = normalizeUnpublishedDesignIds([...current])
+  row.unpublishedDesignIds = next
+  await row.save()
+  return row
 }
