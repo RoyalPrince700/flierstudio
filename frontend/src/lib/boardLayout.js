@@ -22,6 +22,39 @@ export function seedBoardLayout(project) {
   }
 }
 
+/**
+ * Merge any new default project boards into a persisted layout.
+ * Keeps existing order, custom names, duplicates, and template layers.
+ * Returns the same layout reference when nothing changed.
+ */
+export function syncBoardLayoutWithProject(layout, project) {
+  const items = project?.boardItems ?? []
+  if (!items.length) {
+    return layout || { order: [], entries: {} }
+  }
+  if (!layout) return seedBoardLayout(project)
+
+  let changed = false
+  const order = [...layout.order]
+  const entries = { ...layout.entries }
+
+  for (const item of items) {
+    if (!order.includes(item.id)) {
+      order.push(item.id)
+      entries[item.id] = { sourceId: item.id, name: item.name }
+      changed = true
+      continue
+    }
+    if (!entries[item.id]) {
+      entries[item.id] = { sourceId: item.id, name: item.name }
+      changed = true
+    }
+  }
+
+  if (!changed) return layout
+  return { order, entries }
+}
+
 function sourceCatalog(project) {
   const map = new Map()
   ;(project?.boardItems ?? []).forEach((item) => {
@@ -33,7 +66,7 @@ function sourceCatalog(project) {
 /** Resolve laid-out board items + bounds from project + optional layout override. */
 export function resolveProjectBoard(project, layout) {
   const catalog = sourceCatalog(project)
-  const active = layout || seedBoardLayout(project)
+  const active = syncBoardLayoutWithProject(layout, project)
 
   const raw = active.order
     .map((id) => {
@@ -74,7 +107,7 @@ export function resolveProjectBoard(project, layout) {
 }
 
 export function duplicateBoardLayer(layout, project, itemId, newId) {
-  const base = layout || seedBoardLayout(project)
+  const base = syncBoardLayoutWithProject(layout, project)
   const entry = base.entries[itemId]
   if (!entry) return { layout: base, newId: null }
 
@@ -118,10 +151,10 @@ export function duplicateBoardLayer(layout, project, itemId, newId) {
 /** Add a style-library template as a new layer on the workspace project. */
 export function addTemplateLayer(layout, project, template, newId) {
   if (!template?.id || !template?.Component) {
-    return { layout: layout || seedBoardLayout(project), newId: null }
+    return { layout: syncBoardLayoutWithProject(layout, project), newId: null }
   }
 
-  const base = layout || seedBoardLayout(project)
+  const base = syncBoardLayoutWithProject(layout, project)
   const id =
     newId ||
     `tpl_${template.id}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`
@@ -142,7 +175,7 @@ export function addTemplateLayer(layout, project, template, newId) {
 }
 
 export function deleteBoardLayer(layout, project, itemId) {
-  const base = layout || seedBoardLayout(project)
+  const base = syncBoardLayoutWithProject(layout, project)
   if (base.order.length <= 1) {
     return { layout: base, removedId: null, nextSelectedId: base.order[0] || null }
   }

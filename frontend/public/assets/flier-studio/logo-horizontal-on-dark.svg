@@ -1,0 +1,11 @@
+<svg width="420" height="96" viewBox="0 0 420 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    Flier Studio horizontal lockup  on-dark / transparent flier default.
+    Liftoff mark geometry matches logo-mark.svg (tile + Signal peel).
+    Wordmark: Space Grotesk 700/500, light (#FFFFFF) for navy/dark fields.
+    Prefer logo-horizontal-on-dark.png when font embedding is unavailable.
+  -->
+  <path d="M48 12 L84 48 L84 66 Q84 84 66 84 L30 84 Q12 84 12 66 L12 30 Q12 12 30 12 Z" fill="#FFFFFF"/>
+  <path d="M59 6 L72 6 Q90 6 90 24 L90 37 Z" fill="#FF4A1D"/>
+  <text x="112" y="65" font-family="Space Grotesk, Manrope, sans-serif" font-size="50" font-weight="700" letter-spacing="-1.5" fill="#FFFFFF">Flier<tspan font-weight="500"> Studio</tspan></text>
+</svg>

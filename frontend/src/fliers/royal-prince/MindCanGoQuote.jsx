@@ -105,6 +105,9 @@ export default function MindCanGoQuote({
               hasImage={Boolean(photoSrc)}
               onFocusField={studioEdit?.onFocusField}
               onPickImage={studioEdit?.onPickImage}
+              onClearImage={studioEdit?.onClearImage}
+              imageFits={studioEdit?.imageFits}
+              onImageFitChange={studioEdit?.onImageFitChange}
             >
               <PortraitPlaceholder
                 src={photoSrc}

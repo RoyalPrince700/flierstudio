@@ -13,8 +13,8 @@ import {
 } from 'lucide-react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { trackEvent } from '../lib/trackEvent'
 import { useMediaQuery } from '../lib/useMediaQuery'
+import { trackFlierDownload } from '../lib/gtm'
 import { LiftoffMark } from '../fliers/flier-studio/FSLogo'
 import { fsTokens } from '../design/flierStudioTokens'
 import {
@@ -39,8 +39,19 @@ import {
   setArtboardAlignment,
 } from '../lib/flierDraft'
 import {
+  DEFAULT_IMAGE_FIT,
+  clampImageFit,
+  imageFitDraftPath,
+} from '../lib/imageFit'
+import {
+  clampLogoLayout,
+  DEFAULT_LOGO_LAYOUT,
+  isLogoImagePath,
+} from '../lib/logoLayout'
+import {
   DEFAULT_EMERGENCE_COLOR_THEME,
 } from '../design/emergenceThemes'
+import { DEFAULT_BRAND_LOGO_SRC } from '../design/defaultBrandLogo'
 import {
   addTemplateLayer,
   deleteBoardLayer,
@@ -48,6 +59,7 @@ import {
   loadBoardLayouts,
   resolveProjectBoard,
   saveBoardLayouts,
+  syncBoardLayoutWithProject,
   TEMPLATE_WORKSPACE_ID,
 } from '../lib/boardLayout'
 import {
@@ -336,8 +348,6 @@ export default function Studio({
     [drafts],
   )
 
-  const trackEditRef = useRef(null)
-
   const patchDraft = useCallback(
     (projectId, itemId, path, value) => {
       const layout = boardLayouts[projectId]
@@ -346,16 +356,6 @@ export default function Studio({
       const editKind = getItemEditKind(item, projectId)
       recordHistory(`${projectId}:${itemId}:${path}`)
       setDrafts((prev) => patchArtboardDraft(prev, projectId, itemId, path, value, editKind))
-
-      if (trackEditRef.current) window.clearTimeout(trackEditRef.current)
-      trackEditRef.current = window.setTimeout(() => {
-        trackEvent({
-          action: 'edit',
-          projectId,
-          designId: item?.sourceId || itemId,
-          meta: { path },
-        })
-      }, 1200)
     },
     [boardLayouts, recordHistory],
   )
@@ -363,6 +363,20 @@ export default function Studio({
   useEffect(() => {
     saveBoardLayouts(boardLayouts)
   }, [boardLayouts])
+
+  /** Persist newly registered project boards into stale saved layouts. */
+  useEffect(() => {
+    if (!activeProjectId) return
+    const projectRef = getProject(activeProjectId)
+    if (!projectRef) return
+
+    setBoardLayouts((prev) => {
+      const current = prev[activeProjectId]
+      const synced = syncBoardLayoutWithProject(current, projectRef)
+      if (synced === current) return prev
+      return { ...prev, [activeProjectId]: synced }
+    })
+  }, [activeProjectId])
 
   const handleDuplicateLayer = useCallback(
     (itemId) => {
@@ -462,6 +476,9 @@ export default function Studio({
         setSpaceHandActive(false)
         // Keep artboard visible: close the inspector sheet while editing text on mobile.
         if (isNarrow) setMobileInspectorOpen(false)
+      } else if (kind === 'image' && isNarrow) {
+        // Logo / photo controls live in the Edit sheet on mobile.
+        setMobileInspectorOpen(true)
       }
     },
     [isNarrow],
@@ -550,12 +567,148 @@ export default function Studio({
     fileInputRef.current?.click()
   }, [])
 
+  const clearImageAt = useCallback(
+    (projectId, itemId, path) => {
+      if (!projectId || !itemId || !path) return
+      const layout = boardLayouts[projectId]
+      const { items } = resolveProjectBoard(getProject(projectId), layout)
+      const item = items.find((entry) => entry.id === itemId)
+      const editKind = getItemEditKind(item, projectId)
+      const isEmergenceLogo = editKind === 'emergence' && isLogoImagePath(path)
+      recordHistory(`${projectId}:${itemId}:${path}`)
+      setDrafts((prev) => {
+        let next = patchArtboardDraft(prev, projectId, itemId, path, '', editKind)
+        // Brand logo: clear must empty the slot (not restore Flier Studio).
+        if (isEmergenceLogo) {
+          next = patchArtboardDraft(next, projectId, itemId, 'event.logoMode', 'none', editKind)
+        }
+        next = patchArtboardDraft(
+          next,
+          projectId,
+          itemId,
+          imageFitDraftPath(path),
+          { ...DEFAULT_IMAGE_FIT },
+          editKind,
+        )
+        return next
+      })
+    },
+    [boardLayouts, recordHistory],
+  )
+
   const handleClearImage = useCallback(
     (path) => {
       if (!selectedId) return
-      patchDraft(activeProjectId, selectedId, path, '')
+      clearImageAt(activeProjectId, selectedId, path)
+    },
+    [activeProjectId, clearImageAt, selectedId],
+  )
+
+  const handleImageFitChange = useCallback(
+    (path, fit) => {
+      if (!selectedId || !path) return
+      patchDraft(
+        activeProjectId,
+        selectedId,
+        imageFitDraftPath(path),
+        clampImageFit(fit || DEFAULT_IMAGE_FIT),
+      )
     },
     [activeProjectId, patchDraft, selectedId],
+  )
+
+  const handleLogoLayoutChange = useCallback(
+    (layout) => {
+      if (!selectedId) return
+      patchDraft(
+        activeProjectId,
+        selectedId,
+        'event.logoLayout',
+        clampLogoLayout(layout || DEFAULT_LOGO_LAYOUT),
+      )
+    },
+    [activeProjectId, patchDraft, selectedId],
+  )
+
+  const applyEmergenceBrand = useCallback(
+    (projectId, itemId, { logoMode, logoSrc, wordmark, focusPath, focusKind }) => {
+      if (!projectId || !itemId) return
+      const layout = boardLayouts[projectId]
+      const { items } = resolveProjectBoard(getProject(projectId), layout)
+      const item = items.find((entry) => entry.id === itemId)
+      const editKind = getItemEditKind(item, projectId)
+      if (editKind !== 'emergence') return
+      recordHistory(`${projectId}:${itemId}:event.logoMode`)
+      setDrafts((prev) => {
+        let next = prev
+        if (logoMode != null) {
+          next = patchArtboardDraft(next, projectId, itemId, 'event.logoMode', logoMode, editKind)
+        }
+        if (logoSrc !== undefined) {
+          next = patchArtboardDraft(next, projectId, itemId, 'event.logoSrc', logoSrc, editKind)
+        }
+        if (wordmark != null) {
+          next = patchArtboardDraft(next, projectId, itemId, 'event.wordmark', wordmark, editKind)
+        }
+        return next
+      })
+      if (focusPath) {
+        setFocusedPath(focusPath)
+        setFocusedKind(focusKind || (focusPath === 'event.wordmark' ? 'text' : 'image'))
+      }
+    },
+    [boardLayouts, recordHistory],
+  )
+
+  const handleRestoreDefaultLogo = useCallback(
+    (projectId, itemId) => {
+      applyEmergenceBrand(projectId || activeProjectId, itemId || selectedId, {
+        logoMode: 'image',
+        logoSrc: DEFAULT_BRAND_LOGO_SRC,
+        focusPath: 'event.logoSrc',
+        focusKind: 'image',
+      })
+    },
+    [activeProjectId, applyEmergenceBrand, selectedId],
+  )
+
+  const handleUseTextLogo = useCallback(
+    (projectId, itemId) => {
+      const pid = projectId || activeProjectId
+      const iid = itemId || selectedId
+      if (!pid || !iid) return
+      const draft = getDraft(pid, iid)
+      const merged = mergeEmergenceDraft(draft)
+      const wordmark =
+        merged.event?.wordmark?.trim() ||
+        merged.event?.theme?.trim() ||
+        'EMERGE'
+      applyEmergenceBrand(pid, iid, {
+        logoMode: 'text',
+        wordmark,
+        focusPath: 'event.wordmark',
+        focusKind: 'text',
+      })
+    },
+    [activeProjectId, applyEmergenceBrand, getDraft, selectedId],
+  )
+
+  const handleUseImageLogo = useCallback(
+    (projectId, itemId) => {
+      const pid = projectId || activeProjectId
+      const iid = itemId || selectedId
+      if (!pid || !iid) return
+      const draft = getDraft(pid, iid)
+      const merged = mergeEmergenceDraft(draft)
+      const existing = typeof merged.event?.logoSrc === 'string' ? merged.event.logoSrc.trim() : ''
+      applyEmergenceBrand(pid, iid, {
+        logoMode: 'image',
+        logoSrc: existing || DEFAULT_BRAND_LOGO_SRC,
+        focusPath: 'event.logoSrc',
+        focusKind: 'image',
+      })
+    },
+    [activeProjectId, applyEmergenceBrand, getDraft, selectedId],
   )
 
   const handleResetDraft = useCallback(() => {
@@ -591,14 +744,49 @@ export default function Studio({
           setError('Could not read that image.')
           return
         }
-        patchDraft(activeProjectId, selectedId, path, dataUrl)
+        const layout = boardLayouts[activeProjectId]
+        const { items } = resolveProjectBoard(getProject(activeProjectId), layout)
+        const item = items.find((entry) => entry.id === selectedId)
+        const editKind = getItemEditKind(item, activeProjectId)
+        recordHistory(`${activeProjectId}:${selectedId}:${path}`)
+        setDrafts((prev) => {
+          let next = patchArtboardDraft(
+            prev,
+            activeProjectId,
+            selectedId,
+            path,
+            dataUrl,
+            editKind,
+          )
+          // Brand logo upload switches into image mode.
+          if (editKind === 'emergence' && isLogoImagePath(path)) {
+            next = patchArtboardDraft(
+              next,
+              activeProjectId,
+              selectedId,
+              'event.logoMode',
+              'image',
+              editKind,
+            )
+          }
+          // New / replaced image starts at exact cover crop
+          next = patchArtboardDraft(
+            next,
+            activeProjectId,
+            selectedId,
+            imageFitDraftPath(path),
+            { ...DEFAULT_IMAGE_FIT },
+            editKind,
+          )
+          return next
+        })
         setError('')
       } catch (err) {
         console.error(err)
         setError('Could not process that image. Try a different PNG or JPEG.')
       }
     },
-    [activeProjectId, patchDraft, pendingImagePath, selectedId],
+    [activeProjectId, boardLayouts, pendingImagePath, recordHistory, selectedId],
   )
 
   const boardItems = useMemo(() => {
@@ -611,10 +799,16 @@ export default function Studio({
           ? mergeEmergenceDraft(draft).alignments
           : mergePropsDraft(item.props || {}, draft).alignments
 
+      const imageFits =
+        editKind === 'emergence'
+          ? mergeEmergenceDraft(draft).imageFits
+          : mergePropsDraft(item.props || {}, draft).imageFits
+
       const studioEdit = {
         enabled: !spaceHandActive && (primaryTool === 'select' || primaryTool === 'text'),
         focusedPath: selectedId === item.id ? focusedPath : null,
         alignments: alignments || {},
+        imageFits: imageFits || {},
         canvasReadOnly: isNarrow,
         onFocusField: (path, kind) => {
           if (selectedId !== item.id) {
@@ -630,6 +824,52 @@ export default function Studio({
             patchTab(activeProjectId, { selectedId: item.id })
           }
           handlePickImage(path)
+        },
+        onClearImage: (path) => {
+          if (selectedId !== item.id) {
+            patchTab(activeProjectId, { selectedId: item.id })
+          }
+          clearImageAt(activeProjectId, item.id, path)
+        },
+        onImageFitChange: (path, fit) => {
+          if (selectedId !== item.id) {
+            patchTab(activeProjectId, { selectedId: item.id })
+          }
+          patchDraft(
+            activeProjectId,
+            item.id,
+            imageFitDraftPath(path),
+            clampImageFit(fit || DEFAULT_IMAGE_FIT),
+          )
+        },
+        onLogoLayoutChange: (layout) => {
+          if (selectedId !== item.id) {
+            patchTab(activeProjectId, { selectedId: item.id })
+          }
+          patchDraft(
+            activeProjectId,
+            item.id,
+            'event.logoLayout',
+            clampLogoLayout(layout || DEFAULT_LOGO_LAYOUT),
+          )
+        },
+        onRestoreDefaultLogo: () => {
+          if (selectedId !== item.id) {
+            patchTab(activeProjectId, { selectedId: item.id })
+          }
+          handleRestoreDefaultLogo(activeProjectId, item.id)
+        },
+        onUseTextLogo: () => {
+          if (selectedId !== item.id) {
+            patchTab(activeProjectId, { selectedId: item.id })
+          }
+          handleUseTextLogo(activeProjectId, item.id)
+        },
+        onUseImageLogo: () => {
+          if (selectedId !== item.id) {
+            patchTab(activeProjectId, { selectedId: item.id })
+          }
+          handleUseImageLogo(activeProjectId, item.id)
         },
         onExitTextEdit: handleExitTextEdit,
       }
@@ -657,11 +897,15 @@ export default function Studio({
   }, [
     activeProjectId,
     baseBoardItems,
+    clearImageAt,
     focusedPath,
     getDraft,
     handleExitTextEdit,
     handleFocusField,
     handlePickImage,
+    handleRestoreDefaultLogo,
+    handleUseImageLogo,
+    handleUseTextLogo,
     isNarrow,
     patchDraft,
     primaryTool,
@@ -873,13 +1117,6 @@ export default function Studio({
         return
       }
 
-      trackEvent({
-        action: 'select',
-        projectId: full.collectionId || '',
-        designId: full.id,
-        meta: { source: full.source, from: 'templates' },
-      })
-
       navigate('/studio')
       setOpenTemplateCollectionId(null)
       setSelectedTemplateId(null)
@@ -888,6 +1125,14 @@ export default function Studio({
 
       if (full.source === 'project') {
         const projectId = full.collectionId
+        const projectRef = getProject(projectId)
+        if (projectRef) {
+          const currentLayout = boardLayoutsRef.current[projectId]
+          const synced = syncBoardLayoutWithProject(currentLayout, projectRef)
+          if (synced !== currentLayout) {
+            setBoardLayouts((prev) => ({ ...prev, [projectId]: synced }))
+          }
+        }
         setOpenTabIds((prev) => (prev.includes(projectId) ? prev : [...prev, projectId]))
         setTabState((prev) => ({
           ...prev,
@@ -1005,11 +1250,13 @@ export default function Studio({
           setExportLabel(label)
         },
       })
-      trackEvent({
-        action: 'download',
-        projectId: activeProjectId,
+      trackFlierDownload({
+        projectId: activeProjectId || '',
         designId: selected.sourceId || selected.id,
-        meta: { format, hdScaleId },
+        format,
+        hdScale: hdScaleId,
+        width: selected.width,
+        height: selected.height,
       })
       // Brief beat at 100% so completion reads before UI resets
       await new Promise((resolve) => window.setTimeout(resolve, 320))
@@ -1756,6 +2003,11 @@ export default function Studio({
           onFocusField={handleFocusField}
           onPickImage={handlePickImage}
           onClearImage={handleClearImage}
+          onImageFitChange={handleImageFitChange}
+          onLogoLayoutChange={handleLogoLayoutChange}
+          onRestoreDefaultLogo={() => handleRestoreDefaultLogo()}
+          onUseTextLogo={() => handleUseTextLogo()}
+          onUseImageLogo={() => handleUseImageLogo()}
           onAlignChange={handleAlignChange}
           onResetDraft={handleResetDraft}
           hasSavedEdits={Boolean(drafts[activeProjectId]?.[selectedId])}

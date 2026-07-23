@@ -9,6 +9,7 @@ export const FONT_CATALOG = [
   { id: 'space-grotesk', label: 'Space Grotesk', stack: '"Space Grotesk", sans-serif' },
   { id: 'outfit', label: 'Outfit', stack: '"Outfit", sans-serif' },
   { id: 'playfair', label: 'Playfair Display', stack: '"Playfair Display", serif' },
+  { id: 'unifraktur', label: 'UnifrakturCook', stack: '"UnifrakturCook", serif' },
 ]
 
 export function fontStackById(id) {

@@ -207,16 +207,26 @@ Speaker/panelist names in the reference are replaced by empty slots in studio te
 
 ---
 
-## 10. Four studio templates (own versions)
+## 10. Studio templates (own versions)
 
 Same design language, different composition — all leave speaker/convener image areas empty.
 
+**Live in studio today**
+
 | ID | Name | Idea |
 | --- | --- | --- |
-| `classic` | Classic Tilt | Closest to reference: tilted cyan card, 3+4 grid, footer bar |
+| `classic` | Classic Tilt | Closest to reference: tilted cyan card, 3 speakers + 4-col panelist track, floating convener |
+| `cascade` | Cascade Hero | Oversized theme hero; cascading offset frames; motif-heavy footer |
+| `stage-grid` | Stage Grid | Flat cyan card; programme title band; equal 2×3 speaker/panelist grid + tall right convener spanning both rows |
+| `cascade-grid` | Cascade Grid | Cascade hero (eyebrow / theme / capsule / icon pills) + custom equal 2×3 people board |
+| `cascade-stage` | Cascade Stage | Exact Cascade Hero section + exact Stage Grid speaker card composited |
+
+**Guide / future variants** (not registered as boards yet)
+
+| ID | Name | Idea |
+| --- | --- | --- |
 | `ribbon` | Flat Ribbon | No tilt; horizontal lime ribbon; speakers in a single showcase row + panelist strip |
 | `split` | Split Stage | Left theme column + right portrait grid; footer compact |
-| `cascade` | Cascade Hero | Oversized theme hero; cascading offset frames; motif-heavy footer |
 
 ---
 

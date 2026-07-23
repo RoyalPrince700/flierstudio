@@ -54,8 +54,11 @@ export function FSSocialBoard({
               hasImage={Boolean(avatarSrc)}
               onFocusField={studioEdit?.onFocusField}
               onPickImage={studioEdit?.onPickImage}
+              onClearImage={studioEdit?.onClearImage}
+              imageFits={studioEdit?.imageFits}
+              onImageFitChange={studioEdit?.onImageFitChange}
               emptyHint="Avatar"
-              filledHint="Replace"
+              filledHint="Select"
               className="fs-soc__avatar-slot"
             >
               <div className="fs-soc__avatar">

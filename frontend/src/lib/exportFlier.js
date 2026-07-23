@@ -92,7 +92,7 @@ function mountExportClone(node, width, height) {
     el.classList.remove('is-focused', 'studio-editable')
   })
   clone.querySelectorAll('.studio-image-slot').forEach((el) => {
-    el.classList.remove('is-focused', 'studio-image-slot')
+    el.classList.remove('is-focused', 'is-fitting', 'studio-image-slot')
   })
 
   // Soften export artifacts: backdrop-filter is poorly supported in foreignObject

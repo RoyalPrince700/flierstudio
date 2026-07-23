@@ -1,4 +1,7 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ChevronDown,
+  ChevronRight,
   Copy,
   Download,
   FileImage,
@@ -13,7 +16,72 @@ import {
 } from 'lucide-react'
 import { HD_SCALES } from '../../lib/exportFlier'
 import EditPanel from './EditPanel'
+import { resolveEditFocusMode } from './editFocus'
 import ExportProgress from './ExportProgress'
+import LayerThumb from './LayerThumb'
+
+const PANEL_STORAGE_KEY = 'flier-studio-inspector-panels'
+const GROUP_STORAGE_KEY = 'flier-studio-inspector-groups'
+
+function readJson(key, fallback) {
+  try {
+    const raw = sessionStorage.getItem(key)
+    if (!raw) return fallback
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : fallback
+  } catch {
+    return fallback
+  }
+}
+
+function writeJson(key, value) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function groupLayerItems(items) {
+  const groups = []
+  const index = new Map()
+  for (const item of items) {
+    const key = item.group || 'Boards'
+    let group = index.get(key)
+    if (!group) {
+      group = { key, items: [] }
+      index.set(key, group)
+      groups.push(group)
+    }
+    group.items.push(item)
+  }
+  return groups
+}
+
+function PanelHead({ icon: Icon, label, open, onToggle, count, trailing }) {
+  return (
+    <button
+      type="button"
+      className={`inspector__panel-head${open ? ' is-open' : ''}`}
+      aria-expanded={open}
+      onClick={onToggle}
+    >
+      <span className="inspector__panel-head-main">
+        {open ? (
+          <ChevronDown size={14} strokeWidth={2.25} aria-hidden />
+        ) : (
+          <ChevronRight size={14} strokeWidth={2.25} aria-hidden />
+        )}
+        {Icon ? <Icon size={14} strokeWidth={2.25} aria-hidden /> : null}
+        <span>{label}</span>
+        {typeof count === 'number' ? (
+          <span className="inspector__panel-count">{count}</span>
+        ) : null}
+      </span>
+      {trailing}
+    </button>
+  )
+}
 
 export default function Inspector({
   items,
@@ -47,6 +115,11 @@ export default function Inspector({
   onFocusField,
   onPickImage,
   onClearImage,
+  onImageFitChange,
+  onLogoLayoutChange,
+  onRestoreDefaultLogo,
+  onUseTextLogo,
+  onUseImageLogo,
   onAlignChange,
   onResetDraft,
   hasSavedEdits = false,
@@ -64,12 +137,255 @@ export default function Inspector({
   const closeLabel = sheet ? 'Close panel' : 'Collapse sidebar'
   const CloseIcon = sheet ? X : PanelRightClose
   const sheetHidden = sheet && !sheetOpen
+  const focusMode = resolveEditFocusMode(focusedKind, focusedPath)
+
+  const [panels, setPanels] = useState(() => ({
+    layers: true,
+    edit: true,
+    export: true,
+    ...readJson(PANEL_STORAGE_KEY, {}),
+  }))
+  const [collapsedGroups, setCollapsedGroups] = useState(() =>
+    readJson(GROUP_STORAGE_KEY, {}),
+  )
+  const editBodyRef = useRef(null)
+
+  useEffect(() => {
+    writeJson(PANEL_STORAGE_KEY, panels)
+  }, [panels])
+
+  useEffect(() => {
+    writeJson(GROUP_STORAGE_KEY, collapsedGroups)
+  }, [collapsedGroups])
+
+  // Context-first: keep Edit open when selecting text/image/logo.
+  useEffect(() => {
+    if (!editEnabled) return
+    if (focusMode === 'none') return
+    setPanels((prev) => (prev.edit ? prev : { ...prev, edit: true }))
+  }, [editEnabled, focusMode, focusedPath])
+
+  // Image/logo controls sit at the top — jump Edit scroll so they're visible.
+  useEffect(() => {
+    if (focusMode !== 'image') return
+    const el = editBodyRef.current
+    if (!el) return
+    el.scrollTop = 0
+  }, [focusMode, focusedPath])
+
+  const layerGroups = useMemo(() => groupLayerItems(layerItems), [layerItems])
+
+  function togglePanel(id) {
+    setPanels((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  function toggleGroup(key) {
+    setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  function selectLayer(itemId) {
+    if (templatesMode) onTemplatesSelect?.(itemId)
+    else onSelect(itemId)
+  }
 
   function sheetHandle() {
     if (!sheet) return null
     return (
       <div className="inspector__sheet-handle" aria-hidden>
         <span />
+      </div>
+    )
+  }
+
+  function renderLayerRow(item) {
+    const active = (templatesMode ? templatesSelectedId : selectedId) === item.id
+    return (
+      <li key={item.id} className={`inspector__layer-row${active ? ' is-active' : ''}`}>
+        <button
+          type="button"
+          className={`inspector__layer${active ? ' is-active' : ''}`}
+          onClick={() => selectLayer(item.id)}
+        >
+          <LayerThumb item={item} active={active} size="md" />
+          <span className="inspector__layer-text">
+            <strong>{item.name}</strong>
+            <small>{item.meta || item.group || ''}</small>
+          </span>
+        </button>
+
+        {!templatesMode ? (
+          <div className="inspector__layer-actions">
+            <button
+              type="button"
+              className="inspector__layer-action"
+              title="Duplicate layer"
+              aria-label={`Duplicate ${item.name}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                onDuplicateLayer?.(item.id)
+              }}
+            >
+              <CopyPlus size={13} strokeWidth={2.25} />
+            </button>
+            <button
+              type="button"
+              className="inspector__layer-action inspector__layer-action--danger"
+              title={canDeleteLayer ? 'Delete layer' : 'Keep at least one layer'}
+              aria-label={`Delete ${item.name}`}
+              disabled={!canDeleteLayer}
+              onClick={(e) => {
+                e.stopPropagation()
+                onDeleteLayer?.(item.id)
+              }}
+            >
+              <Trash2 size={13} strokeWidth={2.25} />
+            </button>
+          </div>
+        ) : null}
+      </li>
+    )
+  }
+
+  function renderLayersBody() {
+    if (!layerItems.length) {
+      return <p className="inspector__empty">No layers yet.</p>
+    }
+
+    const useGroups = layerGroups.length > 1 || (layerGroups[0] && layerGroups[0].key !== 'Boards')
+
+    if (!useGroups) {
+      return <ul className="inspector__layers">{layerItems.map(renderLayerRow)}</ul>
+    }
+
+    return (
+      <div className="inspector__layer-groups">
+        {layerGroups.map((group) => {
+          const open = !collapsedGroups[group.key]
+          return (
+            <div key={group.key} className="inspector__layer-group">
+              <button
+                type="button"
+                className={`inspector__group-head${open ? ' is-open' : ''}`}
+                aria-expanded={open}
+                onClick={() => toggleGroup(group.key)}
+              >
+                {open ? (
+                  <ChevronDown size={13} strokeWidth={2.25} aria-hidden />
+                ) : (
+                  <ChevronRight size={13} strokeWidth={2.25} aria-hidden />
+                )}
+                <span>{group.key}</span>
+                <span className="inspector__panel-count">{group.items.length}</span>
+              </button>
+              {open ? (
+                <ul className="inspector__layers">{group.items.map(renderLayerRow)}</ul>
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  function renderExportBody() {
+    if (!selected) {
+      return <p className="inspector__empty">Select an artboard to export.</p>
+    }
+
+    return (
+      <div className="inspector__block">
+        <div className="inspector__meta">
+          <p className="inspector__name">{selected.name}</p>
+          <p className="inspector__desc">{selected.description}</p>
+        </div>
+
+        <div className="inspector__row">
+          <span>Artboard</span>
+          <code>{selected.width}</code>
+          <span>×</span>
+          <code>{selected.height}</code>
+          <button
+            type="button"
+            className="inspector__icon-btn"
+            title="Copy artboard size"
+            aria-label="Copy artboard size"
+            onClick={onCopySize}
+          >
+            <Copy size={14} strokeWidth={2.25} />
+          </button>
+        </div>
+
+        <div className="inspector__row inspector__row--stack">
+          <span>Quality</span>
+          <div className="inspector__segment inspector__segment--wrap">
+            {Object.values(HD_SCALES).map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={hdScaleId === item.id ? 'is-active' : ''}
+                onClick={() => onHdScaleChange(item.id)}
+                title={`${item.label} → ${selected.width * item.scale}×${selected.height * item.scale}`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="inspector__row">
+          <span>Output</span>
+          <code className="inspector__code-wide">
+            {outW}×{outH}
+          </code>
+          <span className="inspector__badge">HD</span>
+        </div>
+
+        <div className="inspector__row">
+          <span>Format</span>
+          <div className="inspector__segment">
+            {['png', 'jpg'].map((value) => (
+              <button
+                key={value}
+                type="button"
+                className={format === value ? 'is-active' : ''}
+                onClick={() => onFormatChange(value)}
+              >
+                {value.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="inspector__row">
+          <span>View zoom</span>
+          <code>{Math.round(zoom * 100)}%</code>
+          <Link2 size={13} strokeWidth={2} className="inspector__muted-icon" />
+        </div>
+
+        <p className="inspector__note">
+          Export captures at full HD — preview zoom does not affect sharpness. Larger scale =
+          sharper, bigger file.
+        </p>
+
+        <button
+          type="button"
+          className={`inspector__export${busy ? ' is-busy' : ''}`}
+          disabled={busy}
+          onClick={onExport}
+          title={busy ? exportLabel : `Download ${outW}×${outH} ${format.toUpperCase()}`}
+          aria-busy={busy || undefined}
+        >
+          {busy ? (
+            <ExportProgress progress={exportProgress} label={exportLabel} />
+          ) : (
+            <>
+              <Download size={16} strokeWidth={2.25} />
+              <span>{`Export ${scale}×`}</span>
+            </>
+          )}
+        </button>
+
+        {error ? <p className="inspector__error" role="alert">{error}</p> : null}
       </div>
     )
   }
@@ -113,14 +429,9 @@ export default function Inspector({
                     title={item.name}
                     aria-label={item.name}
                     aria-pressed={active}
-                    onClick={() =>
-                      templatesMode ? onTemplatesSelect?.(item.id) : onSelect(item.id)
-                    }
+                    onClick={() => selectLayer(item.id)}
                   >
-                    <span
-                      className="inspector__swatch"
-                      style={item.color ? { background: item.color } : undefined}
-                    />
+                    <LayerThumb item={item} active={active} size="sm" />
                   </button>
                 </li>
               )
@@ -205,15 +516,16 @@ export default function Inspector({
 
   return (
     <aside
-      className={`inspector${sheet ? ' inspector--sheet' : ''}`}
+      className={`inspector inspector--dock${sheet ? ' inspector--sheet' : ''}`}
       aria-label="Inspector"
       aria-hidden={sheetHidden || undefined}
       data-tour="inspector"
+      data-focus-mode={focusMode}
     >
       {sheetHandle()}
-      <header className="inspector__head">
+      <header className="inspector__head inspector__head--toolbar">
         <Layers size={14} strokeWidth={2.25} />
-        <span>{templatesMode ? 'Templates' : 'Layers'}</span>
+        <span>Inspector</span>
         <button
           type="button"
           className="inspector__collapse-btn"
@@ -226,222 +538,115 @@ export default function Inspector({
         </button>
       </header>
 
-      <ul className="inspector__layers">
-        {layerItems.map((item) => {
-          const active =
-            (templatesMode ? templatesSelectedId : selectedId) === item.id
-          return (
-            <li key={item.id} className={`inspector__layer-row${active ? ' is-active' : ''}`}>
-              <button
-                type="button"
-                className={`inspector__layer${active ? ' is-active' : ''}`}
-                onClick={() => (templatesMode ? onTemplatesSelect?.(item.id) : onSelect(item.id))}
-              >
-                <span
-                  className="inspector__swatch"
-                  style={item.color ? { background: item.color } : undefined}
-                />
-                <span className="inspector__layer-text">
-                  <strong>{item.name}</strong>
-                  <small>{item.group || item.meta}</small>
-                </span>
-              </button>
+      <div className="inspector__panels">
+        <section
+          className={`inspector__panel inspector__panel--layers${panels.layers ? ' is-open' : ''}`}
+        >
+          <PanelHead
+            icon={Layers}
+            label={templatesMode ? 'Templates' : 'Layers'}
+            open={panels.layers}
+            onToggle={() => togglePanel('layers')}
+            count={layerItems.length}
+          />
+          {panels.layers ? (
+            <div className="inspector__panel-body inspector__panel-body--layers">
+              {renderLayersBody()}
+            </div>
+          ) : null}
+        </section>
 
-              {!templatesMode ? (
-                <div className="inspector__layer-actions">
-                  <button
-                    type="button"
-                    className="inspector__layer-action"
-                    title="Duplicate layer"
-                    aria-label={`Duplicate ${item.name}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDuplicateLayer?.(item.id)
-                    }}
+        {templatesMode ? (
+          <section className="inspector__panel inspector__panel--info is-open">
+            <div className="inspector__panel-body">
+              <div className="inspector__block">
+                <p className="inspector__note">
+                  {templatesHint || 'Click a template to open it in the studio editor.'}
+                </p>
+              </div>
+              <div className="inspector__tips">
+                <p>Templates stay inside the studio canvas.</p>
+                <p>Use the grid icon again to return to boards.</p>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <>
+            {editEnabled ? (
+              <section
+                className={`inspector__panel inspector__panel--edit${panels.edit ? ' is-open' : ''}`}
+              >
+                <PanelHead
+                  icon={Pencil}
+                  label="Edit"
+                  open={panels.edit}
+                  onToggle={() => togglePanel('edit')}
+                />
+                {panels.edit ? (
+                  <div
+                    ref={editBodyRef}
+                    className="inspector__panel-body inspector__panel-body--edit"
                   >
-                    <CopyPlus size={13} strokeWidth={2.25} />
-                  </button>
-                  <button
-                    type="button"
-                    className="inspector__layer-action inspector__layer-action--danger"
-                    title={canDeleteLayer ? 'Delete layer' : 'Keep at least one layer'}
-                    aria-label={`Delete ${item.name}`}
-                    disabled={!canDeleteLayer}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDeleteLayer?.(item.id)
-                    }}
-                  >
-                    <Trash2 size={13} strokeWidth={2.25} />
-                  </button>
+                    <EditPanel
+                      content={editContent}
+                      focusedPath={focusedPath}
+                      focusedKind={focusedKind}
+                      onChange={onEditChange}
+                      onFocusField={onFocusField}
+                      onPickImage={onPickImage}
+                      onClearImage={onClearImage}
+                      onImageFitChange={onImageFitChange}
+                      onLogoLayoutChange={onLogoLayoutChange}
+                      onRestoreDefaultLogo={onRestoreDefaultLogo}
+                      onUseTextLogo={onUseTextLogo}
+                      onUseImageLogo={onUseImageLogo}
+                      onAlignChange={onAlignChange}
+                      onResetDraft={onResetDraft}
+                      hasSavedEdits={hasSavedEdits}
+                    />
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            <section
+              className={`inspector__panel inspector__panel--export${panels.export ? ' is-open' : ''}`}
+            >
+              <PanelHead
+                icon={FileImage}
+                label="Export"
+                open={panels.export}
+                onToggle={() => togglePanel('export')}
+              />
+              {panels.export ? (
+                <div className="inspector__panel-body inspector__panel-body--export">
+                  {renderExportBody()}
+                  <div className="inspector__tips inspector__tips--desktop">
+                    <p>
+                      <kbd>V</kbd> Move · <kbd>T</kbd> Text · <kbd>H</kbd> Hand
+                    </p>
+                    <p>
+                      Scroll to pan · <kbd>Ctrl</kbd>+scroll to zoom
+                    </p>
+                    <p>
+                      <kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+
+                      <kbd>Z</kbd> Redo
+                    </p>
+                    <p>Enter = new line · click outside text returns to Move</p>
+                    <p>
+                      <kbd>+</kbd> <kbd>-</kbd> Zoom · <kbd>⌘/Ctrl</kbd>+<kbd>0</kbd> Fit
+                    </p>
+                  </div>
+                  <div className="inspector__tips inspector__tips--mobile">
+                    <p>Pinch to zoom · two-finger drag to pan · Hand tool for one-finger pan</p>
+                    <p>Tap text on the board to edit · use Export above for format &amp; HD</p>
+                  </div>
                 </div>
               ) : null}
-            </li>
-          )
-        })}
-      </ul>
-
-      {templatesMode ? (
-        <>
-          <div className="inspector__block">
-            <p className="inspector__note">
-              {templatesHint ||
-                'Click a template to open it in the studio editor.'}
-            </p>
-          </div>
-          <div className="inspector__tips">
-            <p>Templates stay inside the studio canvas.</p>
-            <p>Use the grid icon again to return to boards.</p>
-          </div>
-        </>
-      ) : (
-        <>
-          {editEnabled ? (
-            <>
-              <header className="inspector__head">
-                <Pencil size={14} strokeWidth={2.25} />
-                <span>Edit</span>
-              </header>
-              <EditPanel
-                content={editContent}
-                focusedPath={focusedPath}
-                focusedKind={focusedKind}
-                onChange={onEditChange}
-                onFocusField={onFocusField}
-                onPickImage={onPickImage}
-                onClearImage={onClearImage}
-                onAlignChange={onAlignChange}
-                onResetDraft={onResetDraft}
-                hasSavedEdits={hasSavedEdits}
-              />
-            </>
-          ) : null}
-
-          <header className="inspector__head">
-            <FileImage size={14} strokeWidth={2.25} />
-            <span>Export</span>
-          </header>
-
-          {selected ? (
-            <div className="inspector__block">
-              <div className="inspector__meta">
-                <p className="inspector__name">{selected.name}</p>
-                <p className="inspector__desc">{selected.description}</p>
-              </div>
-
-              <div className="inspector__row">
-                <span>Artboard</span>
-                <code>{selected.width}</code>
-                <span>×</span>
-                <code>{selected.height}</code>
-                <button
-                  type="button"
-                  className="inspector__icon-btn"
-                  title="Copy artboard size"
-                  aria-label="Copy artboard size"
-                  onClick={onCopySize}
-                >
-                  <Copy size={14} strokeWidth={2.25} />
-                </button>
-              </div>
-
-              <div className="inspector__row inspector__row--stack">
-                <span>Quality</span>
-                <div className="inspector__segment inspector__segment--wrap">
-                  {Object.values(HD_SCALES).map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={hdScaleId === item.id ? 'is-active' : ''}
-                      onClick={() => onHdScaleChange(item.id)}
-                      title={`${item.label} → ${selected.width * item.scale}×${selected.height * item.scale}`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="inspector__row">
-                <span>Output</span>
-                <code className="inspector__code-wide">
-                  {outW}×{outH}
-                </code>
-                <span className="inspector__badge">HD</span>
-              </div>
-
-              <div className="inspector__row">
-                <span>Format</span>
-                <div className="inspector__segment">
-                  {['png', 'jpg'].map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      className={format === value ? 'is-active' : ''}
-                      onClick={() => onFormatChange(value)}
-                    >
-                      {value.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="inspector__row">
-                <span>View zoom</span>
-                <code>{Math.round(zoom * 100)}%</code>
-                <Link2 size={13} strokeWidth={2} className="inspector__muted-icon" />
-              </div>
-
-              <p className="inspector__note">
-                Export captures at full HD — preview zoom does not affect sharpness. Larger scale =
-                sharper, bigger file.
-              </p>
-
-              <button
-                type="button"
-                className={`inspector__export${busy ? ' is-busy' : ''}`}
-                disabled={busy}
-                onClick={onExport}
-                title={busy ? exportLabel : `Download ${outW}×${outH} ${format.toUpperCase()}`}
-                aria-busy={busy || undefined}
-              >
-                {busy ? (
-                  <ExportProgress progress={exportProgress} label={exportLabel} />
-                ) : (
-                  <>
-                    <Download size={16} strokeWidth={2.25} />
-                    <span>{`Export ${scale}×`}</span>
-                  </>
-                )}
-              </button>
-
-              {error ? <p className="inspector__error" role="alert">{error}</p> : null}
-            </div>
-          ) : (
-            <p className="inspector__empty">Select an artboard to export.</p>
-          )}
-
-          <div className="inspector__tips inspector__tips--desktop">
-            <p>
-              <kbd>V</kbd> Move · <kbd>T</kbd> Text · <kbd>H</kbd> Hand
-            </p>
-            <p>
-              Scroll to pan · <kbd>Ctrl</kbd>+scroll to zoom
-            </p>
-            <p>
-              <kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> Redo
-            </p>
-            <p>Enter = new line · click outside text returns to Move</p>
-            <p>
-              <kbd>+</kbd> <kbd>-</kbd> Zoom · <kbd>⌘/Ctrl</kbd>+<kbd>0</kbd> Fit
-            </p>
-          </div>
-          <div className="inspector__tips inspector__tips--mobile">
-            <p>Pinch to zoom · two-finger drag to pan · Hand tool for one-finger pan</p>
-            <p>Tap text on the board to edit · use Export above for format &amp; HD</p>
-          </div>
-        </>
-      )}
+            </section>
+          </>
+        )}
+      </div>
     </aside>
   )
 }

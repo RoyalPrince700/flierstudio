@@ -1,4 +1,5 @@
 import { tokens } from '../../design/tokens'
+import { DEFAULT_BRAND_LOGO_SRC } from '../../design/defaultBrandLogo'
 import EditableImageSlot from '../../components/studio/EditableImageSlot'
 import EditableText from '../../components/studio/EditableText'
 import { editableTextProps } from '../../components/studio/editableTextProps'
@@ -17,7 +18,7 @@ export default function InstagramPostFlier({
   width = 1080,
   height = 1080,
   backgroundImage = '/assets/placeholder-bg.svg',
-  logoSrc = '/assets/logo-placeholder.svg',
+  logoSrc = DEFAULT_BRAND_LOGO_SRC,
   fonts,
   studioEdit,
 }) {
@@ -49,6 +50,10 @@ export default function InstagramPostFlier({
           hasImage={Boolean(logoSrc)}
           onFocusField={studioEdit?.onFocusField}
           onPickImage={studioEdit?.onPickImage}
+          onClearImage={studioEdit?.onClearImage}
+          imageFits={studioEdit?.imageFits}
+          onImageFitChange={studioEdit?.onImageFitChange}
+          enableFit={false}
         >
           <img className="ig-post__logo" src={logoSrc} alt="" />
         </EditableImageSlot>

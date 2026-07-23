@@ -7,7 +7,6 @@ import mongoose from 'mongoose'
 import morgan from 'morgan'
 import authRoutes from './routes/auth.js'
 import adminRoutes from './routes/admin.js'
-import eventRoutes from './routes/events.js'
 import templateRoutes from './routes/templates.js'
 
 const PORT = Number(process.env.PORT) || 8080
@@ -54,7 +53,6 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
-app.use('/api/events', eventRoutes)
 app.use('/api/templates', templateRoutes)
 app.use('/api/admin', adminRoutes)
 

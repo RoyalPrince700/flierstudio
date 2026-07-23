@@ -106,6 +106,15 @@ export const FLIER_SIZES = {
     height: 1080,
     platform: 'portfolio',
   },
+
+  // Print / square export
+  'print-square-5in': {
+    id: 'print-square-5in',
+    label: 'Print Square 5×5 in (300 DPI)',
+    width: 1500,
+    height: 1500,
+    platform: 'print',
+  },
 }
 
 /** Neutral fallback when the brief does not name a size — square Instagram post. */

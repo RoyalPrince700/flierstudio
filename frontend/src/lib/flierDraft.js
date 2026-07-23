@@ -1,4 +1,6 @@
+import { DEFAULT_BRAND_LOGO_SRC, normalizeLogoMode } from '../design/defaultBrandLogo'
 import { emergence } from '../design/emergenceTokens'
+import { clampLogoLayout, DEFAULT_LOGO_LAYOUT } from './logoLayout'
 
 export {
   loadSavedDrafts,
@@ -17,6 +19,7 @@ const LOCKED_PROP_KEYS = new Set([
   'content',
   'alignments',
   'fonts',
+  'imageFits',
 ])
 
 function clonePerson(person) {
@@ -31,7 +34,12 @@ function clonePerson(person) {
 /** Full editable content tree for Emergence boards (defaults from tokens). */
 export function createEmergenceContent() {
   return {
-    event: { ...emergence.event, keywords: [...emergence.event.keywords] },
+    event: {
+      ...emergence.event,
+      keywords: [...emergence.event.keywords],
+      logoMode: normalizeLogoMode(emergence.event.logoMode || 'image'),
+      logoLayout: clampLogoLayout(emergence.event.logoLayout || DEFAULT_LOGO_LAYOUT),
+    },
     speakers: emergence.speakers.map(clonePerson),
     panelists: emergence.panelists.map(clonePerson),
     convener: {
@@ -40,6 +48,7 @@ export function createEmergenceContent() {
     },
     fonts: { ...emergence.fonts },
     alignments: {},
+    imageFits: {},
     colorTheme: 'ocean',
   }
 }
@@ -98,6 +107,48 @@ export function mergeEmergenceDraft(draft) {
     event.date = event.date.replace(/\sAUGUST\s+2026$/i, '').trim()
   }
 
+  // Pre-split drafts bound Stage Grid / Cascade Stage programme title to event.theme.
+  // Keep that look until the user edits programmeTitle on its own path.
+  if (draft.event && !Object.prototype.hasOwnProperty.call(draft.event, 'programmeTitle')) {
+    event.programmeTitle = event.theme
+  }
+
+  // Cascade hero used to share series/theme/capsule with the header.
+  // Seed independent hero paths from the old shared values until edited.
+  if (draft.event) {
+    if (!Object.prototype.hasOwnProperty.call(draft.event, 'heroSeries')) {
+      event.heroSeries = event.series
+    }
+    if (!Object.prototype.hasOwnProperty.call(draft.event, 'heroTheme')) {
+      event.heroTheme = event.theme
+    }
+    if (!Object.prototype.hasOwnProperty.call(draft.event, 'heroCapsule')) {
+      event.heroCapsule = event.capsule
+    }
+  }
+
+  // Brand mark mode: image | text | none
+  const hadLogoMode =
+    draft.event && Object.prototype.hasOwnProperty.call(draft.event, 'logoMode')
+  event.logoMode = normalizeLogoMode(event.logoMode)
+  if (!hadLogoMode) {
+    // Legacy drafts always showed an image lockup (often the forced default).
+    event.logoMode = 'image'
+    if (!event.logoSrc || !String(event.logoSrc).trim()) {
+      event.logoSrc = DEFAULT_BRAND_LOGO_SRC
+    }
+  } else if (event.logoMode === 'image' && (!event.logoSrc || !String(event.logoSrc).trim())) {
+    // Image mode with an explicit empty src → empty brand slot
+    event.logoMode = 'none'
+    event.logoSrc = ''
+  }
+
+  event.logoLayout = clampLogoLayout({
+    ...DEFAULT_LOGO_LAYOUT,
+    ...(base.event.logoLayout || {}),
+    ...(draft.event?.logoLayout || {}),
+  })
+
   return {
     event,
     speakers: base.speakers.map((person, i) => ({
@@ -111,6 +162,7 @@ export function mergeEmergenceDraft(draft) {
     convener: { ...base.convener, ...draft.convener },
     fonts: { ...base.fonts, ...draft.fonts },
     alignments: { ...base.alignments, ...(draft.alignments || {}) },
+    imageFits: draft.imageFits && typeof draft.imageFits === 'object' ? draft.imageFits : {},
     colorTheme: draft.colorTheme || base.colorTheme,
   }
 }
@@ -134,16 +186,25 @@ export function createPropsDraft(props = {}) {
 export function mergePropsDraft(baseProps = {}, draft) {
   const merged = { ...baseProps }
   if (!draft) {
-    return { ...merged, alignments: {} }
+    return { ...merged, alignments: {}, imageFits: {} }
   }
   Object.entries(draft).forEach(([key, value]) => {
-    if (key === 'alignments' || key === 'fonts' || LOCKED_PROP_KEYS.has(key)) return
+    if (
+      key === 'alignments' ||
+      key === 'fonts' ||
+      key === 'imageFits' ||
+      LOCKED_PROP_KEYS.has(key)
+    ) {
+      return
+    }
     if (typeof value === 'string') merged[key] = value
   })
   return {
     ...merged,
     alignments: { ...(draft.alignments || {}) },
     fonts: draft.fonts ? { ...draft.fonts } : undefined,
+    imageFits:
+      draft.imageFits && typeof draft.imageFits === 'object' ? draft.imageFits : {},
   }
 }
 
@@ -152,6 +213,7 @@ export function getArtboardDraft(drafts, projectId, itemId) {
 }
 
 export function patchArtboardDraft(drafts, projectId, itemId, path, value, editKind) {
+  if (!projectId || !itemId) return drafts
   const projectDrafts = drafts[projectId] || {}
   const current =
     projectDrafts[itemId] ||
@@ -160,6 +222,7 @@ export function patchArtboardDraft(drafts, projectId, itemId, path, value, editK
     ...drafts,
     [projectId]: {
       ...projectDrafts,
+      // Only this artboard id is rewritten — siblings keep their prior references.
       [itemId]: setByPath(current, path, value),
     },
   }
@@ -222,6 +285,7 @@ export function buildEditViewModel(item, draft, projectId) {
     fields: merged,
     alignments: merged.alignments || {},
     fonts: merged.fonts || {},
+    imageFits: merged.imageFits || {},
   }
 }
 

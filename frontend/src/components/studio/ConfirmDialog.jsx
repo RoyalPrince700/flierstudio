@@ -14,6 +14,8 @@ function portalHost() {
  * Portaled to .studio-app (fallback: body) so chrome stays viewport-fixed
  * above transformed artboards while inheriting studio theme tokens.
  * tone: 'danger' | 'default' | 'image'
+ *
+ * Optional third action: secondaryLabel + onSecondary (e.g. Remove image).
  */
 export default function ConfirmDialog({
   open,
@@ -22,9 +24,12 @@ export default function ConfirmDialog({
   message,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
+  secondaryLabel,
   tone = 'danger',
+  secondaryTone = 'danger',
   hideCancel = false,
   onConfirm,
+  onSecondary,
   onClose,
 }) {
   const confirmRef = useRef(null)
@@ -52,6 +57,7 @@ export default function ConfirmDialog({
   const Icon = tone === 'image' ? ImageIcon : AlertTriangle
   const iconDanger = tone === 'danger'
   const btnAccent = tone !== 'danger'
+  const hasSecondary = Boolean(secondaryLabel && onSecondary)
 
   const stop = (e) => {
     e.stopPropagation()
@@ -104,7 +110,9 @@ export default function ConfirmDialog({
           <p className="confirm-dialog__message">{message}</p>
         </div>
 
-        <div className="confirm-dialog__actions">
+        <div
+          className={`confirm-dialog__actions${hasSecondary ? ' confirm-dialog__actions--triple' : ''}`}
+        >
           {!hideCancel ? (
             <button
               type="button"
@@ -130,6 +138,22 @@ export default function ConfirmDialog({
           >
             {confirmLabel}
           </button>
+          {hasSecondary ? (
+            <button
+              type="button"
+              className={`confirm-dialog__btn${
+                secondaryTone === 'danger'
+                  ? ' confirm-dialog__btn--danger'
+                  : ' confirm-dialog__btn--ghost'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation()
+                onSecondary?.()
+              }}
+            >
+              {secondaryLabel}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>,

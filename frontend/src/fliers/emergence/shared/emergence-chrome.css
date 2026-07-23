@@ -50,25 +50,192 @@
   z-index: 5;
   display: grid;
   grid-template-columns: 1.1fr 1.4fr 0.9fr;
-  gap: 16px;
+  grid-template-rows: auto auto;
+  column-gap: 16px;
+  row-gap: 0;
   align-items: start;
   padding: 44px 48px 0;
   color: #fff;
   font-family: var(--e-body);
 }
 
+/* Flatten brand so logo shares row 1 with theme/capsule; series on row 2 */
+.e-header__brand {
+  display: contents;
+}
+
+.e-header__brand > .studio-image-slot,
+.e-header__logo-slot,
+.e-header__brand > .e-header__logo,
+.e-header__brand-empty {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: start;
+  width: auto;
+  max-width: 100%;
+  position: relative;
+}
+
+/* Transparent logo holder — no speaker-style solid empty plate */
+.e-header__logo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: var(--logo-w, 280px);
+  height: var(--logo-h, 44px);
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  transform: translate(var(--logo-x, 0px), var(--logo-y, 0px));
+  transform-origin: left center;
+  will-change: transform;
+}
+
+.e-header__logo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+  pointer-events: none;
+  user-select: none;
+}
+
 .e-header__wordmark {
   margin: 0;
   font-family: var(--e-display);
-  font-size: 42px;
+  font-size: 36px;
   font-weight: 800;
   letter-spacing: 0.02em;
   line-height: 1;
+  color: #fff;
+  min-height: var(--logo-h, 44px);
+  display: flex;
+  align-items: center;
+}
+
+.e-header__logo-slot--text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.e-header__wordmark-chrome {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(6, 20, 51, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.e-header__wordmark-chrome-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.e-header__wordmark-chrome-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.e-header__brand-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: var(--logo-h, 44px);
+  justify-content: center;
+}
+
+.e-header__brand-empty.is-focused .e-header__brand-add {
+  outline: 2px solid rgba(94, 182, 255, 0.95);
+  outline-offset: 3px;
+}
+
+.e-header__brand-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1.5px dashed rgba(215, 230, 255, 0.55);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--e-ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.e-header__brand-add:hover {
+  border-color: rgba(182, 255, 0, 0.7);
+  color: #fff;
+  background: rgba(6, 20, 51, 0.28);
+}
+
+.e-header__brand-chooser {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+  padding: 6px;
+  border-radius: 10px;
+  background: rgba(6, 20, 51, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.e-header__brand-chooser button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.e-header__brand-chooser button:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .e-header__series {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+  align-self: start;
   margin: 8px 0 0;
-  max-width: 220px;
+  max-width: 280px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -77,12 +244,17 @@
 }
 
 .e-header__theme {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding-top: 8px;
+  /* Match logo band height so theme/capsule share the same optical center */
+  min-height: var(--logo-h, 44px);
+  padding-top: 0;
+  align-self: start;
 }
 
 .e-header__theme-text {
@@ -112,10 +284,13 @@
 /* Upper-right abstract mark — rising twin wings + cyan core + lime vector */
 .e-header__mark {
   position: relative;
+  grid-column: 3;
+  grid-row: 1;
   width: 92px;
   height: 72px;
   justify-self: end;
-  margin-top: 2px;
+  align-self: start;
+  margin-top: 0;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.28));
 }
 

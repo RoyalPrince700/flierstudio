@@ -20,7 +20,7 @@ export default createProject({
   id: 'emergence',
   name: 'Emergence',
   brand: 'Emerge',
-  description: 'Emerge conference flier set — Classic Tilt and Cascade Hero.',
+  description: 'Emerge conference flier set — Classic, Cascade, Stage Grid, Cascade Grid, and Cascade Stage.',
   color: '#3A8DFF',
   fliers,
 })

@@ -79,6 +79,9 @@ export default function OrbitPocketSplitFlier({
               hasImage={Boolean(heroSrc)}
               onFocusField={studioEdit?.onFocusField}
               onPickImage={studioEdit?.onPickImage}
+              onClearImage={studioEdit?.onClearImage}
+              imageFits={studioEdit?.imageFits}
+              onImageFitChange={studioEdit?.onImageFitChange}
             >
               <ImagePlaceholder
                 src={heroSrc || undefined}

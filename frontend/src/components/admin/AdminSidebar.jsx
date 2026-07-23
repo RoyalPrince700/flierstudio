@@ -1,11 +1,10 @@
 import { NavLink } from 'react-router-dom'
-import { BarChart3, LayoutTemplate, LayoutDashboard, Users } from 'lucide-react'
+import { LayoutTemplate, LayoutDashboard, Users } from 'lucide-react'
 
 const LINKS = [
   { to: '/admin/overview', label: 'Overview', icon: LayoutDashboard, end: false },
   { to: '/admin/users', label: 'Users', icon: Users, end: false },
   { to: '/admin/templates', label: 'Templates', icon: LayoutTemplate, end: false },
-  { to: '/admin/analytics', label: 'Usage', icon: BarChart3, end: false },
 ]
 
 export default function AdminSidebar() {

@@ -47,13 +47,6 @@ export default function PrivacyPage() {
             creation time, and last login time.
           </li>
           <li>
-            <strong>Usage events</strong> — product actions such as viewing or
-            selecting a template, editing, uploading a photo into a board,
-            downloading an export, favoriting, and signing in. Events may
-            include related IDs (for example project or design identifiers) and
-            lightweight metadata needed for product analytics.
-          </li>
-          <li>
             <strong>Content you put into boards</strong> — text, images, and
             color choices you edit in the Studio. Drafts are primarily stored on
             your device (see below). We do not treat your flier copy as a
@@ -65,6 +58,13 @@ export default function PrivacyPage() {
             browser type, and timestamps) to keep the service secure and
             reliable.
           </li>
+          <li>
+            <strong>Aggregate usage measurement</strong> — we use Google Tag
+            Manager / Google Analytics to understand how people use the product
+            in aggregate (for example pages visited). That measurement is handled
+            by Google under their policies and is not stored as per-action event
+            logs in our own database.
+          </li>
         </ul>
       </section>
 
@@ -74,12 +74,12 @@ export default function PrivacyPage() {
           <li>Authenticate you and keep your session working.</li>
           <li>Show templates you are allowed to use and run the Studio.</li>
           <li>
-            Improve the product — understand which templates get opened,
-            edited, and exported.
+            Improve the product — understand aggregate usage through Google
+            Analytics / Tag Manager.
           </li>
           <li>
-            Support admin tools — published template groups, user lists, and
-            usage overviews for operators of the service.
+            Support admin tools — published template groups and user lists for
+            operators of the service.
           </li>
           <li>Protect the service against abuse and outages.</li>
         </ul>
@@ -149,10 +149,11 @@ export default function PrivacyPage() {
       <section className="pub-section">
         <h2>Retention</h2>
         <p>
-          Account records and usage events are kept while your account is active
-          and for a reasonable period afterward as needed for security,
-          analytics, and legal obligations. Local drafts remain on your device
-          until you delete them or clear browser storage.
+          Account records are kept while your account is active and for a
+          reasonable period afterward as needed for security and legal
+          obligations. Local drafts remain on your device until you delete them
+          or clear browser storage. Aggregate analytics retention follows Google
+          Analytics / Tag Manager settings.
         </p>
       </section>
 

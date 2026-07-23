@@ -1,0 +1,385 @@
+/* GraceLife Prayer Chain — 1500×1500
+   Layer recipe: prayerchaindesignguide.md */
+
+.pc-flier {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--pc-field);
+  color: var(--pc-ink);
+  font-family: var(--pc-support);
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.pc-flier > * {
+  pointer-events: none;
+}
+
+.pc-flier .studio-image-slot,
+.pc-flier [data-edit-path],
+.pc-flier [contenteditable],
+.pc-flier .studio-editable {
+  pointer-events: auto;
+}
+
+/* ——— z-0 Base radial (Step 1) ——— */
+.pc-flier__base {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      var(--pc-core) 0%,
+      var(--pc-glow-mid) 28%,
+      var(--pc-field) 62%,
+      var(--pc-field-deep) 100%
+    );
+}
+
+/* ——— z-1 City plate (Step 2) ——— */
+.pc-flier__city {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 52%;
+  z-index: 1;
+  opacity: var(--pc-city-opacity);
+  -webkit-mask-image: linear-gradient(
+    to top,
+    #000 0%,
+    #000 28%,
+    rgba(0, 0, 0, 0.55) 55%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to top,
+    #000 0%,
+    #000 28%,
+    rgba(0, 0, 0, 0.55) 55%,
+    transparent 100%
+  );
+  mix-blend-mode: multiply;
+}
+
+.pc-flier__city .studio-image-slot,
+.pc-flier__city-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.pc-flier__city-img {
+  object-fit: cover;
+  object-position: center 62%;
+  filter: sepia(0.65) saturate(1.35) brightness(0.92) contrast(1.05);
+}
+
+/* ——— Chains shared (Steps 3–5) ——— */
+.pc-flier__chains {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pc-flier__chains--soft {
+  z-index: 2;
+}
+
+.pc-flier__chains--hero {
+  z-index: 3;
+}
+
+.pc-flier__chain {
+  position: absolute;
+  display: block;
+  max-width: none;
+  mix-blend-mode: screen;
+  /* Metal grade: kill red link, S-curve contrast (Step 4) */
+  filter: grayscale(1) contrast(1.42) brightness(1.08);
+}
+
+/* Top-right hero — sharp, clarity approx (Step 5) */
+.pc-flier__chain--tr {
+  width: 112%;
+  top: -22%;
+  right: -38%;
+  transform: rotate(-32deg) scaleX(-1) scale(1.02);
+  filter: grayscale(1) contrast(1.62) brightness(1.14) saturate(0);
+  opacity: 0.95;
+}
+
+/* Bottom-left — DOF blur */
+.pc-flier__chain--bl {
+  width: 100%;
+  bottom: -26%;
+  left: -44%;
+  transform: rotate(22deg) scale(1.05);
+  filter: grayscale(1) contrast(1.38) brightness(1.04) blur(var(--pc-chain-blur));
+  opacity: 0.82;
+}
+
+/* Bottom-right — DOF blur */
+.pc-flier__chain--br {
+  width: 68%;
+  bottom: -20%;
+  right: -26%;
+  transform: rotate(-8deg) scaleX(-1) scale(0.92);
+  filter: grayscale(1) contrast(1.35) brightness(1.02) blur(calc(var(--pc-chain-blur) + 0.4px));
+  opacity: 0.74;
+}
+
+/* ——— z-4 Yellow abstract glow (Step 6) ——— */
+.pc-flier__glow {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(
+    ellipse 70% 55% at 50% 48%,
+    transparent 18%,
+    rgba(0, 0, 0, 0.35) 42%,
+    #000 78%
+  );
+  mask-image: radial-gradient(
+    ellipse 70% 55% at 50% 48%,
+    transparent 18%,
+    rgba(0, 0, 0, 0.35) 42%,
+    #000 78%
+  );
+}
+
+.pc-flier__glow-img {
+  position: absolute;
+  inset: -20%;
+  width: 140%;
+  height: 140%;
+  object-fit: cover;
+  filter: blur(var(--pc-glow-blur)) saturate(1.4) brightness(1.15);
+  mix-blend-mode: screen;
+  opacity: 0.72;
+}
+
+.pc-flier__glow-blob {
+  position: absolute;
+  left: 50%;
+  width: 140%;
+  height: 42%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 230, 80, 0.85) 0%,
+    rgba(255, 200, 0, 0.35) 40%,
+    transparent 72%
+  );
+  mix-blend-mode: screen;
+  filter: blur(48px);
+  opacity: 0.75;
+}
+
+.pc-flier__glow-blob--top {
+  top: -12%;
+}
+
+.pc-flier__glow-blob--bottom {
+  bottom: -14%;
+  opacity: 0.65;
+}
+
+/* ——— z-5 Gradient maps (Step 7) ——— */
+.pc-flier__map {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+  opacity: 0.28;
+}
+
+.pc-flier__map--yellow {
+  background: radial-gradient(
+    circle at 50% 40%,
+    rgba(255, 210, 0, 0.95) 0%,
+    transparent 70%
+  );
+}
+
+.pc-flier__map--warm {
+  background: linear-gradient(
+    160deg,
+    rgba(220, 70, 20, 0.55) 0%,
+    transparent 45%,
+    rgba(200, 60, 10, 0.4) 100%
+  );
+  opacity: 0.22;
+}
+
+/* ——— z-6 Content (Steps 8–10) ——— */
+.pc-flier__content {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--pc-safe);
+  padding-top: 88px;
+  text-align: center;
+}
+
+.pc-flier__logo-wrap {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+
+.pc-flier__logo-slot {
+  display: inline-flex;
+}
+
+.pc-flier__logo {
+  width: 200px;
+  height: 162px;
+  background: var(--pc-ink);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-mode: luminance;
+  mask-mode: luminance;
+}
+
+.pc-flier__title {
+  margin: 0;
+  margin-top: 128px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  font-family: var(--pc-display);
+  font-weight: 700;
+  font-size: var(--pc-display-size);
+  line-height: 0.86;
+  letter-spacing: 0.01em;
+  color: var(--pc-ink);
+}
+
+.pc-flier__display-line {
+  position: relative;
+  display: block;
+}
+
+/* Gold fill + lighten-brush sheen baked into the glyph gradient (Steps 8 + 10) */
+.pc-flier__display-line .studio-text {
+  display: inline-block;
+  font-family: var(--pc-display);
+  font-weight: 700;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  background: linear-gradient(
+    180deg,
+    #c9a227 0%,
+    #8a6414 12%,
+    var(--pc-ink) 38%,
+    #2a1a04 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255, 220, 120, 0.2));
+}
+
+.pc-flier__sheen {
+  display: none;
+}
+
+.pc-flier__support {
+  margin: 40px 0 0;
+  max-width: 90%;
+  font-family: var(--pc-support);
+  font-weight: 600;
+  font-style: italic;
+  font-size: var(--pc-support-size);
+  line-height: 1.25;
+  letter-spacing: -0.045em;
+  color: var(--pc-ink-soft);
+}
+
+.pc-flier__date {
+  margin: 24px 0 0;
+  max-width: 92%;
+  font-family: var(--pc-support);
+  font-weight: 700;
+  font-size: var(--pc-date-size);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--pc-ink);
+}
+
+/* ——— z-7 Grain (Step 1) ——— */
+.pc-flier__grain {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  opacity: var(--pc-grain);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* ——— z-8 Global grade + color balance (Steps 11–12) ——— */
+.pc-flier__grade {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      transparent 30%,
+      rgba(40, 20, 0, 0.12) 100%
+    );
+  mix-blend-mode: soft-light;
+  opacity: 0.85;
+  /* ACR-ish punch via contrast overlay */
+  box-shadow: inset 0 0 120px rgba(20, 10, 0, 0.18);
+}
+
+.pc-flier__balance {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.pc-flier__balance--shadow {
+  background: radial-gradient(
+    ellipse at 50% 80%,
+    transparent 40%,
+    var(--pc-shadow-cool) 100%
+  );
+  mix-blend-mode: soft-light;
+  opacity: 0.55;
+}
+
+.pc-flier__balance--highlight {
+  background: radial-gradient(
+    circle at 50% 38%,
+    var(--pc-highlight-warm) 0%,
+    transparent 55%
+  );
+  mix-blend-mode: soft-light;
+  opacity: 0.7;
+}
+
+/* Studio edit focus affordance on logo */
+.pc-flier .studio-image-slot.is-focused {
+  outline: 2px solid rgba(61, 40, 8, 0.45);
+  outline-offset: 6px;
+}

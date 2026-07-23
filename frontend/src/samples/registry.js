@@ -2,6 +2,7 @@ import glassStack from './glass-stack/meta'
 import malikGadget from './malik-gadget/meta'
 import radioshow from './radioshow/meta'
 import voidProfileAsk from './void-profile-ask/meta'
+import prayerChain from './prayer-chain/meta'
 import { PROJECTS } from '../projects/registry'
 
 /**
@@ -55,6 +56,7 @@ export const ANALYZED_COLLECTIONS = [
       },
     ],
   }),
+  normalizeCollection(prayerChain),
 ]
 
 const PRINCIPLES_BY_PROJECT = {
@@ -65,6 +67,7 @@ const PRINCIPLES_BY_PROJECT = {
   'orbit-gadgets': 'src/samples/malik-gadget/PRINCIPLES.md',
   oxygenfm: 'src/samples/radioshow/PRINCIPLES.md',
   'royal-prince': 'src/samples/void-profile-ask/PRINCIPLES.md',
+  'prayer-chain': 'prayerchaindesignguide.md',
 }
 
 function sizeLabel(width, height) {

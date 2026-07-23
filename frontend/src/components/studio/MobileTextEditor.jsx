@@ -11,6 +11,10 @@ function fieldLabel(path) {
   if (path === 'event.timeNote') return 'Time note'
   if (path === 'event.dateNote') return 'Date note'
   if (path === 'event.ticketLabel') return 'Ticket label'
+  if (path === 'event.programmeTitle') return 'Programme title'
+  if (path === 'event.heroSeries') return 'Hero series'
+  if (path === 'event.heroTheme') return 'Hero theme'
+  if (path === 'event.heroCapsule') return 'Hero capsule'
   if (path.startsWith('speakers.')) {
     const [, index, field] = path.split('.')
     const n = Number(index) + 1

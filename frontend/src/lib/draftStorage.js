@@ -12,6 +12,9 @@ const RECORD_ID = 'all'
 const EMERGENCE_ITEM_IDS = [
   'emergence-classic',
   'emergence-cascade',
+  'emergence-stage-grid',
+  'emergence-cascade-grid',
+  'emergence-cascade-stage',
 ]
 
 function isArtboardDraftMap(value) {
@@ -33,7 +36,10 @@ export function normalizeDrafts(parsed) {
     if (!value || typeof value !== 'object') continue
 
     if (isArtboardDraftMap(value)) {
-      next[projectId] = value
+      // Deep-clone each artboard so boards never share object references.
+      next[projectId] = Object.fromEntries(
+        Object.entries(value).map(([itemId, draft]) => [itemId, structuredClone(draft)]),
+      )
       continue
     }
 

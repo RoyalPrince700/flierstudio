@@ -1,9 +1,23 @@
+import { DEFAULT_BRAND_LOGO_SRC } from './defaultBrandLogo'
+
 export const emergence = {
   event: {
     wordmark: 'EMERGE',
+    /** image | text | none — header brand mark mode */
+    logoMode: 'image',
+    /** Header brand image when logoMode is image. Clear sets '' + logoMode none. */
+    logoSrc: DEFAULT_BRAND_LOGO_SRC,
+    /** Uniform scale + optical nudge for the header logo (not photo crop). */
+    logoLayout: { scale: 1, offsetX: 0, offsetY: 0 },
     series: 'EMERGE SUMMIT',
     theme: 'Emergence',
+    /** Stage Grid / Cascade Stage programme heading (independent of header/hero theme). */
+    programmeTitle: 'Emergence',
     capsule: 'Beyond Limit',
+    /** Cascade-family hero chrome (independent of header series/theme/capsule). */
+    heroSeries: 'EMERGE SUMMIT',
+    heroTheme: 'Emergence',
+    heroCapsule: 'Beyond Limit',
     keywords: ['DISRUPTION', '1M+ GRANT', 'GROWTH', 'NETWORKING'],
     city: 'LAGOS',
     venue: 'UNILAG MAIN AUDITORIUM',

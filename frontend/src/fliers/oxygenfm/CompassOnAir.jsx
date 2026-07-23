@@ -149,8 +149,11 @@ export default function CompassOnAir({
               hasImage={Boolean(photoSrc)}
               onFocusField={studioEdit?.onFocusField}
               onPickImage={studioEdit?.onPickImage}
+              onClearImage={studioEdit?.onClearImage}
+              imageFits={studioEdit?.imageFits}
+              onImageFitChange={studioEdit?.onImageFitChange}
               emptyHint="Add host"
-              filledHint="Replace"
+              filledHint="Select"
             >
               <div className="compass-air__portrait">
                 {photoSrc ? (

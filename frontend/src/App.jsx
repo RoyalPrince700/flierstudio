@@ -8,7 +8,6 @@ import AdminShell from './components/admin/AdminShell'
 import AdminOverview from './components/admin/pages/AdminOverview'
 import AdminUsers from './components/admin/pages/AdminUsers'
 import AdminTemplates from './components/admin/pages/AdminTemplates'
-import AdminAnalytics from './components/admin/pages/AdminAnalytics'
 import PrivacyPage from './components/legal/PrivacyPage'
 import TermsPage from './components/legal/TermsPage'
 import AboutPage from './components/legal/AboutPage'
@@ -86,7 +85,6 @@ export default function App() {
         <Route path="overview" element={<AdminOverview />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="templates" element={<AdminTemplates />} />
-        <Route path="analytics" element={<AdminAnalytics />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

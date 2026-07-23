@@ -27,21 +27,21 @@ export default function EmergenceCascade(props) {
           <Zap size={18} strokeWidth={2.4} />
           <EditableText
             as="span"
-            value={event.series}
-            {...editableTextProps(studioEdit, 'event.series')}
+            value={event.heroSeries}
+            {...editableTextProps(studioEdit, 'event.heroSeries')}
           />
         </p>
         <h2 className="e-cascade__title">
           <EditableText
             as="span"
-            value={event.theme}
-            {...editableTextProps(studioEdit, 'event.theme')}
+            value={event.heroTheme}
+            {...editableTextProps(studioEdit, 'event.heroTheme')}
           />
           <em>
             <EditableText
               as="span"
-              value={event.capsule}
-              {...editableTextProps(studioEdit, 'event.capsule')}
+              value={event.heroCapsule}
+              {...editableTextProps(studioEdit, 'event.heroCapsule')}
             />
           </em>
         </h2>
