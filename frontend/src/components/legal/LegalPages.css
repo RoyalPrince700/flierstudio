@@ -88,38 +88,114 @@
   color: var(--l-text);
 }
 
-.pub-placeholder {
-  display: inline;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: rgba(255, 74, 29, 0.14);
-  color: var(--l-accent-bright);
-  font-family: var(--l-display);
-  font-size: 0.92em;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.pub-callout {
-  margin-top: 8px;
-  padding: 18px 20px;
-  border: 1px solid var(--l-border);
-  border-radius: var(--l-radius);
-  background: var(--l-panel);
-}
-
-.pub-callout p {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--l-muted);
-}
-
 .pub-about-cta {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 8px;
+}
+
+/* ---------- contact form ---------- */
+
+.pub-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.pub-contact-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.pub-contact-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--l-text);
+}
+
+.pub-contact-form__optional {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--l-faint);
+}
+
+.pub-contact-form__field input,
+.pub-contact-form__field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--l-border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--l-text);
+  font-family: var(--l-font);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pub-contact-form__field textarea {
+  resize: vertical;
+  min-height: 140px;
+}
+
+.pub-contact-form__field input::placeholder,
+.pub-contact-form__field textarea::placeholder {
+  color: var(--l-faint);
+}
+
+.pub-contact-form__field input:focus,
+.pub-contact-form__field textarea:focus {
+  border-color: rgba(255, 74, 29, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pub-contact-form__field input:disabled,
+.pub-contact-form__field textarea:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.pub-contact-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 18px;
+  margin-top: 4px;
+}
+
+.pub-contact-form__actions .l-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
+}
+
+.pub-contact-form__status {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.pub-contact-form__status--ok {
+  color: #7dcea0;
+}
+
+.pub-contact-form__status--err {
+  color: #ff8a70;
+}
+
+@media (max-width: 640px) {
+  .pub-contact-form__row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Reuse landing footer look for shared PublicFooter */

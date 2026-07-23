@@ -13,7 +13,9 @@ import nodemailer from 'nodemailer'
 
 function env(name, fallback = '') {
   const value = process.env[name]
-  return value == null || value === '' ? fallback : value
+  if (value == null) return fallback
+  const trimmed = String(value).trim()
+  return trimmed === '' ? fallback : trimmed
 }
 
 export function useMailtrapSandbox() {
