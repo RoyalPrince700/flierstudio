@@ -41,6 +41,7 @@ import {
  * Filled: click focuses only (no modal). Focused chrome:
  *   Photo: − / + / reset | Replace / Remove
  *   Logo:  size −/+ · ← → · reset | text | Flier Studio | Replace / Remove
+ * Mobile: filled photos stay on-canvas (sheet stays closed); logos may open Edit.
  */
 export default function EditableImageSlot({
   path,
@@ -86,6 +87,10 @@ export default function EditableImageSlot({
   const canLogoLayout = isLogo && hasImage && typeof onLogoLayoutChange === 'function'
   const showChrome = focused && hasImage
 
+  const focusImage = () => {
+    onFocusField?.(path, 'image', { hasImage, variant })
+  }
+
   useEffect(() => {
     const node = slotRef.current
     if (!editable || !node || !focused) return undefined
@@ -123,13 +128,13 @@ export default function EditableImageSlot({
 
   const activateEmptySlot = () => {
     if (typeof onEmptyClick === 'function') {
-      onFocusField?.(path, 'image')
+      focusImage()
       onEmptyClick()
       return
     }
     // Pick first while the user gesture is still active; focus/sheet can follow.
     onPickImage?.(path)
-    onFocusField?.(path, 'image')
+    focusImage()
   }
 
   const commitFit = (next) => {
@@ -281,7 +286,8 @@ export default function EditableImageSlot({
           return
         }
 
-        onFocusField?.(path, 'image')
+        // Focus (and close Edit sheet on filled photos) so pan is not covered.
+        focusImage()
         onPointerDownDrag(e)
       }}
       onPointerMove={onPointerMoveDrag}
@@ -303,7 +309,7 @@ export default function EditableImageSlot({
           armClickThroughGuard()
           return
         }
-        onFocusField?.(path, 'image')
+        focusImage()
       }}
       title={title}
     >

@@ -517,7 +517,7 @@ export default function Studio({
   }, [drafts, draftsReady])
 
   const handleFocusField = useCallback(
-    (path, kind = 'text') => {
+    (path, kind = 'text', opts = {}) => {
       setFocusedPath(path)
       setFocusedKind(kind)
       if (kind === 'text') {
@@ -526,7 +526,12 @@ export default function Studio({
         // Keep artboard visible: close the inspector sheet while editing text on mobile.
         if (isNarrow) setMobileInspectorOpen(false)
       } else if (kind === 'image' && isNarrow) {
-        // Logo / photo controls live in the Edit sheet on mobile.
+        // EditableImageSlot passes { hasImage, variant }. Filled photos stay on-canvas;
+        // logos / legacy callers (no variant) may open Edit for brand controls.
+        if (opts?.variant && opts.variant !== 'logo') {
+          if (opts.hasImage) setMobileInspectorOpen(false)
+          return
+        }
         setMobileInspectorOpen(true)
       }
     },
@@ -908,11 +913,11 @@ export default function Studio({
         alignments: alignments || {},
         imageFits: imageFits || {},
         canvasReadOnly: isNarrow,
-        onFocusField: (path, kind) => {
+        onFocusField: (path, kind, opts) => {
           if (selectedId !== item.id) {
             patchTab(activeProjectId, { selectedId: item.id })
           }
-          handleFocusField(path, kind)
+          handleFocusField(path, kind, opts)
         },
         onChange: (path, value) => {
           patchDraft(activeProjectId, item.id, path, value)
