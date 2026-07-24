@@ -18,6 +18,8 @@ export const EMERGENCE_COLOR_THEMES = [
       limeInk: '#0A1400',
       amber: '#FFB800',
       orange: '#FF8A3D',
+      /** Convener photo offset slab — theme chrome, not universal gold */
+      convenerSlab: '#3A8DFF',
       inkDark: '#061433',
     },
   },
@@ -38,6 +40,7 @@ export const EMERGENCE_COLOR_THEMES = [
       limeInk: '#0A1400',
       amber: '#FBBF24',
       orange: '#F59E0B',
+      convenerSlab: '#22C55E',
       inkDark: '#041A10',
     },
   },
@@ -58,6 +61,7 @@ export const EMERGENCE_COLOR_THEMES = [
       limeInk: '#141400',
       amber: '#FBBF24',
       orange: '#FB7185',
+      convenerSlab: '#8B5CF6',
       inkDark: '#1A0B2E',
     },
   },
@@ -78,6 +82,7 @@ export const EMERGENCE_COLOR_THEMES = [
       limeInk: '#1A1400',
       amber: '#FBBF24',
       orange: '#EF4444',
+      convenerSlab: '#F97316',
       inkDark: '#1C0A05',
     },
   },
@@ -98,6 +103,7 @@ export const EMERGENCE_COLOR_THEMES = [
       limeInk: '#0A1400',
       amber: '#FBBF24',
       orange: '#FB923C',
+      convenerSlab: '#14B8A6',
       inkDark: '#042F2E',
     },
   },
@@ -128,6 +134,7 @@ export function emergenceThemeCssVars(themeId) {
     '--e-lime-ink': colors.limeInk,
     '--e-amber': colors.amber,
     '--e-orange': colors.orange,
+    '--e-convener-slab': colors.convenerSlab,
     '--e-ink-dark': colors.inkDark,
   }
 }

@@ -12,7 +12,7 @@ export const emergence = {
     series: 'EMERGE SUMMIT',
     theme: 'Emergence',
     /** Stage Grid / Cascade Stage programme heading (independent of header/hero theme). */
-    programmeTitle: 'Speaker',
+    programmeTitle: 'Speakers',
     capsule: 'Beyond Limit',
     /** Cascade-family hero chrome (independent of header series/theme/capsule). */
     heroSeries: 'EMERGE SUMMIT',

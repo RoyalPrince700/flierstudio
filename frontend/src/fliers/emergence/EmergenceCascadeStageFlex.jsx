@@ -11,6 +11,7 @@ import {
 } from './shared/EmergenceChrome'
 import { resolveEmergenceData } from './shared/emergenceData'
 import {
+  isStageFlexBannerCount,
   stagePeopleLayoutClass,
   stagePeopleRowGroups,
 } from './stagePeopleLayout'
@@ -18,6 +19,7 @@ import './emergence-templates.css'
 
 /**
  * Cascade Stage Flex — same chrome as Cascade Stage, dynamic stagePeople 1–10.
+ * N≤8: 1080×1350 portrait. N≥9: growing landscape banner (one tall portrait row).
  * Original `EmergenceCascadeStage` stays fixed 3+3; this board owns the flex layout.
  */
 export default function EmergenceCascadeStageFlex(props) {
@@ -35,7 +37,20 @@ export default function EmergenceCascadeStageFlex(props) {
   const count = stagePeopleCount
   const people = stagePeople
   const showConvener = includeConvener !== false
+  const landscape = isStageFlexBannerCount(count)
   const rows = stagePeopleRowGroups(people, { includeConvener: showConvener })
+  /* N=1 + convener: programme spans the full speaker+convener pair */
+  const programmeOverPair = showConvener && count === 1
+
+  const programmeHeading = (
+    <h2 className="e-grid__programme">
+      <EditableText
+        as="span"
+        value={event.programmeTitle}
+        {...editableTextProps(studioEdit, 'event.programmeTitle')}
+      />
+    </h2>
+  )
 
   return (
     <article
@@ -50,6 +65,7 @@ export default function EmergenceCascadeStageFlex(props) {
       style={rootStyle}
       data-people-count={count}
       data-include-convener={showConvener ? '1' : '0'}
+      data-orientation={landscape ? 'landscape' : 'portrait'}
     >
       <EmergenceBackground />
       <EmergenceHeader event={event} studioEdit={studioEdit} />
@@ -92,15 +108,11 @@ export default function EmergenceCascadeStageFlex(props) {
 
       <div className="e-grid__stage">
         <div className="e-grid__card">
+          {programmeOverPair ? programmeHeading : null}
+
           <div className="e-grid__layout">
             <div className="e-grid__people-col">
-              <h2 className="e-grid__programme">
-                <EditableText
-                  as="span"
-                  value={event.programmeTitle}
-                  {...editableTextProps(studioEdit, 'event.programmeTitle')}
-                />
-              </h2>
+              {!programmeOverPair ? programmeHeading : null}
 
               <div
                 className={`e-flex-people ${stagePeopleLayoutClass(count)}`}
@@ -144,7 +156,7 @@ export default function EmergenceCascadeStageFlex(props) {
         </div>
       </div>
 
-      <EmergenceFooter event={event} studioEdit={studioEdit} />
+      <EmergenceFooter event={event} studioEdit={studioEdit} compact={landscape} />
     </article>
   )
 }

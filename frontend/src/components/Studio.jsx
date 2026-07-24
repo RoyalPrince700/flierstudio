@@ -86,6 +86,11 @@ import {
   syncBoardLayoutWithProject,
   TEMPLATE_WORKSPACE_ID,
 } from '../lib/boardLayout'
+import { layoutBoardItems } from '../projects/layout'
+import {
+  isEmergenceCascadeStageFlexItem,
+  resolveStageFlexBoardSize,
+} from '../fliers/emergence/stagePeopleLayout'
 import {
   cloneStudioSnapshot,
   createStudioHistory,
@@ -384,7 +389,6 @@ export default function Studio({
     resolvedBoard.items,
     unpublishedDesignsMap,
   ])
-  const bounds = resolvedBoard.bounds ?? { width: 1000, height: 1000 }
   const currentTab = tabState[activeProjectId] ?? createTabState(activeProjectId)
   const selectedId = currentTab.selectedId
   const zoom = currentTab.zoom
@@ -922,9 +926,9 @@ export default function Studio({
     [activeProjectId, boardLayouts, pendingImagePath, recordHistory, selectedId],
   )
 
-  const boardItems = useMemo(() => {
+  const boardPack = useMemo(() => {
     const items = baseBoardItems
-    return items.map((item) => {
+    const mapped = items.map((item) => {
       const editKind = getItemEditKind(item, activeProjectId)
       const draft = getDraft(activeProjectId, item.id)
       const alignments =
@@ -1007,15 +1011,25 @@ export default function Studio({
         onExitTextEdit: handleExitTextEdit,
       }
 
+      let next = item
       if (editKind === 'emergence') {
-        return {
+        const content = mergeEmergenceDraft(draft)
+        next = {
           ...item,
           props: {
             ...item.props,
-            content: mergeEmergenceDraft(draft),
+            content,
             studioEdit,
           },
         }
+        /* Flex N≥9 → banner artboard; N≤8 restores portrait (size follows count). */
+        if (isEmergenceCascadeStageFlexItem(item)) {
+          const size = resolveStageFlexBoardSize(content.stagePeopleCount, {
+            includeConvener: content.includeConvener !== false,
+          })
+          next = { ...next, width: size.width, height: size.height }
+        }
+        return next
       }
 
       const merged = mergePropsDraft(item.props || {}, draft)
@@ -1027,6 +1041,9 @@ export default function Studio({
         },
       }
     })
+
+    /* Re-pack so a landscape Flex board does not keep portrait frame/bounds. */
+    return layoutBoardItems(mapped)
   }, [
     activeProjectId,
     baseBoardItems,
@@ -1045,6 +1062,9 @@ export default function Studio({
     selectedId,
     spaceHandActive,
   ])
+
+  const boardItems = boardPack.items
+  const bounds = boardPack.bounds ?? { width: 1000, height: 1000 }
 
   const selected = useMemo(
     () => boardItems.find((item) => item.id === selectedId) || null,

@@ -99,6 +99,7 @@ export const FLIER_SIZES = {
     height: 1200,
     platform: 'portfolio',
   },
+  /** Also used by Cascade Stage Flex when People on stage ≥ 9. */
   'brand-widescreen': {
     id: 'brand-widescreen',
     label: 'Brand Widescreen (16:9)',

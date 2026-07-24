@@ -1,8 +1,23 @@
 /** Cascade Stage Flex — dynamic stage people (1–10) with balanced row recipes. */
 
+import { getFlierSize } from '../../lib/sizes'
+
 export const STAGE_PEOPLE_MIN = 1
 export const STAGE_PEOPLE_MAX = 10
 export const DEFAULT_STAGE_PEOPLE_COUNT = 6
+
+/** N≥9 switches Flex artboard to a growing landscape banner; N≤8 stays portrait. */
+export const STAGE_FLEX_BANNER_MIN_COUNT = 9
+export const STAGE_FLEX_PORTRAIT_SIZE_ID = 'instagram-portrait'
+
+/** Banner strip: fixed portrait holders; artboard width grows with N (+ optional convener). */
+export const STAGE_FLEX_BANNER_SLOT_W = 176
+export const STAGE_FLEX_BANNER_SLOT_H = 320
+export const STAGE_FLEX_BANNER_GAP = 12
+/** Stage + card horizontal padding that wraps the people row. */
+export const STAGE_FLEX_BANNER_PAD_X = 120
+/** Header + hero + tall row + keywords + compact footer. */
+export const STAGE_FLEX_BANNER_HEIGHT = 960
 
 const ACCENTS = ['amber', 'orange', 'cyan']
 
@@ -14,11 +29,11 @@ const ACCENTS = ['amber', 'orange', 'cyan']
  * | 3  | 1×3                            | —                  |
  * | 4  | 1×4 (single row always)        | same ([4])         |
  * | 5  | 1×5 (single row always)        | same               |
- * | 6  | 3×2                            | —                  |
- * | 7  | 4 + 3 (last centered)          | —                  |
- * | 8  | 4×2                            | —                  |
- * | 9  | 3×3                            | —                  |
- * | 10 | 5×2                            | —                  |
+ * | 6  | 3×2 (full-card; +cnv equal-w)  | —                  |
+ * | 7  | 4 + 3 centered (equal slots)   | —                  |
+ * | 8  | 4×2 (full-card; +cnv equal-w)  | —                  |
+ * | 9  | 1×9 banner strip               | —                  |
+ * | 10 | 1×10 banner strip              | —                  |
  */
 export const STAGE_PEOPLE_ROWS = {
   1: [1],
@@ -29,8 +44,8 @@ export const STAGE_PEOPLE_ROWS = {
   6: [3, 3],
   7: [4, 3],
   8: [4, 4],
-  9: [3, 3, 3],
-  10: [5, 5],
+  9: [9],
+  10: [10],
 }
 
 /** Solo (no convener) overrides — kept for N=4 clarity (same recipe as with-convener). */
@@ -42,6 +57,73 @@ export function clampStagePeopleCount(n) {
   const v = Number(n)
   if (!Number.isFinite(v)) return DEFAULT_STAGE_PEOPLE_COUNT
   return Math.min(STAGE_PEOPLE_MAX, Math.max(STAGE_PEOPLE_MIN, Math.round(v)))
+}
+
+/** True when Flex should use the landscape banner canvas. */
+export function isStageFlexBannerCount(count) {
+  return clampStagePeopleCount(count) >= STAGE_FLEX_BANNER_MIN_COUNT
+}
+
+/**
+ * Resolved export / artboard size for Cascade Stage Flex.
+ * N≤8 → 1080×1350 portrait.
+ * N≥9 → landscape banner; width wraps one portrait row (+ convener when on).
+ */
+export function resolveStageFlexBoardSize(count, { includeConvener = true } = {}) {
+  const n = clampStagePeopleCount(count)
+  if (!isStageFlexBannerCount(n)) {
+    return getFlierSize(STAGE_FLEX_PORTRAIT_SIZE_ID)
+  }
+
+  const withConvener = includeConvener !== false
+  const holders = withConvener ? n + 1 : n
+  const gaps = Math.max(0, holders - 1)
+  const rowWidth =
+    holders * STAGE_FLEX_BANNER_SLOT_W + gaps * STAGE_FLEX_BANNER_GAP
+  const width = STAGE_FLEX_BANNER_PAD_X + rowWidth
+
+  return {
+    id: 'emergence-flex-banner',
+    label: `Emergence Flex Banner (${n}${withConvener ? '+cnv' : ' solo'})`,
+    width,
+    height: STAGE_FLEX_BANNER_HEIGHT,
+    platform: 'portfolio',
+    slotWidth: STAGE_FLEX_BANNER_SLOT_W,
+    slotHeight: STAGE_FLEX_BANNER_SLOT_H,
+    gap: STAGE_FLEX_BANNER_GAP,
+  }
+}
+
+/** CSS custom properties for the N≥9 single-row banner strip. */
+export function stageFlexBannerCssVars(count, { includeConvener = true } = {}) {
+  if (!isStageFlexBannerCount(count)) return {}
+  const withConvener = includeConvener !== false
+  return {
+    '--e-flex-banner-slot-w': `${STAGE_FLEX_BANNER_SLOT_W}px`,
+    '--e-flex-banner-slot-h': `${STAGE_FLEX_BANNER_SLOT_H}px`,
+    '--e-flex-col-gap': `${STAGE_FLEX_BANNER_GAP}px`,
+    '--e-flex-row-gap': '0px',
+    '--e-flex-ref-h': `${STAGE_FLEX_BANNER_SLOT_H}px`,
+    '--e-flex-convener-h': `${STAGE_FLEX_BANNER_SLOT_H + 8}px`,
+    '--e-flex-slot-basis': `${STAGE_FLEX_BANNER_SLOT_W}px`,
+    '--e-flex-banner-holders': String(
+      withConvener ? clampStagePeopleCount(count) + 1 : clampStagePeopleCount(count),
+    ),
+  }
+}
+
+/** Detect Cascade Stage Flex board items (including duplicates). */
+export function isEmergenceCascadeStageFlexItem(item) {
+  if (!item) return false
+  if (item.props?.stageFlex === true) return true
+  const id = String(item.id || '')
+  const sourceId = String(item.sourceId || '')
+  return (
+    id === 'emergence-cascade-stage-flex' ||
+    sourceId === 'emergence-cascade-stage-flex' ||
+    id.includes('cascade-stage-flex') ||
+    sourceId.includes('cascade-stage-flex')
+  )
 }
 
 export function defaultStagePerson(index) {

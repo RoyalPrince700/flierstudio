@@ -2,6 +2,8 @@ import { EMERGENCE_TEMPLATES } from '../../fliers/emergence'
 import { emergence } from '../../design/emergenceTokens'
 import { createProject } from '../layout'
 
+/* Default catalog size is portrait; Cascade Stage Flex overrides to a
+ * growing landscape banner when stagePeopleCount ≥ 9 (see stagePeopleLayout). */
 const fliers = Object.values(EMERGENCE_TEMPLATES).map((template) => ({
   id: `emergence-${template.id}`,
   name: template.label.replace(/^\d+\s·\s/, ''),

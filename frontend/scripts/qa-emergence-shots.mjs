@@ -25,7 +25,7 @@ async function launch() {
 }
 
 const browser = await launch()
-const page = await browser.newPage({ viewport: { width: 1200, height: 1600 } })
+const page = await browser.newPage({ viewport: { width: 2200, height: 1400 } })
 
 await page.goto(`${base}/qa-emergence.html`, { waitUntil: 'networkidle', timeout: 60000 })
 await page.waitForSelector('.e-flier', { timeout: 20000 })

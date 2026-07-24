@@ -177,14 +177,14 @@
   z-index: 1;
 }
 
-/* Amber offset slab behind the frame only (same language as .e-slot__slab) */
+/* Theme-aware offset slab behind the frame (same language as .e-slot__slab--cyan) */
 .e-grid__convener::before {
   content: '';
   grid-area: 1 / 1;
   align-self: stretch;
   margin: 10px -8px -8px 10px;
   border-radius: 4px;
-  background: var(--e-amber);
+  background: var(--e-convener-slab);
   z-index: 0;
   pointer-events: none;
 }
@@ -200,8 +200,8 @@
 }
 
 /*
- * Empty fill matches .e-slot__frame: translucent gradient over the solid amber slab
- * so the cyan card never shows through (slab is the opaque backplane).
+ * Empty fill matches .e-slot__frame: translucent gradient over the solid theme slab
+ * so the card never shows through (slab is the opaque backplane).
  */
 .e-grid__convener .e-convener__frame {
   position: relative;
@@ -372,11 +372,20 @@
 }
 
 .e-flier--cascade-stage-flex[data-people-count='1'] {
-  --e-flex-people-max: 320px;
+  --e-flex-people-max: 420px;
+  --e-flex-ref-w: 380px;
+  --e-flex-ref-h: 540px;
+  --e-flex-name-size: 18px;
+  --e-flex-title-size: 13px;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='2'] {
-  --e-flex-people-max: 660px; /* 320 + 10 + 320 + breathing */
+  --e-flex-people-max: 720px;
+  --e-flex-ref-w: 300px;
+  --e-flex-ref-h: 420px;
+  --e-flex-col-gap: 28px;
+  --e-flex-name-size: 15px;
+  --e-flex-title-size: 12px;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='3'] {
@@ -402,8 +411,6 @@
   grid-template-columns: minmax(0, 1fr) minmax(260px, 280px);
 }
 
-.e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__card,
-.e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__card,
 .e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__card {
   padding: 18px 20px 14px;
   gap: 12px;
@@ -415,7 +422,35 @@
   font-size: 24px;
 }
 
-/* Person photo frame = classic convener frame size */
+/*
+ * N=1–2: no shared mint/cyan stage tray (writer-like mid-band balance).
+ * N=1 — hero portrait on the Emergence gradient.
+ * N=2 — equal dual person cards with a clear gap, optically centered.
+ */
+.e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__card,
+.e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__card {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  gap: 16px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__programme,
+.e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__programme {
+  color: #fff;
+  padding: 18px 8px 26px;
+  margin: 0;
+  text-shadow: 0 2px 14px rgba(6, 20, 51, 0.4);
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1'] .e-keywords,
+.e-flier--cascade-stage-flex[data-people-count='2'] .e-keywords {
+  margin-top: 4px;
+  padding: 12px 16px;
+  flex-shrink: 0;
+}
+
+/* Person photo frame sizes (N=1–2 vars above; N=3 keeps classic ref) */
 .e-flier--cascade-stage-flex[data-people-count='1'] .e-flex-people .e-slot__stack,
 .e-flier--cascade-stage-flex[data-people-count='2'] .e-flex-people .e-slot__stack {
   aspect-ratio: auto;
@@ -428,6 +463,254 @@
   flex: 0 0 auto;
   width: auto;
   max-width: none;
+}
+
+/* N=1: light ink on gradient — no per-person light panel */
+.e-flier--cascade-stage-flex[data-people-count='1'] .e-flex-people .e-slot.e-slot--ink-dark {
+  color: #fff;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1'] .e-flex-people .e-slot.e-slot--ink-dark .e-slot__title {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1'] .e-flex-people .e-slot__name {
+  margin-top: 14px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__people-col {
+  justify-self: center;
+  align-items: center;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__layout {
+  align-items: center;
+  max-width: 980px;
+  gap: 28px;
+}
+
+/*
+ * N=1 + convener: one mid-band pair (speaker + convener), no shared mint tray.
+ * Programme sits above the layout (markup) so it centers over the full pair.
+ */
+.e-flier--cascade-stage-flex[data-people-count='1']:not(.e-flier--cascade-stage-flex-solo) {
+  --e-flex-people-max: 320px;
+  --e-flex-ref-w: 300px;
+  --e-flex-ref-h: 440px;
+  --e-flex-convener-w: 300px;
+  --e-flex-pair-gap: 36px;
+  --e-flex-name-size: 16px;
+  --e-flex-title-size: 12px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1']:not(.e-flier--cascade-stage-flex-solo) > .e-grid__stage > .e-grid__card > .e-grid__programme {
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1']:not(.e-flier--cascade-stage-flex-solo) .e-grid__layout {
+  grid-template-columns: var(--e-flex-ref-w) var(--e-flex-convener-w);
+  justify-content: center;
+  justify-items: stretch;
+  align-items: start;
+  gap: var(--e-flex-pair-gap);
+  max-width: 760px;
+  width: 100%;
+  margin-inline: auto;
+  padding-right: 0;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1']:not(.e-flier--cascade-stage-flex-solo) .e-grid__people-col {
+  justify-self: stretch;
+  max-width: none;
+  width: 100%;
+  align-items: center;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener {
+  width: 100%;
+  min-height: 0;
+  align-self: start;
+  /* Fixed photo row = speaker stack height; label below (not stretch-to-fill) */
+  grid-template-rows: var(--e-flex-ref-h) auto;
+  gap: 12px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener::before {
+  align-self: stretch;
+  height: auto;
+  margin: 8px -6px -6px 8px;
+  border-radius: 4px;
+  background: var(--e-convener-slab);
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener > :not(.e-convener__label) {
+  min-height: 0;
+  height: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__frame {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  border-radius: 4px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='1']:not(.e-flier--cascade-stage-flex-solo) .e-keywords {
+  max-width: 760px;
+  margin-inline: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* N=2: each speaker gets their own light framed panel (dual-card stage) */
+.e-flier--cascade-stage-flex[data-people-count='2'] .e-flex-people__row > .e-slot {
+  padding: 16px 14px 18px;
+  border-radius: 20px;
+  background: linear-gradient(
+    145deg,
+    var(--e-card-light) 0%,
+    var(--e-card) 42%,
+    var(--e-card-deep) 100%
+  );
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2'] .e-flex-people .e-slot.e-slot--ink-dark {
+  color: var(--e-ink-dark);
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2'] .e-flex-people .e-slot.e-slot--ink-dark .e-slot__title {
+  color: color-mix(in srgb, var(--e-ink-dark) 72%, transparent);
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2'] .e-flex-people .e-slot__name {
+  margin-top: 12px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__people-col {
+  justify-self: center;
+  align-items: center;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__layout {
+  align-items: start;
+  max-width: 1024px;
+  gap: 22px;
+}
+
+/*
+ * N=2 + convener: keep equal dual person-cards; convener as a third mid-band column
+ * matched to card portrait height (not a stretched classic 3+3 orphan).
+ * people-col uses display:contents so programme stays over the dual cards (col 1)
+ * while convener aligns to the photo row (col 2 / row 2).
+ */
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) {
+  --e-flex-people-max: 560px;
+  --e-flex-ref-w: 236px;
+  --e-flex-ref-h: 340px;
+  --e-flex-col-gap: 20px;
+  /* Outer column = photo + horizontal card pad (10px × 2) so three cards share width */
+  --e-flex-convener-w: calc(var(--e-flex-ref-w) + 20px);
+  --e-flex-pair-gap: 22px;
+  --e-flex-name-size: 13px;
+  --e-flex-title-size: 10px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-grid__layout {
+  display: grid;
+  grid-template-columns: max-content var(--e-flex-convener-w);
+  grid-template-rows: auto auto;
+  justify-content: center;
+  align-items: start;
+  column-gap: var(--e-flex-pair-gap);
+  row-gap: 0;
+  max-width: 980px;
+  width: 100%;
+  margin-inline: auto;
+  padding-right: 0;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-grid__people-col {
+  display: contents;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-grid__programme {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: stretch;
+  width: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people {
+  grid-column: 1;
+  grid-row: 2;
+  width: max-content;
+  max-width: var(--e-flex-people-max);
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row > .e-slot {
+  padding: 12px 10px 14px;
+  border-radius: 16px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  min-height: 0;
+  align-self: start;
+  margin-top: 0;
+  padding: 12px 10px 14px;
+  border-radius: 16px;
+  box-sizing: border-box;
+  background: linear-gradient(
+    145deg,
+    var(--e-card-light) 0%,
+    var(--e-card) 42%,
+    var(--e-card-deep) 100%
+  );
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  grid-template-rows: var(--e-flex-ref-h) auto;
+  gap: 10px;
+}
+
+/*
+ * N=2 + convener: drop the offset slab — light person-card chrome is enough.
+ * Hide always (empty + filled) so uploaded photos never show a gold/theme edge.
+ */
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener::before {
+  content: none;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener > :not(.e-convener__label) {
+  min-height: 0;
+  height: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__frame {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__label {
+  /* Sit inside the light card like speaker name/title */
+  background: color-mix(in srgb, var(--e-navy-deep) 88%, transparent);
+  margin-top: 2px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='2']:not(.e-flier--cascade-stage-flex-solo) .e-keywords {
+  max-width: 980px;
+  margin-inline: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /*
@@ -502,7 +785,125 @@
   padding: 20px 28px 24px;
 }
 
-/* Solo (no convener): N=1–3 hit exact ref; N=4/5 use single-row full-width strips */
+/*
+ * N=4 + convener: five equal-width holders (4 speakers + convener), same rhythm as
+ * Ocean N=5 solo. Convener frame is only ~8px taller — not a fat hero column.
+ */
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) {
+  --e-flex-col-gap: 8px;
+  --e-flex-row-gap: 0;
+  --e-flex-people-max: 100%;
+  --e-flex-ref-h: 320px;
+  --e-flex-convener-h: calc(var(--e-flex-ref-h) + 8px);
+  --e-flex-name-size: 12px;
+  --e-flex-title-size: 9px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__stage {
+  padding: 28px 32px 32px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__card {
+  padding: 16px 18px 12px;
+  gap: 10px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__layout {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  column-gap: var(--e-flex-col-gap);
+  row-gap: 0;
+  max-width: 1024px;
+  width: 100%;
+  margin-inline: auto;
+  padding-right: 0;
+  align-items: start;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__people-col,
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people,
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row {
+  display: contents;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__programme {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  justify-self: stretch;
+  width: 100%;
+  font-size: 22px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row > .e-slot {
+  grid-row: 2;
+  flex: none;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people .e-slot__stack {
+  aspect-ratio: auto;
+  width: 100%;
+  height: var(--e-flex-ref-h);
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener {
+  grid-column: 5;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-self: start;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  grid-template-rows: var(--e-flex-convener-h) auto;
+  gap: 6px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener::before {
+  /* No offset slab — equal-column rhythm; overhang would fatten the track */
+  content: none;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener > :not(.e-convener__label) {
+  min-height: 0;
+  height: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__frame {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__label {
+  margin-top: 0;
+}
+
+/* Solo (no convener): N=1–2 use tray-less sizes; N=3 hits classic ref; N=4/5 single-row */
+.e-flier--cascade-stage-flex-solo[data-people-count='1'] {
+  --e-flex-people-max: 460px;
+  --e-flex-ref-w: 420px;
+  --e-flex-ref-h: 580px;
+  --e-flex-name-size: 20px;
+  --e-flex-title-size: 14px;
+}
+
+.e-flier--cascade-stage-flex-solo[data-people-count='2'] {
+  --e-flex-people-max: 780px;
+  --e-flex-ref-w: 320px;
+  --e-flex-ref-h: 450px;
+  --e-flex-col-gap: 32px;
+  --e-flex-name-size: 16px;
+  --e-flex-title-size: 12px;
+}
+
 .e-flier--cascade-stage-flex-solo[data-people-count='1'] .e-flex-people .e-slot__stack,
 .e-flier--cascade-stage-flex-solo[data-people-count='2'] .e-flex-people .e-slot__stack,
 .e-flier--cascade-stage-flex-solo[data-people-count='3'] .e-flex-people .e-slot__stack {
@@ -517,6 +918,18 @@
 .e-flier--cascade-stage-flex-solo[data-people-count='2'] .e-flex-people__row > .e-slot,
 .e-flier--cascade-stage-flex-solo[data-people-count='3'] .e-flex-people__row > .e-slot {
   width: auto;
+}
+
+.e-flier--cascade-stage-flex-solo[data-people-count='2'] .e-flex-people__row > .e-slot {
+  padding: 18px 16px 20px;
+}
+
+.e-flier--cascade-stage-flex-solo[data-people-count='1'] .e-grid__stage {
+  padding: 20px 40px 24px;
+}
+
+.e-flier--cascade-stage-flex-solo[data-people-count='2'] .e-grid__stage {
+  padding: 18px 40px 22px;
 }
 
 .e-flier--cascade-stage-flex-solo[data-people-count='3'] {
@@ -660,7 +1073,7 @@
  * Cascade Stage sets .e-grid__stage to align-items:flex-start + tight padding;
  * override under Flex so leftover column space centers the cyan card mid-band
  * and opens air under the hero icon pills. N=4–5 have their own single-row stage
- * padding; counts 6–10 keep cascade-stage defaults.
+ * padding; N=6–8 have multi-row stage rules below; 9–10 keep cascade-stage defaults.
  */
 .e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__stage,
 .e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__stage,
@@ -670,11 +1083,11 @@
 }
 
 .e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__stage {
-  padding: 24px 36px 28px;
+  padding: 20px 36px 24px;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__stage {
-  padding: 22px 36px 26px;
+  padding: 18px 32px 22px;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__stage {
@@ -687,104 +1100,575 @@
   margin-bottom: 4px;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='6'] {
-  --e-flex-slot-basis: 140px;
-  --e-flex-name-size: 12px;
-  --e-flex-title-size: 10px;
-  --e-flex-people-max: 500px;
-}
-
-.e-flier--cascade-stage-flex[data-people-count='7'] {
-  --e-flex-slot-basis: 118px;
-  --e-flex-name-size: 11px;
-  --e-flex-title-size: 9px;
-  --e-flex-people-max: 540px;
-  --e-flex-col-gap: 10px;
-  --e-flex-row-gap: 10px;
-}
-
+/*
+ * N=6–8: multi-row grids that own the light stage card (not a 500px people strip).
+ * Recipes stay [3,3] / [4,3] / [4,4]. Solo = full card width; +convener = equal-width
+ * people slots with a matching-width convener column (N=4 equal-width direction).
+ */
+.e-flier--cascade-stage-flex[data-people-count='6'],
+.e-flier--cascade-stage-flex[data-people-count='7'],
 .e-flier--cascade-stage-flex[data-people-count='8'] {
-  --e-flex-slot-basis: 118px;
+  --e-flex-people-max: 100%;
+  --e-flex-col-gap: 12px;
+  --e-flex-row-gap: 14px;
+  --e-flex-name-size: 12px;
+  --e-flex-title-size: 9px;
+  --e-flex-ref-h: 240px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6'] {
+  --e-flex-slot-basis: 280px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7'],
+.e-flier--cascade-stage-flex[data-people-count='8'] {
+  --e-flex-slot-basis: 220px;
+  --e-flex-col-gap: 10px;
+  --e-flex-row-gap: 12px;
   --e-flex-name-size: 11px;
   --e-flex-title-size: 9px;
-  --e-flex-people-max: 540px;
+  --e-flex-ref-h: 210px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6'] .e-grid__card,
+.e-flier--cascade-stage-flex[data-people-count='7'] .e-grid__card,
+.e-flier--cascade-stage-flex[data-people-count='8'] .e-grid__card {
+  padding: 16px 18px 12px;
+  gap: 12px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6'] .e-grid__programme,
+.e-flier--cascade-stage-flex[data-people-count='7'] .e-grid__programme,
+.e-flier--cascade-stage-flex[data-people-count='8'] .e-grid__programme {
+  font-size: 22px;
+  padding: 12px 8px 16px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6'] .e-grid__stage,
+.e-flier--cascade-stage-flex[data-people-count='7'] .e-grid__stage,
+.e-flier--cascade-stage-flex[data-people-count='8'] .e-grid__stage {
+  align-items: center;
+  justify-content: center;
+  padding: 16px 28px 18px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6'] .e-grid__people-col,
+.e-flier--cascade-stage-flex[data-people-count='7'] .e-grid__people-col,
+.e-flier--cascade-stage-flex[data-people-count='8'] .e-grid__people-col {
+  max-width: 100%;
+  justify-self: stretch;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6'] .e-flex-people .e-slot__stack,
+.e-flier--cascade-stage-flex[data-people-count='7'] .e-flex-people .e-slot__stack,
+.e-flier--cascade-stage-flex[data-people-count='8'] .e-flex-people .e-slot__stack {
+  aspect-ratio: auto;
+  width: 100%;
+  height: var(--e-flex-ref-h);
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6'] .e-flex-people .e-slot__name,
+.e-flier--cascade-stage-flex[data-people-count='7'] .e-flex-people .e-slot__name,
+.e-flier--cascade-stage-flex[data-people-count='8'] .e-flex-people .e-slot__name {
+  margin-top: 6px;
+}
+
+/* Solo N=6–8: people grid fills the card; equal holders; N=7 last row centered */
+.e-flier--cascade-stage-flex-solo[data-people-count='6'],
+.e-flier--cascade-stage-flex-solo[data-people-count='7'],
+.e-flier--cascade-stage-flex-solo[data-people-count='8'] {
+  --e-flex-people-max: 100%;
+}
+
+.e-flier--cascade-stage-flex-solo[data-people-count='6'] {
+  --e-flex-ref-h: 280px;
+  --e-flex-col-gap: 14px;
+  --e-flex-row-gap: 16px;
+  --e-flex-name-size: 13px;
+  --e-flex-title-size: 10px;
+}
+
+.e-flier--cascade-stage-flex-solo[data-people-count='7'],
+.e-flier--cascade-stage-flex-solo[data-people-count='8'] {
+  --e-flex-ref-h: 245px;
+  --e-flex-col-gap: 12px;
+  --e-flex-row-gap: 14px;
+  --e-flex-name-size: 12px;
+  --e-flex-title-size: 9px;
+}
+
+.e-flier--cascade-stage-flex-solo[data-people-count='6'] .e-grid__layout,
+.e-flier--cascade-stage-flex-solo[data-people-count='7'] .e-grid__layout,
+.e-flier--cascade-stage-flex-solo[data-people-count='8'] .e-grid__layout {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 1024px;
+  gap: 0;
+  padding-right: 0;
+}
+
+.e-flier--cascade-stage-flex-solo[data-people-count='6'] .e-grid__people-col,
+.e-flier--cascade-stage-flex-solo[data-people-count='7'] .e-grid__people-col,
+.e-flier--cascade-stage-flex-solo[data-people-count='8'] .e-grid__people-col {
+  max-width: 100%;
+  justify-self: stretch;
+}
+
+.e-flier--cascade-stage-flex-solo[data-people-count='6'] .e-grid__stage,
+.e-flier--cascade-stage-flex-solo[data-people-count='7'] .e-grid__stage,
+.e-flier--cascade-stage-flex-solo[data-people-count='8'] .e-grid__stage {
+  padding: 20px 32px 22px;
+}
+
+/* N=6 solo: equal thirds across full card ([3,3]) */
+.e-flier--cascade-stage-flex-solo[data-people-count='6'] .e-flex-people__row > .e-slot {
+  flex: 0 0 auto;
+  width: calc((100% - 2 * var(--e-flex-col-gap)) / 3);
+  max-width: none;
+}
+
+/*
+ * N=7 solo: size every slot from the 4-col first row so the centered 3-up
+ * second row matches (do not recompute from --row-cols: 3).
+ */
+.e-flier--cascade-stage-flex-solo[data-people-count='7'] .e-flex-people__row > .e-slot,
+.e-flier--cascade-stage-flex-solo[data-people-count='8'] .e-flex-people__row > .e-slot {
+  flex: 0 0 auto;
+  width: calc((100% - 3 * var(--e-flex-col-gap)) / 4);
+  max-width: none;
+}
+
+/*
+ * N=6 + convener: 3 people cols + 1 matching-width convener (equal-width rhythm).
+ * Programme spans full card; people grid + convener share row 2.
+ */
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) {
+  --e-flex-ref-h: 220px;
+  --e-flex-row-gap: 12px;
   --e-flex-col-gap: 10px;
+  --e-flex-convener-h: calc(2 * var(--e-flex-ref-h) + var(--e-flex-row-gap) + 8px);
+  --e-flex-name-size: 12px;
+  --e-flex-title-size: 9px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-grid__layout {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--e-flex-col-gap);
+  row-gap: 0;
+  max-width: 1024px;
+  width: 100%;
+  margin-inline: auto;
+  padding-right: 0;
+  align-items: start;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-grid__people-col {
+  display: contents;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-grid__programme {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  justify-self: stretch;
+  width: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people {
+  grid-column: 1 / 4;
+  grid-row: 2;
+  min-width: 0;
+  width: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row > .e-slot {
+  flex: 0 0 auto;
+  width: calc((100% - 2 * var(--e-flex-col-gap)) / 3);
+  max-width: none;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener {
+  grid-column: 4;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-self: start;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  grid-template-rows: var(--e-flex-convener-h) auto;
+  gap: 6px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener::before {
+  content: none;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener > :not(.e-convener__label) {
+  min-height: 0;
+  height: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__frame {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__label {
+  margin-top: 0;
+}
+
+/*
+ * N=7–8 + convener: 4 people cols + 1 matching-width convener.
+ * N=7 incomplete second row stays centered; all slots share the 4-col width.
+ */
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo),
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) {
+  --e-flex-ref-h: 190px;
   --e-flex-row-gap: 10px;
-}
-
-.e-flier--cascade-stage-flex[data-people-count='9'] {
-  --e-flex-slot-basis: 108px;
-  --e-flex-name-size: 10px;
-  --e-flex-title-size: 8px;
-  --e-flex-people-max: 520px;
   --e-flex-col-gap: 8px;
-  --e-flex-row-gap: 8px;
-}
-
-.e-flier--cascade-stage-flex[data-people-count='10'] {
-  --e-flex-slot-basis: 96px;
-  --e-flex-name-size: 9px;
+  --e-flex-convener-h: calc(2 * var(--e-flex-ref-h) + var(--e-flex-row-gap) + 8px);
+  --e-flex-name-size: 11px;
   --e-flex-title-size: 8px;
-  --e-flex-people-max: 560px;
-  --e-flex-col-gap: 8px;
-  --e-flex-row-gap: 8px;
 }
 
-/* High-N: slightly compress hero/card so footer stays clear on 1080×1350 */
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-grid__layout,
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-grid__layout {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  column-gap: var(--e-flex-col-gap);
+  row-gap: 0;
+  max-width: 1024px;
+  width: 100%;
+  margin-inline: auto;
+  padding-right: 0;
+  align-items: start;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-grid__people-col,
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-grid__people-col {
+  display: contents;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-grid__programme,
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-grid__programme {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  justify-self: stretch;
+  width: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people,
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people {
+  grid-column: 1 / 5;
+  grid-row: 2;
+  min-width: 0;
+  width: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row > .e-slot,
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row > .e-slot {
+  flex: 0 0 auto;
+  width: calc((100% - 3 * var(--e-flex-col-gap)) / 4);
+  max-width: none;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener,
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener {
+  grid-column: 5;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-self: start;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  grid-template-rows: var(--e-flex-convener-h) auto;
+  gap: 6px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener::before,
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener::before {
+  content: none;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener > :not(.e-convener__label),
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener > :not(.e-convener__label) {
+  min-height: 0;
+  height: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__frame,
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__frame {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='7']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__label,
+.e-flier--cascade-stage-flex[data-people-count='8']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__label {
+  margin-top: 0;
+}
+
+/* High-N portrait: slightly compress hero so footer stays clear on 1080×1350 */
+.e-flier--cascade-stage-flex[data-people-count='6'] .e-cascade__hero {
+  padding-top: 4px;
+}
+
 .e-flier--cascade-stage-flex[data-people-count='7'] .e-cascade__hero,
 .e-flier--cascade-stage-flex[data-people-count='8'] .e-cascade__hero {
-  padding-top: 2px;
+  padding-top: 0;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='6'] .e-cascade__title {
+  font-size: 60px;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='7'] .e-cascade__title,
 .e-flier--cascade-stage-flex[data-people-count='8'] .e-cascade__title {
-  font-size: 58px;
+  font-size: 56px;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='9'] .e-cascade__hero,
-.e-flier--cascade-stage-flex[data-people-count='10'] .e-cascade__hero {
-  padding: 0 48px;
+.e-flier--cascade-stage-flex[data-people-count='6'] .e-cascade__icons,
+.e-flier--cascade-stage-flex[data-people-count='7'] .e-cascade__icons,
+.e-flier--cascade-stage-flex[data-people-count='8'] .e-cascade__icons {
+  margin-top: 8px;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='9'] .e-cascade__title,
-.e-flier--cascade-stage-flex[data-people-count='10'] .e-cascade__title {
-  margin-top: 4px;
-  font-size: 54px;
+/*
+ * N=9–10 landscape banner strip — one tall portrait row; artboard width grows with N
+ * (+ convener) via resolveStageFlexBoardSize / stageFlexBannerCssVars.
+ */
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-header {
+  padding: 18px 40px 0;
+  column-gap: 14px;
+  row-gap: 0;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='9'] .e-cascade__icons,
-.e-flier--cascade-stage-flex[data-people-count='10'] .e-cascade__icons {
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-cascade__hero {
+  padding: 2px 40px 0;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-cascade__eyebrow {
+  font-size: 12px;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-cascade__title {
+  margin-top: 2px;
+  max-width: min(1100px, 72%);
+  font-size: 44px;
+  line-height: 0.94;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-cascade__title em {
+  font-size: 15px;
+  padding: 4px 12px;
+  margin-left: 10px;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-cascade__icons {
+  margin-top: 6px;
+  gap: 8px;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-cascade__icons span {
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-grid__stage {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 40px 6px;
+  min-height: 0;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-grid__card {
+  gap: 10px;
+  padding: 12px 20px 10px;
+  border-radius: 22px;
+  width: max-content;
+  max-width: 100%;
+  min-height: 0;
+  margin-inline: auto;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-grid__programme {
+  font-size: 22px;
+  padding: 4px 8px 10px;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-footer {
+  min-height: 120px;
+  padding: 10px 36px 18px;
+  gap: 14px;
+}
+
+.e-flier--cascade-stage-flex[data-orientation='landscape'] .e-footer--compact {
+  min-height: 120px;
+  padding: 10px 36px 18px;
+}
+
+/* Shared single-row portrait strip (solo + convener) */
+.e-flier--cascade-stage-flex[data-people-count='9'],
+.e-flier--cascade-stage-flex[data-people-count='10'] {
+  --e-flex-people-max: none;
+  --e-flex-name-size: 12px;
+  --e-flex-title-size: 9px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9'] .e-grid__people-col,
+.e-flier--cascade-stage-flex[data-people-count='10'] .e-grid__people-col {
+  max-width: none;
+  width: auto;
+  justify-self: center;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9'] .e-flex-people .e-slot__stack,
+.e-flier--cascade-stage-flex[data-people-count='10'] .e-flex-people .e-slot__stack {
+  aspect-ratio: auto;
+  width: 100%;
+  height: var(--e-flex-banner-slot-h, var(--e-flex-ref-h, 320px));
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9'] .e-flex-people .e-slot__name,
+.e-flier--cascade-stage-flex[data-people-count='10'] .e-flex-people .e-slot__name {
   margin-top: 6px;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='9'] .e-grid__stage,
-.e-flier--cascade-stage-flex[data-people-count='10'] .e-grid__stage {
-  padding: 10px 40px 12px;
+/* Solo N=9–10: one row of fixed portrait holders */
+.e-flier--cascade-stage-flex-solo[data-people-count='9'],
+.e-flier--cascade-stage-flex-solo[data-people-count='10'] {
+  --e-flex-name-size: 12px;
+  --e-flex-title-size: 9px;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='9'] .e-grid__card,
-.e-flier--cascade-stage-flex[data-people-count='10'] .e-grid__card {
-  gap: 10px;
-  padding: 16px 22px 14px;
+.e-flier--cascade-stage-flex-solo[data-people-count='9'] .e-grid__layout,
+.e-flier--cascade-stage-flex-solo[data-people-count='10'] .e-grid__layout {
+  display: block;
+  width: max-content;
+  max-width: none;
+  margin-inline: auto;
+  padding-right: 0;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='9'] .e-grid__programme,
-.e-flier--cascade-stage-flex[data-people-count='10'] .e-grid__programme {
-  font-size: 22px;
+.e-flier--cascade-stage-flex-solo[data-people-count='9'] .e-grid__people-col,
+.e-flier--cascade-stage-flex-solo[data-people-count='10'] .e-grid__people-col {
+  max-width: none;
+  width: max-content;
+  justify-self: center;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='7'] .e-grid__programme,
-.e-flier--cascade-stage-flex[data-people-count='8'] .e-grid__programme {
-  font-size: 24px;
+.e-flier--cascade-stage-flex-solo[data-people-count='9'] .e-flex-people__row > .e-slot,
+.e-flier--cascade-stage-flex-solo[data-people-count='10'] .e-flex-people__row > .e-slot {
+  flex: 0 0 auto;
+  width: var(--e-flex-banner-slot-w, 176px);
+  max-width: none;
+}
+
+/*
+ * N=9–10 + convener: one people row + equal-width convener (+8px height).
+ * display:contents → programme spans full strip; holders share one grid row.
+ */
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo),
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) {
+  --e-flex-name-size: 12px;
+  --e-flex-title-size: 9px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-grid__layout,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-grid__layout {
+  display: grid;
+  grid-template-columns: repeat(var(--e-flex-banner-holders, 10), var(--e-flex-banner-slot-w, 176px));
+  column-gap: var(--e-flex-col-gap, 12px);
+  row-gap: 0;
+  width: max-content;
+  max-width: none;
+  margin-inline: auto;
+  padding-right: 0;
+  align-items: start;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-grid__people-col,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-grid__people-col,
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people,
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row {
+  display: contents;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-grid__programme,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-grid__programme {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  justify-self: stretch;
+  width: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row > .e-slot,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-flex-people__row > .e-slot {
+  grid-row: 2;
+  flex: none;
+  width: var(--e-flex-banner-slot-w, 176px);
+  min-width: 0;
+  max-width: none;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener {
+  grid-row: 2;
+  width: var(--e-flex-banner-slot-w, 176px);
+  min-width: 0;
+  min-height: 0;
+  align-self: start;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  grid-template-rows: var(--e-flex-convener-h) auto;
+  gap: 6px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener::before,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener::before {
+  content: none;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener > :not(.e-convener__label),
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener > :not(.e-convener__label) {
+  min-height: 0;
+  height: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__frame,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__frame {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='9']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__label,
+.e-flier--cascade-stage-flex[data-people-count='10']:not(.e-flier--cascade-stage-flex-solo) .e-grid__convener .e-convener__label {
+  margin-top: 0;
 }
 
 .e-flier--cascade-stage-flex-solo[data-people-count='1'] {
   --e-flex-people-max: 320px;
-}
-
-.e-flier--cascade-stage-flex-solo[data-people-count='9'],
-.e-flier--cascade-stage-flex-solo[data-people-count='10'] {
-  --e-flex-people-max: 860px;
-  --e-flex-slot-basis: 140px;
 }
 
