@@ -2,6 +2,11 @@ import { Router } from 'express'
 import { Template } from '../models/Template.js'
 import { User } from '../models/User.js'
 import {
+  createCategory,
+  listCategories,
+  setDesignCategory,
+} from '../lib/categories.js'
+import {
   listTemplateCollectionRecords,
   serializeTemplateCollection,
   setTemplateCollectionStatus,
@@ -85,12 +90,38 @@ router.patch('/users/:id/role', async (req, res) => {
   }
 })
 
+/** Category catalog — seeds + admin-created custom labels. */
+router.get('/categories', async (_req, res) => {
+  try {
+    const categories = await listCategories()
+    return res.json({ categories })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ error: 'Could not load categories' })
+  }
+})
+
+router.post('/categories', async (req, res) => {
+  try {
+    const category = await createCategory(req.body?.label)
+    return res.status(201).json({ category })
+  } catch (err) {
+    if (err?.status === 400 || err?.status === 409) {
+      return res.status(err.status).json({ error: err.message })
+    }
+    console.error(err)
+    return res.status(500).json({ error: 'Could not create category' })
+  }
+})
+
 /** Sync static catalog collections into Mongo (creates draft records for new groups). */
 router.post('/templates/sync', async (req, res) => {
   try {
     const records = await syncTemplateCollectionCatalog(req.body?.collections)
+    const categories = await listCategories()
     return res.json({
       collections: records.map(serializeTemplateCollection),
+      categories,
     })
   } catch (err) {
     if (err?.status === 400) {
@@ -103,9 +134,13 @@ router.post('/templates/sync', async (req, res) => {
 
 router.get('/templates', async (_req, res) => {
   try {
-    const records = await listTemplateCollectionRecords()
+    const [records, categories] = await Promise.all([
+      listTemplateCollectionRecords(),
+      listCategories(),
+    ])
     return res.json({
       collections: records.map(serializeTemplateCollection),
+      categories,
     })
   } catch (err) {
     console.error(err)
@@ -168,5 +203,40 @@ router.patch('/templates/collections/:collectionId/designs/:templateId', async (
     return res.status(500).json({ error: 'Could not update design publish state' })
   }
 })
+
+/**
+ * Set or clear a design's primary category.
+ * Body: { category: "event" } or { category: null } to clear.
+ */
+router.patch(
+  '/templates/collections/:collectionId/designs/:templateId/category',
+  async (req, res) => {
+    try {
+      if (!Object.prototype.hasOwnProperty.call(req.body || {}, 'category')) {
+        return res.status(400).json({ error: 'category is required (slug string or null to clear)' })
+      }
+
+      const record = await setDesignCategory(
+        req.params.collectionId,
+        req.params.templateId,
+        req.body.category,
+      )
+
+      if (!record) {
+        return res.status(404).json({ error: 'Collection not found — sync catalog first' })
+      }
+
+      return res.json({
+        collection: serializeTemplateCollection(record),
+      })
+    } catch (err) {
+      if (err?.status === 400) {
+        return res.status(400).json({ error: err.message })
+      }
+      console.error(err)
+      return res.status(500).json({ error: 'Could not update design category' })
+    }
+  },
+)
 
 export default router

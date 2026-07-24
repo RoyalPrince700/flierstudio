@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useAuth } from '../../auth/AuthContext'
@@ -10,6 +10,7 @@ import {
   MARK_TILE_PATH,
 } from '../../fliers/flier-studio/FSLogo'
 import { fsTokens } from '../../design/flierStudioTokens'
+import { consumeAuthReturn } from '../../lib/authReturn'
 import { EASE } from '../landing/motion'
 import './LoginScreen.css'
 
@@ -73,6 +74,7 @@ function ArtboardSilhouette({ className }) {
 
 export default function LoginScreen({ theme = 'dark' }) {
   const { loginWithGoogle, error, setError } = useAuth()
+  const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
   const reduceMotion = useReducedMotion()
   const googleWrapRef = useRef(null)
@@ -90,6 +92,24 @@ export default function LoginScreen({ theme = 'dark' }) {
           animate: { opacity: 1, y: 0 },
           transition: { duration: 0.55, ease: EASE, delay },
         }
+
+  async function handleGoogleSuccess(response) {
+    if (!response.credential) {
+      setError('Google did not return a credential.')
+      return
+    }
+    setBusy(true)
+    setError('')
+    try {
+      await loginWithGoogle(response.credential)
+      const returnTo = consumeAuthReturn('/studio')
+      navigate(returnTo, { replace: true })
+    } catch (err) {
+      setError(err?.message || 'Google sign-in failed')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <div className="login-screen" data-theme={theme}>
@@ -135,21 +155,7 @@ export default function LoginScreen({ theme = 'dark' }) {
           >
             <GoogleLogin
               key={googleWidth}
-              onSuccess={async (response) => {
-                if (!response.credential) {
-                  setError('Google did not return a credential.')
-                  return
-                }
-                setBusy(true)
-                setError('')
-                try {
-                  await loginWithGoogle(response.credential)
-                } catch (err) {
-                  setError(err?.message || 'Google sign-in failed')
-                } finally {
-                  setBusy(false)
-                }
-              }}
+              onSuccess={handleGoogleSuccess}
               onError={() => setError('Google sign-in was cancelled or failed.')}
               useOneTap={false}
               theme={isDark ? 'filled_black' : 'outline'}

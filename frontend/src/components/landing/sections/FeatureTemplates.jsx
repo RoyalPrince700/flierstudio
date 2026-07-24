@@ -78,6 +78,20 @@ export default function FeatureTemplates() {
             </motion.div>
           ))}
         </motion.div>
+
+        <motion.div
+          className="samples-head"
+          style={{ marginTop: 28 }}
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+          custom={0.15}
+        >
+          <Link to="/templates" className="l-btn l-btn--ghost">
+            Browse all templates
+          </Link>
+        </motion.div>
       </div>
     </section>
   )

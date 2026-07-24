@@ -1,0 +1,38 @@
+---
+description: When a message starts with RP, rewrite into copy-paste prompt(s) grounded in this codebase — do not implement. Split large/multi work into ordered batches.
+alwaysApply: true
+---
+
+# Rewrite Prompt (RP)
+
+When a user message starts with **RP** (or clearly says “rewrite prompt”), do **not** execute the task yet.
+
+## What to do
+
+1. **Read the rough prompt** — treat everything after `RP` as the draft intent.
+2. **Ground in the codebase** — skim the relevant project files, fliers, samples, guides, registry, sizes, and prior patterns so the rewrite matches how this studio actually works.
+3. **Decide: one prompt or batches**
+   - **Single prompt** — small, one-agent scope (one bugfix, one layout tweak, one file family).
+   - **Batches** — default when the draft spans multiple systems, has several independent goals, or would overwhelm one model (routing + API + UI + auth + docs, etc.). Split into **ordered, self-contained** prompts a different AI can run one-at-a-time.
+4. **Each prompt must be comprehensive and runnable alone** — include:
+   - Goal / intent in one line
+   - Prerequisites / depends on (e.g. “Requires Batch 1 merged”)
+   - Constraints (brand vs standalone, size/platform, do/don’t)
+   - Exact paths, ids, and files to touch when known
+   - Acceptance criteria / hand-off
+5. **Hand back only copyable text**
+   - **One prompt:** reply body is only that prompt.
+   - **Batches:** reply body is only the batch prompts. Label each with a single line `Batch N/M — <short title>` then the prompt. No preamble, no “here’s a rewrite”, no closing offers. Put dependency notes inside each batch prompt, not in surrounding commentary.
+6. **Batching rules**
+   - Prefer vertical slices that leave the app working after each batch when possible.
+   - Order by dependency (API/routes before UI that consumes them; route moves before link rewrites; public page before auth return-URL polish).
+   - Keep each batch simple and direct — one clear job.
+   - If the user pastes multiple unrelated tasks in one RP, emit one batch (or one prompt) per task, still ordered if any depend on each other.
+   - Do not invent scope the draft did not imply; if a batch needs a choice, encode it inside that batch as an explicit option.
+
+## Do not
+
+- Start coding, committing, or “just doing it” on an RP message unless they explicitly say to implement after the rewrite.
+- Invent brand assets, sizes, or Emergence placement the draft did not imply — encode those choices as explicit options inside the prompt if unclear.
+- Wrap prompts in commentary the user has to strip before pasting.
+- Dump one mega-prompt when the work clearly needs multiple models/batches.

@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js'
 import adminRoutes from './routes/admin.js'
 import templateRoutes from './routes/templates.js'
 import contactRoutes from './routes/contact.js'
+import { seedCategories } from './lib/categories.js'
 
 const PORT = Number(process.env.PORT) || 8080
 
@@ -66,6 +67,9 @@ app.use((err, _req, res, _next) => {
 async function start() {
   await mongoose.connect(process.env.MONGODB_URI)
   console.log('MongoDB connected')
+
+  const categories = await seedCategories()
+  console.log(`Categories ready (${categories.length} total)`)
 
   app.listen(PORT, () => {
     console.log(`API listening on http://localhost:${PORT}`)

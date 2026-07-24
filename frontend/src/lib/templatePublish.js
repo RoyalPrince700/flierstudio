@@ -102,6 +102,47 @@ export function isDesignPublished(
   return !denied.includes(templateId)
 }
 
+/**
+ * Map of collectionId → { templateId: categorySlug }.
+ * Accepts publish-state `designCategories` map or admin sync collection rows.
+ */
+export function mapDesignCategories(rowsOrMap) {
+  if (!rowsOrMap) return {}
+  if (!Array.isArray(rowsOrMap)) {
+    const next = {}
+    for (const [id, value] of Object.entries(rowsOrMap)) {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        next[id] = { ...value }
+      }
+    }
+    return next
+  }
+
+  const next = {}
+  for (const row of rowsOrMap) {
+    const id = row?.collectionId
+    if (!id) continue
+    const cats =
+      row.designCategories && typeof row.designCategories === 'object'
+        ? { ...row.designCategories }
+        : {}
+    next[id] = { ...(next[id] || {}), ...cats }
+  }
+  return next
+}
+
+/** Normalize category catalog rows from API (sorted by sortOrder then label). */
+export function normalizeCategories(list) {
+  if (!Array.isArray(list)) return []
+  return [...list]
+    .filter((row) => row && typeof row.slug === 'string' && typeof row.label === 'string')
+    .sort((a, b) => {
+      const order = (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0)
+      if (order !== 0) return order
+      return String(a.label).localeCompare(String(b.label))
+    })
+}
+
 export function useTemplatePublish() {
   const { isAdmin } = useAuth()
   const [collectionPublishMap, setCollectionPublishMap] = useState({})
@@ -146,6 +187,26 @@ export function useTemplatePublish() {
   }
 }
 
+/**
+ * Guest-safe publish visibility for the marketing /templates gallery.
+ * Uses `/api/templates/publish-state/public` — never returns draft inventory.
+ * Includes:
+ * - categories: only those assigned to ≥1 visible published design
+ * - designCategories: published collections only; deny-listed designs omitted
+ */
+export async function fetchPublicPublishState() {
+  const data = await api('/api/templates/publish-state/public')
+  return {
+    collectionPublishMap: mapCollectionPublishState(data.collections || {}),
+    unpublishedDesignsMap: mapUnpublishedDesigns(data.unpublishedDesigns || {}),
+    publishedCollectionIds: Array.isArray(data.publishedCollectionIds)
+      ? data.publishedCollectionIds
+      : [],
+    categories: normalizeCategories(data.categories),
+    designCategoriesMap: mapDesignCategories(data.designCategories || {}),
+  }
+}
+
 export async function setCollectionPublishStatus(collectionId, status) {
   const data = await api(
     `/api/admin/templates/collections/${encodeURIComponent(collectionId)}`,
@@ -163,6 +224,29 @@ export async function setDesignPublishStatus(collectionId, templateId, published
     {
       method: 'PATCH',
       body: { published },
+    },
+  )
+  return data.collection
+}
+
+export async function createCategory(label) {
+  const data = await api('/api/admin/categories', {
+    method: 'POST',
+    body: { label },
+  })
+  return data.category
+}
+
+/**
+ * Assign or clear a design's primary category.
+ * Pass categorySlug null/'' to clear.
+ */
+export async function setDesignCategory(collectionId, templateId, categorySlug) {
+  const data = await api(
+    `/api/admin/templates/collections/${encodeURIComponent(collectionId)}/designs/${encodeURIComponent(templateId)}/category`,
+    {
+      method: 'PATCH',
+      body: { category: categorySlug || null },
     },
   )
   return data.collection

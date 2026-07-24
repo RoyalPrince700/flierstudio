@@ -236,7 +236,7 @@ export default function Studio({
   const isNarrow = useMediaQuery('(max-width: 900px)')
   const isPhone = useMediaQuery('(max-width: 640px)')
 
-  const templatesOpen = location.pathname === '/templates'
+  const templatesOpen = location.pathname === '/studio/templates'
 
   const [openTabIds, setOpenTabIds] = useState(() => readStoredTabs(user))
   const [activeProjectId, setActiveProjectId] = useState(
@@ -1139,7 +1139,7 @@ export default function Studio({
   useEffect(() => {
     const hash = window.location.hash
     if (hash === '#/samples' || hash === '#samples' || hash === '#/templates' || hash === '#templates') {
-      navigate('/templates', { replace: true })
+      navigate('/studio/templates', { replace: true })
       return
     }
     if (hash === '#/admin' || hash === '#admin') {
@@ -1189,7 +1189,7 @@ export default function Studio({
       navigate('/studio')
       return
     }
-    navigate('/templates')
+    navigate('/studio/templates')
   }
 
   function patchTab(projectId, patch) {
@@ -1246,12 +1246,12 @@ export default function Studio({
   const openTemplateInStudio = useCallback(
     (template) => {
       const full = getTemplate(template.id) || template
-      if (!full?.Component) return
+      if (!full?.Component) return false
 
       const publishStatus = collectionPublishMap[full.collectionId] ?? 'draft'
       if (!isAdmin && publishStatus !== 'published') {
         setError('This template group is not available yet.')
-        return
+        return false
       }
       if (
         !isDesignPublished(full.collectionId, full.id, {
@@ -1261,7 +1261,7 @@ export default function Studio({
         })
       ) {
         setError('This template is not available yet.')
-        return
+        return false
       }
 
       navigate('/studio')
@@ -1289,14 +1289,14 @@ export default function Studio({
           },
         }))
         setActiveProjectId(projectId)
-        return
+        return true
       }
 
       // Analyzed collections (Inspire, Prayer Chain, …) get their own studio tab —
       // never dump into Starter. Re-open focuses the existing board layer.
       const workspaceId = full.collectionId
       const projectRef = resolveStudioProject(workspaceId)
-      if (!projectRef) return
+      if (!projectRef) return false
 
       const currentLayout = boardLayoutsRef.current[workspaceId]
       const existingId = findTemplateLayer(currentLayout, full.id)
@@ -1310,11 +1310,11 @@ export default function Studio({
           },
         }))
         setActiveProjectId(workspaceId)
-        return
+        return true
       }
 
       const { layout, newId } = addTemplateLayer(currentLayout, projectRef, full)
-      if (!newId) return
+      if (!newId) return false
 
       recordHistory()
       setBoardLayouts((prev) => ({ ...prev, [workspaceId]: layout }))
@@ -1327,6 +1327,7 @@ export default function Studio({
         },
       }))
       setActiveProjectId(workspaceId)
+      return true
     },
     [isAdmin, navigate, collectionPublishMap, unpublishedDesignsMap, recordHistory],
   )
@@ -1347,9 +1348,20 @@ export default function Studio({
     const templateId = searchParams.get('template')
     if (!templateId || !draftsReady || publishLoading) return
     const template = getTemplate(templateId)
-    if (!template) return
+    if (!template) {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('template')
+        return next
+      }, { replace: true })
+      return
+    }
     openTemplateInStudio(template)
-    setSearchParams({}, { replace: true })
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('template')
+      return next
+    }, { replace: true })
   }, [draftsReady, openTemplateInStudio, publishLoading, searchParams, setSearchParams])
 
   function handleTemplatesInspectorSelect(id) {
@@ -1535,7 +1547,7 @@ export default function Studio({
       }
       if ((e.ctrlKey || e.metaKey) && (e.key === 'o' || e.key === 'O')) {
         e.preventDefault()
-        navigate('/templates')
+        navigate('/studio/templates')
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
         e.preventDefault()
@@ -2114,7 +2126,7 @@ export default function Studio({
                 type="button"
                 className="studio-empty-state__cta"
                 data-tour="templates-cta"
-                onClick={() => navigate('/templates')}
+                onClick={() => navigate('/studio/templates')}
               >
                 Templates
               </button>

@@ -15,6 +15,10 @@
   margin-inline: auto;
 }
 
+.pub-doc--wide {
+  max-width: 1100px;
+}
+
 .pub-doc__title {
   margin: 0 0 12px;
   font-family: var(--l-display);

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from './auth/AuthContext'
 import LoginScreen from './components/auth/LoginScreen'
@@ -12,6 +12,8 @@ import PrivacyPage from './components/legal/PrivacyPage'
 import TermsPage from './components/legal/TermsPage'
 import AboutPage from './components/legal/AboutPage'
 import ContactPage from './components/legal/ContactPage'
+import TemplatesPage from './components/legal/TemplatesPage'
+import { rememberAuthReturn } from './lib/authReturn'
 
 const THEME_KEY = 'flier-studio-theme'
 
@@ -27,6 +29,13 @@ function getInitialTheme() {
 
 function RequireAuth({ theme, children }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (loading || user) return
+    const returnTo = `${location.pathname}${location.search}`
+    rememberAuthReturn(returnTo)
+  }, [loading, user, location.pathname, location.search])
 
   if (loading) {
     return (
@@ -70,9 +79,10 @@ export default function App() {
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/templates" element={<TemplatesPage />} />
       <Route path="/studio" element={<RequireAuth theme={theme}>{studio}</RequireAuth>} />
-      <Route path="/templates" element={<RequireAuth theme={theme}>{studio}</RequireAuth>} />
-      <Route path="/samples" element={<Navigate to="/templates" replace />} />
+      <Route path="/studio/templates" element={<RequireAuth theme={theme}>{studio}</RequireAuth>} />
+      <Route path="/samples" element={<Navigate to="/studio/templates" replace />} />
       <Route
         path="/admin"
         element={

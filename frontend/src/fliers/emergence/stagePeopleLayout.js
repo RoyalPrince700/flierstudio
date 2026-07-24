@@ -12,7 +12,7 @@ const ACCENTS = ['amber', 'orange', 'cyan']
  * | 1  | 1 centered                     | —                  |
  * | 2  | 1×2                            | —                  |
  * | 3  | 1×3                            | —                  |
- * | 4  | 2×2                            | [4] single row     |
+ * | 4  | 1×4 (single row always)        | same ([4])         |
  * | 5  | 1×5 (single row always)        | same               |
  * | 6  | 3×2                            | —                  |
  * | 7  | 4 + 3 (last centered)          | —                  |
@@ -24,7 +24,7 @@ export const STAGE_PEOPLE_ROWS = {
   1: [1],
   2: [2],
   3: [3],
-  4: [2, 2],
+  4: [4],
   5: [5],
   6: [3, 3],
   7: [4, 3],
@@ -33,7 +33,7 @@ export const STAGE_PEOPLE_ROWS = {
   10: [5, 5],
 }
 
-/** Solo (no convener) overrides — only where full width changes the recipe. */
+/** Solo (no convener) overrides — kept for N=4 clarity (same recipe as with-convener). */
 export const STAGE_PEOPLE_ROWS_SOLO = {
   4: [4],
 }

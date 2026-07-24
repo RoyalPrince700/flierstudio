@@ -191,7 +191,7 @@ export default function TemplatesBoard({
             <h2>{loading ? 'Loading templates…' : 'No published template groups yet'}</h2>
             <p>
               {isAdmin
-                ? 'Publish template groups from Admin → Templates to make them visible here for all users.'
+                ? 'Publish template groups from Admin → Templates to make them visible here and on the public Templates page.'
                 : 'Check back soon — new template groups are added regularly.'}
             </p>
           </div>

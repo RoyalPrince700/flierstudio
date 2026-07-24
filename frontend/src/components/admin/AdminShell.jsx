@@ -32,10 +32,10 @@ export default function AdminShell({ theme = 'dark', onThemeChange }) {
         </div>
 
         <div className="admin-shell__top-actions">
-          <Link to="/templates" className="admin-shell__link">
+          <Link to="/studio" className="admin-shell__link">
             Open Studio
           </Link>
-          <Link to="/templates" className="admin-shell__link">
+          <Link to="/studio/templates" className="admin-shell__link">
             Templates
           </Link>
           <span className="admin-shell__user" title={user?.email || ''}>

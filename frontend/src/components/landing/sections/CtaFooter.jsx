@@ -54,12 +54,12 @@ export default function CtaFooter() {
             <div className="landing-footer__link-group">
               <a href="/#boards">Boards</a>
               <a href="/#editing">Editing</a>
-              <a href="/#templates">Templates</a>
               <a href="/#export">Export</a>
               <Link to="/studio">Sign in</Link>
             </div>
             <div className="landing-footer__link-group landing-footer__link-group--legal">
               <Link to="/about">About</Link>
+              <Link to="/templates">Templates</Link>
               <Link to="/privacy">Privacy</Link>
               <Link to="/terms">Terms</Link>
               <Link to="/contact">Contact</Link>

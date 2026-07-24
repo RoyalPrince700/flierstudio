@@ -6,6 +6,7 @@ import './LegalPages.css'
 
 const FOOTER_LINKS = [
   { to: '/about', label: 'About' },
+  { to: '/templates', label: 'Templates' },
   { to: '/privacy', label: 'Privacy' },
   { to: '/terms', label: 'Terms' },
   { to: '/contact', label: 'Contact' },
@@ -27,7 +28,6 @@ export function PublicFooter({ showSectionAnchors = false }) {
             <>
               <a href="/#boards">Boards</a>
               <a href="/#editing">Editing</a>
-              <a href="/#templates">Templates</a>
               <a href="/#export">Export</a>
             </>
           ) : null}
@@ -53,6 +53,7 @@ export default function PublicPageShell({
   updated,
   children,
   lead,
+  wide = false,
 }) {
   const location = useLocation()
 
@@ -92,7 +93,7 @@ export default function PublicPageShell({
         </header>
 
         <main className="pub-main">
-          <div className="landing-wrap pub-doc">
+          <div className={`landing-wrap pub-doc${wide ? ' pub-doc--wide' : ''}`}>
             {eyebrow ? <p className="landing-eyebrow">{eyebrow}</p> : null}
             <h1 className="pub-doc__title">{title}</h1>
             {updated ? (

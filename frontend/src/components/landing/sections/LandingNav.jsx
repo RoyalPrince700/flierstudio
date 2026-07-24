@@ -8,9 +8,10 @@ import { EASE } from '../motion'
 const LINKS = [
   { href: '/#boards', label: 'Boards' },
   { href: '/#editing', label: 'Editing' },
-  { href: '/#templates', label: 'Templates' },
   { href: '/#export', label: 'Export' },
   { to: '/about', label: 'About' },
+  { to: '/templates', label: 'Templates' },
+  { to: '/contact', label: 'Contact' },
 ]
 
 function NavLink({ link, onNavigate }) {

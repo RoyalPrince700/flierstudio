@@ -602,8 +602,8 @@ Classic `speakers[]` / `panelists[]` remain for Cascade Stage and other template
 | 1 | 1 | Large centered in people-col |
 | 2 | 1×2 | Equal pair |
 | 3 | 1×3 | Single row |
-| 4 | 2×2 | Quad |
-| 5 | 3 + 2 | Last row centered |
+| 4 | 1×4 | Single row (with or without convener) |
+| 5 | 1×5 | Single row (with or without convener) |
 | 6 | 3×2 | Same balance as shipped Cascade Stage |
 | 7 | 4 + 3 | Last row centered |
 | 8 | 4×2 | Smaller slots |

@@ -76,12 +76,16 @@ export default function AboutPage() {
       <section className="pub-section">
         <h2>Get started</h2>
         <p>
-          Sign in with Google, open the studio, and pick a template to begin. Your drafts can
-          live on your device while you work; export when it’s ready to post.
+          Sign in with Google, open the studio, and pick a template to begin. Or browse published
+          layouts first — sign-in happens when you open one. Your drafts can live on your device
+          while you work; export when it&apos;s ready to post.
         </p>
         <div className="pub-about-cta">
           <Link to="/studio" className="l-btn l-btn--primary">
             Open the Studio
+          </Link>
+          <Link to="/templates" className="l-btn l-btn--ghost">
+            Browse templates
           </Link>
           <Link to="/contact" className="l-btn l-btn--ghost">
             Contact us

@@ -4,9 +4,13 @@ import { ChevronDown, ChevronRight, ExternalLink, RefreshCw, Search } from 'luci
 import { listTemplateCollections } from '../../../samples/registry'
 import {
   buildCollectionSyncPayload,
+  createCategory,
   mapCollectionPublishState,
+  mapDesignCategories,
   mapUnpublishedDesigns,
+  normalizeCategories,
   setCollectionPublishStatus,
+  setDesignCategory,
   setDesignPublishStatus,
 } from '../../../lib/templatePublish'
 import { api } from '../../../lib/api'
@@ -15,6 +19,7 @@ import '../../SamplesBoard.css'
 
 const THUMB_WIDTH = 220
 const THUMB_HEIGHT = 200
+const ADD_CATEGORY_VALUE = '__add__'
 
 const SEGMENTS = [
   { id: 'all', label: 'All' },
@@ -27,16 +32,125 @@ function designIsPublished(collectionId, templateId, unpublishedDesignsMap) {
   return !denied.includes(templateId)
 }
 
+function categoryLabelForSlug(categories, slug) {
+  if (!slug) return null
+  const match = categories.find((cat) => cat.slug === slug)
+  return match?.label || slug
+}
+
+function DesignCategoryControl({
+  collectionId,
+  templateId,
+  categories,
+  currentSlug,
+  busy,
+  adding,
+  onSelectCategory,
+  onStartAdd,
+  onCancelAdd,
+  onCreateAndAssign,
+}) {
+  const [newLabel, setNewLabel] = useState('')
+  const [creating, setCreating] = useState(false)
+
+  useEffect(() => {
+    if (!adding) setNewLabel('')
+  }, [adding])
+
+  async function handleCreate(e) {
+    e.preventDefault()
+    const label = newLabel.trim()
+    if (!label || creating || busy) return
+    setCreating(true)
+    try {
+      await onCreateAndAssign(collectionId, templateId, label)
+      setNewLabel('')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  if (adding) {
+    return (
+      <form className="admin-templates__category-add" onSubmit={handleCreate}>
+        <label className="admin-templates__category-field">
+          <span className="admin-templates__category-label">New category</span>
+          <input
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="e.g. Wedding"
+            disabled={creating || busy}
+            autoFocus
+          />
+        </label>
+        <div className="admin-templates__category-add-actions">
+          <button
+            type="submit"
+            className="admin-board__mini admin-board__mini--primary"
+            disabled={!newLabel.trim() || creating || busy}
+          >
+            {creating ? 'Adding…' : 'Add & assign'}
+          </button>
+          <button
+            type="button"
+            className="admin-board__mini admin-board__mini--ghost"
+            disabled={creating || busy}
+            onClick={onCancelAdd}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    )
+  }
+
+  return (
+    <label className="admin-templates__category-field">
+      <span className="admin-templates__category-label">Category</span>
+      <select
+        className="admin-templates__category-select"
+        value={currentSlug || ''}
+        disabled={busy}
+        aria-label={`Category for ${templateId}`}
+        onChange={(e) => {
+          const value = e.target.value
+          if (value === ADD_CATEGORY_VALUE) {
+            onStartAdd(collectionId, templateId)
+            return
+          }
+          onSelectCategory(collectionId, templateId, value || null)
+        }}
+      >
+        <option value="">No category</option>
+        {categories.map((cat) => (
+          <option key={cat.slug} value={cat.slug}>
+            {cat.label}
+          </option>
+        ))}
+        <option value={ADD_CATEGORY_VALUE}>Add category…</option>
+      </select>
+    </label>
+  )
+}
+
 function CollectionCard({
   collection,
   status,
   unpublishedDesignsMap,
+  designCategoriesMap,
+  categories,
   expanded,
   onToggleExpand,
   busy,
   busyDesignId,
+  busyCategoryId,
+  addingCategoryKey,
   onTogglePublish,
   onToggleDesignPublish,
+  onSelectCategory,
+  onStartAddCategory,
+  onCancelAddCategory,
+  onCreateAndAssignCategory,
 }) {
   const isPublished = status === 'published'
   const unpublishedCount = (collection.templates || []).filter(
@@ -93,7 +207,7 @@ function CollectionCard({
           {expanded ? 'Hide designs' : 'Manage designs'}
         </button>
         <Link
-          to={`/templates?collection=${encodeURIComponent(collection.id)}`}
+          to={`/studio/templates?collection=${encodeURIComponent(collection.id)}`}
           className="admin-board__mini admin-board__mini--ghost"
         >
           <ExternalLink size={12} strokeWidth={2.25} />
@@ -111,12 +225,16 @@ function CollectionCard({
       {expanded ? (
         <ul className="admin-templates__designs">
           {(collection.templates || []).map((template) => {
+            const designKey = `${collection.id}:${template.id}`
             const designPublished = designIsPublished(
               collection.id,
               template.id,
               unpublishedDesignsMap,
             )
-            const designBusy = busyDesignId === `${collection.id}:${template.id}`
+            const designBusy = busyDesignId === designKey
+            const categoryBusy = busyCategoryId === designKey
+            const currentSlug = designCategoriesMap[collection.id]?.[template.id] || ''
+            const currentLabel = categoryLabelForSlug(categories, currentSlug)
             return (
               <li key={template.id} className="admin-templates__design">
                 <div className="admin-templates__design-meta">
@@ -127,25 +245,46 @@ function CollectionCard({
                   >
                     {designPublished ? 'Published' : 'Unpublished'}
                   </span>
+                  {currentLabel ? (
+                    <span className="admin-templates__design-badge admin-templates__design-badge--category">
+                      {currentLabel}
+                    </span>
+                  ) : null}
                   {isPublished && !designPublished ? (
-                    <span className="admin-templates__design-note">Hidden from non-admins</span>
+                    <span className="admin-templates__design-note">
+                      Hidden on public Templates and for non-admins
+                    </span>
                   ) : null}
                   {!isPublished && designPublished ? (
                     <span className="admin-templates__design-note">
-                      Group draft — not public yet
+                      Group draft — not on public Templates yet
                     </span>
                   ) : null}
                 </div>
-                <button
-                  type="button"
-                  className={`admin-board__mini${designPublished ? '' : ' admin-board__mini--primary'}`}
-                  disabled={designBusy || busy}
-                  onClick={() =>
-                    onToggleDesignPublish(collection.id, template.id, designPublished)
-                  }
-                >
-                  {designPublished ? 'Unpublish' : 'Publish'}
-                </button>
+                <div className="admin-templates__design-actions">
+                  <DesignCategoryControl
+                    collectionId={collection.id}
+                    templateId={template.id}
+                    categories={categories}
+                    currentSlug={currentSlug}
+                    busy={categoryBusy || designBusy || busy}
+                    adding={addingCategoryKey === designKey}
+                    onSelectCategory={onSelectCategory}
+                    onStartAdd={onStartAddCategory}
+                    onCancelAdd={onCancelAddCategory}
+                    onCreateAndAssign={onCreateAndAssignCategory}
+                  />
+                  <button
+                    type="button"
+                    className={`admin-board__mini${designPublished ? '' : ' admin-board__mini--primary'}`}
+                    disabled={designBusy || busy || categoryBusy}
+                    onClick={() =>
+                      onToggleDesignPublish(collection.id, template.id, designPublished)
+                    }
+                  >
+                    {designPublished ? 'Unpublish' : 'Publish'}
+                  </button>
+                </div>
               </li>
             )
           })}
@@ -163,12 +302,20 @@ function SegmentSection({
   collections,
   collectionPublishMap,
   unpublishedDesignsMap,
+  designCategoriesMap,
+  categories,
   expandedId,
   busyId,
   busyDesignId,
+  busyCategoryId,
+  addingCategoryKey,
   onToggleExpand,
   onTogglePublish,
   onToggleDesignPublish,
+  onSelectCategory,
+  onStartAddCategory,
+  onCancelAddCategory,
+  onCreateAndAssignCategory,
 }) {
   return (
     <section className="admin-templates__segment">
@@ -186,12 +333,20 @@ function SegmentSection({
                 collection={collection}
                 status={status}
                 unpublishedDesignsMap={unpublishedDesignsMap}
+                designCategoriesMap={designCategoriesMap}
+                categories={categories}
                 expanded={expandedId === collection.id}
                 onToggleExpand={onToggleExpand}
                 busy={busyId === collection.id}
                 busyDesignId={busyDesignId}
+                busyCategoryId={busyCategoryId}
+                addingCategoryKey={addingCategoryKey}
                 onTogglePublish={onTogglePublish}
                 onToggleDesignPublish={onToggleDesignPublish}
+                onSelectCategory={onSelectCategory}
+                onStartAddCategory={onStartAddCategory}
+                onCancelAddCategory={onCancelAddCategory}
+                onCreateAndAssignCategory={onCreateAndAssignCategory}
               />
             )
           })}
@@ -206,16 +361,42 @@ function SegmentSection({
   )
 }
 
+function applyCollectionCategoryState(row, collectionId, setters) {
+  const { setUnpublishedDesignsMap, setCollectionPublishMap, setDesignCategoriesMap } = setters
+  if (row?.unpublishedDesignIds) {
+    setUnpublishedDesignsMap((prev) => ({
+      ...prev,
+      [collectionId]: row.unpublishedDesignIds,
+    }))
+  }
+  if (row?.status) {
+    setCollectionPublishMap((prev) => ({
+      ...prev,
+      [collectionId]: row.status,
+    }))
+  }
+  if (row?.designCategories) {
+    setDesignCategoriesMap((prev) => ({
+      ...prev,
+      [collectionId]: { ...row.designCategories },
+    }))
+  }
+}
+
 export default function AdminTemplates() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [collectionPublishMap, setCollectionPublishMap] = useState({})
   const [unpublishedDesignsMap, setUnpublishedDesignsMap] = useState({})
+  const [designCategoriesMap, setDesignCategoriesMap] = useState({})
+  const [categories, setCategories] = useState([])
   const [query, setQuery] = useState('')
   const [segment, setSegment] = useState('all')
   const [busyId, setBusyId] = useState(null)
   const [busyDesignId, setBusyDesignId] = useState(null)
+  const [busyCategoryId, setBusyCategoryId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
+  const [addingCategoryKey, setAddingCategoryKey] = useState(null)
 
   const collections = useMemo(() => listTemplateCollections(), [])
 
@@ -230,6 +411,8 @@ export default function AdminTemplates() {
       const rows = data.collections || []
       setCollectionPublishMap(mapCollectionPublishState(rows))
       setUnpublishedDesignsMap(mapUnpublishedDesigns(rows))
+      setDesignCategoriesMap(mapDesignCategories(rows))
+      setCategories(normalizeCategories(data.categories))
     } catch (err) {
       setError(err?.message || 'Could not load template collections')
     } finally {
@@ -257,6 +440,12 @@ export default function AdminTemplates() {
           [collectionId]: row.unpublishedDesignIds,
         }))
       }
+      if (row?.designCategories) {
+        setDesignCategoriesMap((prev) => ({
+          ...prev,
+          [collectionId]: { ...row.designCategories },
+        }))
+      }
     } catch (err) {
       setError(err?.message || 'Could not update collection')
     } finally {
@@ -280,6 +469,12 @@ export default function AdminTemplates() {
           [collectionId]: row.status,
         }))
       }
+      if (row?.designCategories) {
+        setDesignCategoriesMap((prev) => ({
+          ...prev,
+          [collectionId]: { ...row.designCategories },
+        }))
+      }
     } catch (err) {
       setError(err?.message || 'Could not update design')
     } finally {
@@ -287,8 +482,64 @@ export default function AdminTemplates() {
     }
   }
 
+  async function selectDesignCategory(collectionId, templateId, categorySlug) {
+    const key = `${collectionId}:${templateId}`
+    setBusyCategoryId(key)
+    setError('')
+    setAddingCategoryKey(null)
+    try {
+      const row = await setDesignCategory(collectionId, templateId, categorySlug)
+      applyCollectionCategoryState(row, collectionId, {
+        setUnpublishedDesignsMap,
+        setCollectionPublishMap,
+        setDesignCategoriesMap,
+      })
+      // Ensure local map updates even if API omits empty object
+      setDesignCategoriesMap((prev) => {
+        const nextForCollection = { ...(prev[collectionId] || {}) }
+        if (categorySlug) nextForCollection[templateId] = categorySlug
+        else delete nextForCollection[templateId]
+        return { ...prev, [collectionId]: nextForCollection }
+      })
+    } catch (err) {
+      setError(err?.message || 'Could not update category')
+    } finally {
+      setBusyCategoryId(null)
+    }
+  }
+
+  async function createAndAssignCategory(collectionId, templateId, label) {
+    const key = `${collectionId}:${templateId}`
+    setBusyCategoryId(key)
+    setError('')
+    try {
+      const category = await createCategory(label)
+      setCategories((prev) => normalizeCategories([...prev, category]))
+      const row = await setDesignCategory(collectionId, templateId, category.slug)
+      applyCollectionCategoryState(row, collectionId, {
+        setUnpublishedDesignsMap,
+        setCollectionPublishMap,
+        setDesignCategoriesMap,
+      })
+      setDesignCategoriesMap((prev) => ({
+        ...prev,
+        [collectionId]: {
+          ...(prev[collectionId] || {}),
+          [templateId]: category.slug,
+        },
+      }))
+      setAddingCategoryKey(null)
+    } catch (err) {
+      setError(err?.message || 'Could not create category')
+      throw err
+    } finally {
+      setBusyCategoryId(null)
+    }
+  }
+
   function toggleExpand(collectionId) {
     setExpandedId((prev) => (prev === collectionId ? null : collectionId))
+    setAddingCategoryKey(null)
   }
 
   const filtered = useMemo(() => {
@@ -327,6 +578,26 @@ export default function AdminTemplates() {
     (segment === 'published' && !publishedCount) ||
     (segment === 'unpublished' && !unpublishedCount)
 
+  const segmentProps = {
+    collectionPublishMap,
+    unpublishedDesignsMap,
+    designCategoriesMap,
+    categories,
+    expandedId,
+    busyId,
+    busyDesignId,
+    busyCategoryId,
+    addingCategoryKey,
+    onToggleExpand: toggleExpand,
+    onTogglePublish: togglePublish,
+    onToggleDesignPublish: toggleDesignPublish,
+    onSelectCategory: selectDesignCategory,
+    onStartAddCategory: (collectionId, templateId) =>
+      setAddingCategoryKey(`${collectionId}:${templateId}`),
+    onCancelAddCategory: () => setAddingCategoryKey(null),
+    onCreateAndAssignCategory: createAndAssignCategory,
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-page__header">
@@ -334,9 +605,11 @@ export default function AdminTemplates() {
           <h1 className="admin-page__title">Templates</h1>
           <p className="admin-page__copy">
             Manage template groups and individual designs. A group must be published for any of
-            its fliers to appear on <Link to="/templates">/templates</Link>; you can still
-            unpublish specific designs inside a published group. Open a group in the studio to QA
-            before publishing.
+            its fliers to appear on the public{' '}
+            <Link to="/templates">Templates</Link> page and in Studio at{' '}
+            <Link to="/studio/templates">/studio/templates</Link>; you can still unpublish specific
+            designs inside a published group. Assign a category per design for the public gallery.
+            Open a group in the studio to QA before publishing.
           </p>
         </div>
         <button type="button" className="admin-board__refresh" onClick={load} disabled={loading}>
@@ -411,6 +684,8 @@ export default function AdminTemplates() {
         Published {publishedCount}
         <span aria-hidden="true"> · </span>
         Unpublished {unpublishedCount}
+        <span aria-hidden="true"> · </span>
+        Categories {categories.length}
       </p>
 
       <div className="samples-board samples-board--grid admin-templates__grid">
@@ -441,14 +716,7 @@ export default function AdminTemplates() {
                       : 'Publish a group, then manage individual designs if needed.'
                   }
                   collections={published}
-                  collectionPublishMap={collectionPublishMap}
-                  unpublishedDesignsMap={unpublishedDesignsMap}
-                  expandedId={expandedId}
-                  busyId={busyId}
-                  busyDesignId={busyDesignId}
-                  onToggleExpand={toggleExpand}
-                  onTogglePublish={togglePublish}
-                  onToggleDesignPublish={toggleDesignPublish}
+                  {...segmentProps}
                 />
               ) : null}
               {showUnpublished ? (
@@ -462,14 +730,7 @@ export default function AdminTemplates() {
                       : 'Draft and hidden groups will appear here.'
                   }
                   collections={unpublished}
-                  collectionPublishMap={collectionPublishMap}
-                  unpublishedDesignsMap={unpublishedDesignsMap}
-                  expandedId={expandedId}
-                  busyId={busyId}
-                  busyDesignId={busyDesignId}
-                  onToggleExpand={toggleExpand}
-                  onTogglePublish={togglePublish}
-                  onToggleDesignPublish={toggleDesignPublish}
+                  {...segmentProps}
                 />
               ) : null}
             </div>

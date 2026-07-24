@@ -292,6 +292,11 @@
   --e-flex-people-max: 500px;
 }
 
+/* Air between stage card top, programme label, and portrait row */
+.e-flier--cascade-stage-flex .e-grid__programme {
+  padding: 20px 8px 24px;
+}
+
 .e-flier--cascade-stage-flex .e-grid__people-col {
   max-width: var(--e-flex-people-max);
 }
@@ -350,14 +355,13 @@
 
 /* Per-count scale + people-col width (recipe balance lives in row markup) */
 /*
- * N=1–4: match classic Cascade Stage convener photo frame (320×506).
- * N=1–2: exact. N=3–4: same aspect; max size after widening layout / tightening gaps
- * (three 320px columns + convener cannot fit 1080). N=5–10 unchanged below.
+ * N=1–3: match classic Cascade Stage convener photo frame (320×506).
+ * N=1–2: exact. N=3: same aspect; max size after widening layout / tightening gaps
+ * (three 320px columns + convener cannot fit 1080). N=4–5: single-row strips below.
  */
 .e-flier--cascade-stage-flex[data-people-count='1'],
 .e-flier--cascade-stage-flex[data-people-count='2'],
-.e-flier--cascade-stage-flex[data-people-count='3'],
-.e-flier--cascade-stage-flex[data-people-count='4'] {
+.e-flier--cascade-stage-flex[data-people-count='3'] {
   --e-flex-ref-w: 320px;
   --e-flex-ref-h: 506px;
   --e-flex-slot-basis: var(--e-flex-ref-w);
@@ -382,17 +386,10 @@
   --e-flex-title-size: 10px;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='4'] {
-  --e-flex-people-max: 660px;
-  --e-flex-name-size: 13px;
-  --e-flex-title-size: 10px;
-}
-
-/* Widen stage band so 320-wide frames can sit beside convener (N=1–4) */
+/* Widen stage band so 320-wide frames can sit beside convener (N=1–3) */
 .e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__layout,
 .e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__layout,
-.e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__layout,
-.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__layout {
+.e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__layout {
   max-width: 1000px;
   gap: 16px;
   padding-right: 8px;
@@ -407,21 +404,18 @@
 
 .e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__card,
 .e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__card,
-.e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__card,
-.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__card {
+.e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__card {
   padding: 18px 20px 14px;
   gap: 12px;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__programme,
 .e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__programme,
-.e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__programme,
-.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__programme {
+.e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__programme {
   font-size: 24px;
-  padding-bottom: 2px;
 }
 
-/* Person photo frame = classic convener frame size (override 3/4 for this match) */
+/* Person photo frame = classic convener frame size */
 .e-flier--cascade-stage-flex[data-people-count='1'] .e-flex-people .e-slot__stack,
 .e-flier--cascade-stage-flex[data-people-count='2'] .e-flex-people .e-slot__stack {
   aspect-ratio: auto;
@@ -437,7 +431,7 @@
 }
 
 /*
- * N=3–4: size slots from the ROW width (not nested % of width:auto).
+ * N=3: size slots from the ROW width (not nested % of width:auto).
  * Keep classic convener aspect 320/506; take the largest size that fits.
  */
 .e-flier--cascade-stage-flex[data-people-count='3'] .e-flex-people__row > .e-slot {
@@ -453,29 +447,62 @@
   height: var(--e-flex-ref-h);
 }
 
+/* N=4: always one row of four (with or without convener) — mirror N=5 single-row strip */
+.e-flier--cascade-stage-flex[data-people-count='4'] {
+  --e-flex-ref-w: 320px;
+  --e-flex-ref-h: 506px;
+  --e-flex-slot-basis: 150px;
+  --e-flex-name-size: 12px;
+  --e-flex-title-size: 9px;
+  --e-flex-people-max: 100%;
+  --e-flex-col-gap: 6px;
+  --e-flex-row-gap: 0;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__layout {
+  max-width: 1024px;
+  gap: 12px;
+  padding-right: 6px;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 260px);
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__people-col {
+  max-width: 100%;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__card {
+  padding: 16px 18px 12px;
+  gap: 10px;
+}
+
+.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__programme {
+  font-size: 22px;
+}
+
 .e-flier--cascade-stage-flex[data-people-count='4'] .e-flex-people__row > .e-slot {
   flex: 0 0 auto;
-  /* Two across can reach ~ref width; height capped so 2 rows still fit */
-  width: min(var(--e-flex-ref-w), calc((100% - var(--e-flex-col-gap)) / 2));
+  width: calc((100% - 3 * var(--e-flex-col-gap)) / 4);
   max-width: none;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='4'] .e-flex-people .e-slot__stack {
   aspect-ratio: auto;
   width: 100%;
-  height: min(var(--e-flex-ref-h), 320px);
+  /* Shared single-row height with N=5 with-convener */
+  height: 320px;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='4'] .e-flex-people .e-slot__name {
   margin-top: 6px;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__programme {
-  font-size: 22px;
-  padding-bottom: 0;
+.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__stage {
+  align-items: center;
+  justify-content: center;
+  padding: 20px 28px 24px;
 }
 
-/* Solo (no convener): N=1–3 hit exact ref; N=4 still height-capped for 2 rows */
+/* Solo (no convener): N=1–3 hit exact ref; N=4/5 use single-row full-width strips */
 .e-flier--cascade-stage-flex-solo[data-people-count='1'] .e-flex-people .e-slot__stack,
 .e-flier--cascade-stage-flex-solo[data-people-count='2'] .e-flex-people .e-slot__stack,
 .e-flier--cascade-stage-flex-solo[data-people-count='3'] .e-flex-people .e-slot__stack {
@@ -500,7 +527,7 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* Solo N=4: one row of four (not 2×2) — fit full card width */
+/* Solo N=4: one row of four — fit full card width */
 .e-flier--cascade-stage-flex-solo[data-people-count='4'] {
   --e-flex-people-max: 100%;
   --e-flex-col-gap: 8px;
@@ -530,7 +557,7 @@
 .e-flier--cascade-stage-flex-solo[data-people-count='4'] .e-flex-people .e-slot__stack {
   aspect-ratio: auto;
   width: 100%;
-  /* Single row — taller than 2×2 cap is fine */
+  /* Solo single-row — taller than with-convener strip */
   height: min(var(--e-flex-ref-h, 506px), 400px);
 }
 
@@ -570,7 +597,6 @@
 
 .e-flier--cascade-stage-flex[data-people-count='5'] .e-grid__programme {
   font-size: 22px;
-  padding-bottom: 2px;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='5'] .e-flex-people__row > .e-slot {
@@ -630,15 +656,15 @@
 }
 
 /*
- * Step 1 — vertical balance for short cards (N=1–4 only).
+ * Step 1 — vertical balance for short cards (N=1–3 only).
  * Cascade Stage sets .e-grid__stage to align-items:flex-start + tight padding;
  * override under Flex so leftover column space centers the cyan card mid-band
- * and opens air under the hero icon pills. Counts 5–10 keep cascade-stage defaults.
+ * and opens air under the hero icon pills. N=4–5 have their own single-row stage
+ * padding; counts 6–10 keep cascade-stage defaults.
  */
 .e-flier--cascade-stage-flex[data-people-count='1'] .e-grid__stage,
 .e-flier--cascade-stage-flex[data-people-count='2'] .e-grid__stage,
-.e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__stage,
-.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__stage {
+.e-flier--cascade-stage-flex[data-people-count='3'] .e-grid__stage {
   align-items: center;
   justify-content: center;
 }
@@ -655,14 +681,9 @@
   padding: 20px 28px 24px;
 }
 
-.e-flier--cascade-stage-flex[data-people-count='4'] .e-grid__stage {
-  padding: 16px 36px 20px;
-}
-
 .e-flier--cascade-stage-flex[data-people-count='1'] .e-cascade__icons,
 .e-flier--cascade-stage-flex[data-people-count='2'] .e-cascade__icons,
-.e-flier--cascade-stage-flex[data-people-count='3'] .e-cascade__icons,
-.e-flier--cascade-stage-flex[data-people-count='4'] .e-cascade__icons {
+.e-flier--cascade-stage-flex[data-people-count='3'] .e-cascade__icons {
   margin-bottom: 4px;
 }
 
@@ -750,7 +771,6 @@
 .e-flier--cascade-stage-flex[data-people-count='9'] .e-grid__programme,
 .e-flier--cascade-stage-flex[data-people-count='10'] .e-grid__programme {
   font-size: 22px;
-  padding-bottom: 2px;
 }
 
 .e-flier--cascade-stage-flex[data-people-count='7'] .e-grid__programme,

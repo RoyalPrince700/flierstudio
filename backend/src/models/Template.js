@@ -8,7 +8,9 @@ import mongoose from 'mongoose'
  * - Missing from unpublishedDesignIds → published (safe default for new designs on sync)
  * - Present in unpublishedDesignIds → individually unpublished
  * Non-admins see a design only when group status is published AND the design is not denied.
- * Catalog sync never resets status or unpublishedDesignIds.
+ * Catalog sync never resets status, unpublishedDesignIds, or designCategories.
+ *
+ * designCategories maps catalog templateId → category slug (primary category).
  */
 const templateSchema = new mongoose.Schema(
   {
@@ -23,6 +25,8 @@ const templateSchema = new mongoose.Schema(
     },
     /** Catalog template ids that are hidden while the group may still be published. */
     unpublishedDesignIds: { type: [String], default: [] },
+    /** Per-design primary category slug: { [templateId]: categorySlug }. */
+    designCategories: { type: Map, of: String, default: () => new Map() },
     publishedAt: { type: Date },
     publishedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },

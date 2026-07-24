@@ -438,6 +438,85 @@
   color: var(--studio-muted);
 }
 
+.admin-templates__design-badge--category {
+  background: color-mix(in srgb, var(--studio-accent) 18%, transparent);
+  color: color-mix(in srgb, var(--studio-accent) 70%, #fff);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-weight: 700;
+}
+
+.admin-templates__design-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 8px 10px;
+  max-width: 100%;
+}
+
+.admin-templates__category-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+}
+
+.admin-templates__category-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--studio-muted);
+}
+
+.admin-templates__category-select,
+.admin-templates__category-add input {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--studio-border-soft);
+  background: var(--studio-panel);
+  color: var(--studio-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-templates__category-select:focus,
+.admin-templates__category-add input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--studio-accent) 45%, var(--studio-border-soft));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--studio-accent) 18%, transparent);
+}
+
+.admin-templates__category-select:disabled,
+.admin-templates__category-add input:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.admin-templates__category-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px dashed color-mix(in srgb, var(--studio-accent) 35%, var(--studio-border-soft));
+  background: color-mix(in srgb, var(--studio-accent) 6%, var(--studio-panel));
+}
+
+.admin-templates__category-add .admin-templates__category-field {
+  flex: 1 1 140px;
+  min-width: 140px;
+}
+
+.admin-templates__category-add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .admin-templates__toolbar {
   display: flex;
   flex-wrap: wrap;

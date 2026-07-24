@@ -39,6 +39,46 @@ export function normalizeUnpublishedDesignIds(ids) {
   return out.sort((a, b) => a.localeCompare(b))
 }
 
+/** Normalize Map / plain object / null into { [templateId]: categorySlug }. */
+export function toPlainDesignCategories(value) {
+  if (!value) return {}
+  let entries
+  if (value instanceof Map) entries = [...value.entries()]
+  else if (typeof value.entries === 'function' && typeof value.get === 'function') {
+    entries = [...value.entries()]
+  } else if (typeof value === 'object') entries = Object.entries(value)
+  else return {}
+
+  const out = {}
+  for (const [rawId, rawSlug] of entries) {
+    const templateId = typeof rawId === 'string' ? rawId.trim() : ''
+    const slug = typeof rawSlug === 'string' ? rawSlug.trim().toLowerCase() : ''
+    if (!templateId || !slug) continue
+    out[templateId] = slug
+  }
+  return out
+}
+
+function designCategoriesEqual(a, b) {
+  const left = toPlainDesignCategories(a)
+  const right = toPlainDesignCategories(b)
+  const leftKeys = Object.keys(left).sort()
+  const rightKeys = Object.keys(right).sort()
+  if (leftKeys.length !== rightKeys.length) return false
+  return leftKeys.every((key, i) => key === rightKeys[i] && left[key] === right[key])
+}
+
+/** Merge category maps: losers first, then winner overwrites on conflict. */
+export function mergeDesignCategories(docs, winner) {
+  const merged = {}
+  for (const doc of docs || []) {
+    if (doc === winner) continue
+    Object.assign(merged, toPlainDesignCategories(doc.designCategories))
+  }
+  Object.assign(merged, toPlainDesignCategories(winner?.designCategories))
+  return merged
+}
+
 export function serializeTemplateCollection(row) {
   return {
     collectionId: row.collectionId,
@@ -46,6 +86,7 @@ export function serializeTemplateCollection(row) {
     templateCount: row.templateCount,
     status: row.status,
     unpublishedDesignIds: normalizeUnpublishedDesignIds(row.unpublishedDesignIds),
+    designCategories: toPlainDesignCategories(row.designCategories),
     publishedAt: row.publishedAt,
     updatedAt: row.updatedAt,
   }
@@ -123,6 +164,7 @@ export async function dedupeTemplateCollections() {
     const mergedUnpublished = normalizeUnpublishedDesignIds(
       docs.flatMap((doc) => doc.unpublishedDesignIds || []),
     )
+    const mergedCategories = mergeDesignCategories(docs, winner)
     const patch = {}
     if ((Number(winner.templateCount) || 0) < mergedCount) {
       patch.templateCount = mergedCount
@@ -134,6 +176,9 @@ export async function dedupeTemplateCollections() {
     const winnerUnpublished = normalizeUnpublishedDesignIds(winner.unpublishedDesignIds)
     if (mergedUnpublished.join('\0') !== winnerUnpublished.join('\0')) {
       patch.unpublishedDesignIds = mergedUnpublished
+    }
+    if (!designCategoriesEqual(mergedCategories, winner.designCategories)) {
+      patch.designCategories = mergedCategories
     }
     if (Object.keys(patch).length) {
       await Template.updateOne({ _id: winner._id }, { $set: patch })
@@ -150,6 +195,7 @@ export async function dedupeTemplateCollections() {
  * Upsert catalog rows without resetting publish status or per-design overrides.
  * Creates missing collections as draft only ($setOnInsert).
  * New designs default to published (not present in unpublishedDesignIds).
+ * Never clears unpublishedDesignIds or designCategories.
  */
 export async function syncTemplateCollectionCatalog(entries) {
   const valid = (Array.isArray(entries) ? entries : []).filter(
@@ -180,6 +226,7 @@ export async function syncTemplateCollectionCatalog(entries) {
           collectionId: row.collectionId,
           status: 'draft',
           unpublishedDesignIds: [],
+          designCategories: {},
         },
       },
       upsert: true,
