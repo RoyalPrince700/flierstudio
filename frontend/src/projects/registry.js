@@ -2,9 +2,12 @@ import emergence from './emergence/project'
 import femtech from './femtech/project'
 import flierStudio from './flier-studio/project'
 import flierStudioEditorial from './flier-studio-editorial/project'
+import offerQuintet from './offer-quintet/project'
 import orbitGadgets from './orbit-gadgets/project'
 import oxygenfm from './oxygenfm/project'
+import pillArcGallery from './pill-arc-gallery/project'
 import royalPrince from './royal-prince/project'
+import skylineTrio from './skyline-trio/project'
 import smipay from './smipay/project'
 import starter from './starter/project'
 
@@ -20,6 +23,9 @@ export const PROJECTS = [
   flierStudio,
   flierStudioEditorial,
   emergence,
+  skylineTrio,
+  pillArcGallery,
+  offerQuintet,
   smipay,
   femtech,
   orbitGadgets,

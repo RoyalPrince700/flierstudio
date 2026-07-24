@@ -325,6 +325,7 @@ export default function EditableImageSlot({
             : filledHint
           : emptyHint}
       </span>
+      {/* TODO: remove on-slot chrome after contextual statusbar QA. */}
       {showChrome ? (
         <div
           className="studio-image-slot__fit-chrome"

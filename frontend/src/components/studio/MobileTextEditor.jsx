@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { Check, Type } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 /** Treat overlaps above this as a virtual keyboard (filters tiny chrome jitter). */
 const KEYBOARD_OPEN_PX = 80
-const DOCK_GAP_PX = 8
+const DOCK_GAP_PX = 10
+const INPUT_MAX_HEIGHT_PX = 120
 
 function fieldLabel(path) {
   if (!path) return 'Text'
@@ -64,10 +65,16 @@ function clearKeyboardDock(el) {
   el.style.removeProperty('max-width')
 }
 
+function syncInputHeight(node) {
+  if (!node) return
+  node.style.height = 'auto'
+  node.style.height = `${Math.min(node.scrollHeight, INPUT_MAX_HEIGHT_PX)}px`
+}
+
 /**
- * Mobile text edit dock — keeps the artboard visible while editing in a
- * readable 16px+ multiline field (avoids iOS page-zoom + transform scroll jumps).
- * Return inserts a new line; Done commits/closes. Soft keyboard docks via Visual Viewport.
+ * CapCut-style typing highlight — slim translucent field above the keyboard.
+ * Keeps a dedicated ≥16px textarea (no on-canvas contentEditable / iOS zoom).
+ * Return = newline; Done / Escape commits via onDone. Soft keyboard docks via Visual Viewport.
  */
 export default function MobileTextEditor({ path, value = '', onChange, onDone }) {
   const inputRef = useRef(null)
@@ -78,6 +85,7 @@ export default function MobileTextEditor({ path, value = '', onChange, onDone })
     if (!node) return undefined
     const id = window.setTimeout(() => {
       node.focus({ preventScroll: true })
+      syncInputHeight(node)
       const len = node.value.length
       try {
         node.setSelectionRange(len, len)
@@ -88,7 +96,11 @@ export default function MobileTextEditor({ path, value = '', onChange, onDone })
     return () => window.clearTimeout(id)
   }, [path])
 
-  // Pin dock above the virtual keyboard while it is open.
+  useEffect(() => {
+    syncInputHeight(inputRef.current)
+  }, [value, path])
+
+  // Pin highlight above the virtual keyboard while it is open.
   useEffect(() => {
     const dock = dockRef.current
     if (!dock) return undefined
@@ -140,25 +152,24 @@ export default function MobileTextEditor({ path, value = '', onChange, onDone })
       ref={dockRef}
       className="mobile-text-editor"
       role="dialog"
-      aria-label="Edit text"
+      aria-label={`Edit ${fieldLabel(path)}`}
     >
-      <div className="mobile-text-editor__head">
-        <Type size={14} strokeWidth={2.25} aria-hidden />
-        <span className="mobile-text-editor__label">{fieldLabel(path)}</span>
-        <button type="button" className="mobile-text-editor__done" onClick={onDone}>
-          <Check size={16} strokeWidth={2.5} />
-          Done
-        </button>
-      </div>
       <textarea
         ref={inputRef}
         className="mobile-text-editor__input"
-        rows={4}
+        rows={2}
         value={typeof value === 'string' ? value : ''}
-        onChange={(e) => onChange?.(path, e.target.value)}
+        onChange={(e) => {
+          onChange?.(path, e.target.value)
+          syncInputHeight(e.target)
+        }}
         onKeyDown={(e) => {
           // Stop studio shortcuts; never treat Enter as Done (Done is the button).
           e.stopPropagation()
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            onDone?.()
+          }
         }}
         /* "enter" keeps Return = newline on iOS/Android soft keyboards.
            "done" remaps Return to dismiss and blocks multi-line editing. */
@@ -167,11 +178,17 @@ export default function MobileTextEditor({ path, value = '', onChange, onDone })
         autoCapitalize="sentences"
         autoCorrect="on"
         spellCheck
-        aria-describedby="mobile-text-editor-hint"
+        aria-label={fieldLabel(path)}
       />
-      <p id="mobile-text-editor-hint" className="mobile-text-editor__hint">
-        Return = new line · Done when finished
-      </p>
+      <button
+        type="button"
+        className="mobile-text-editor__done"
+        title="Done"
+        aria-label="Done"
+        onClick={onDone}
+      >
+        <Check size={18} strokeWidth={2.5} aria-hidden />
+      </button>
     </div>
   )
 }

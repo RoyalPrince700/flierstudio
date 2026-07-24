@@ -1,15 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ArrowDown,
+  ArrowUp,
+  ChevronLeft,
+  ChevronRight,
   CircleHelp,
   Copy,
   CopyPlus,
   Download,
+  ImagePlus,
   Layers,
   LogOut,
   Maximize2,
+  Minus,
   Moon,
   MoreHorizontal,
+  Plus,
+  RotateCcw,
+  Sparkles,
   Sun,
+  Trash2,
+  Type,
 } from 'lucide-react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -40,18 +51,30 @@ import {
 } from '../lib/flierDraft'
 import {
   DEFAULT_IMAGE_FIT,
+  IMAGE_FIT_MAX_SCALE,
+  IMAGE_FIT_MIN_SCALE,
   clampImageFit,
+  getImageFit,
   imageFitDraftPath,
+  zoomImageFit,
 } from '../lib/imageFit'
 import {
   clampLogoLayout,
   DEFAULT_LOGO_LAYOUT,
+  LOGO_NUDGE_X,
+  LOGO_NUDGE_Y,
+  LOGO_OFFSET_X_MAX,
+  LOGO_OFFSET_X_MIN,
+  LOGO_OFFSET_Y_MAX,
+  LOGO_OFFSET_Y_MIN,
+  LOGO_SCALE_MAX,
+  LOGO_SCALE_MIN,
+  LOGO_SCALE_STEP,
   isLogoImagePath,
+  nudgeLogoLayout,
+  scaleLogoLayout,
 } from '../lib/logoLayout'
-import {
-  DEFAULT_EMERGENCE_COLOR_THEME,
-} from '../design/emergenceThemes'
-import { DEFAULT_BRAND_LOGO_SRC } from '../design/defaultBrandLogo'
+import { DEFAULT_BRAND_LOGO_SRC, normalizeLogoMode } from '../design/defaultBrandLogo'
 import {
   addTemplateLayer,
   deleteBoardLayer,
@@ -91,7 +114,6 @@ import MobileTextEditor from './studio/MobileTextEditor'
 import ProjectTabs from './studio/ProjectTabs'
 import StudioHelp from './studio/StudioHelp'
 import StudioTour from './studio/StudioTour'
-import ThemeRail from './studio/ThemeRail'
 // Tool coach toast — temporarily disabled; auto-switch only. Uncomment if we want gesture explanations again.
 // import ToolCoachToast from './studio/ToolCoachToast'
 import ToolRail from './studio/ToolRail'
@@ -262,6 +284,8 @@ export default function Studio({
     }
   })
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false)
+  /** Phone CapCut dock: main | edit-menu | layers | themes | fonts | logo | export-options */
+  const [mobileDockMode, setMobileDockMode] = useState('main')
   const [topbarMenuOpen, setTopbarMenuOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [tourOpen, setTourOpen] = useState(false)
@@ -532,10 +556,16 @@ export default function Studio({
           if (opts.hasImage) setMobileInspectorOpen(false)
           return
         }
+        // Phone: CapCut edit dock — never the full-height inspector sheet.
+        if (isPhone) {
+          setMobileInspectorOpen(false)
+          setMobileDockMode(selectedEditKind === 'emergence' ? 'logo' : 'edit-menu')
+          return
+        }
         setMobileInspectorOpen(true)
       }
     },
-    [isNarrow],
+    [isNarrow, isPhone, selectedEditKind],
   )
 
   const frameFocusedTextInView = useCallback(
@@ -1447,6 +1477,20 @@ export default function Studio({
           handleExitTextEdit()
           return
         }
+        if (mobileDockMode !== 'main') {
+          if (
+            mobileDockMode === 'layers' ||
+            mobileDockMode === 'themes' ||
+            mobileDockMode === 'fonts' ||
+            mobileDockMode === 'logo' ||
+            mobileDockMode === 'export-options'
+          ) {
+            setMobileDockMode('edit-menu')
+          } else {
+            setMobileDockMode('main')
+          }
+          return
+        }
         if (mobileInspectorOpen) {
           setMobileInspectorOpen(false)
           return
@@ -1520,6 +1564,7 @@ export default function Studio({
     handleExitTextEdit,
     handleExport,
     isNarrow,
+    mobileDockMode,
     mobileInspectorOpen,
     navigate,
     primaryTool,
@@ -1534,6 +1579,17 @@ export default function Studio({
       setTopbarMenuOpen(false)
     }
   }, [isNarrow])
+
+  useEffect(() => {
+    if (!isPhone) {
+      setMobileDockMode('main')
+    }
+  }, [isPhone])
+
+  useEffect(() => {
+    if (!templatesOpen) return
+    setMobileDockMode('main')
+  }, [templatesOpen])
 
   useEffect(() => {
     if (!topbarMenuOpen) return undefined
@@ -1595,6 +1651,58 @@ export default function Studio({
     setTopbarMenuOpen(false)
   }
 
+  /** Phone: CapCut Edit dock swap — does not open the covering inspector sheet. */
+  function openMobileEditMenu() {
+    setMobileDockMode('edit-menu')
+    setMobileInspectorOpen(false)
+    setTopbarMenuOpen(false)
+  }
+
+  function handleDockBack() {
+    if (
+      mobileDockMode === 'layers' ||
+      mobileDockMode === 'themes' ||
+      mobileDockMode === 'fonts' ||
+      mobileDockMode === 'logo' ||
+      mobileDockMode === 'export-options'
+    ) {
+      setMobileDockMode('edit-menu')
+      return
+    }
+    setMobileDockMode('main')
+  }
+
+  function handleEditMenuSelect(id) {
+    if (id === 'layers') {
+      setMobileDockMode('layers')
+      return
+    }
+    if (id === 'theme') {
+      setMobileDockMode('themes')
+      return
+    }
+    if (id === 'fonts') {
+      setMobileDockMode('fonts')
+      return
+    }
+    if (id === 'logo') {
+      setMobileDockMode('logo')
+      return
+    }
+    if (id === 'export') {
+      setMobileDockMode('export-options')
+    }
+  }
+
+  function handleMobilePanelChip() {
+    if (isPhone) {
+      if (mobileDockMode !== 'main') setMobileDockMode('main')
+      else openMobileEditMenu()
+      return
+    }
+    toggleMobileInspector()
+  }
+
   async function handleCopySize() {
     if (!selected) return
     const text = `${selected.width}×${selected.height}`
@@ -1614,12 +1722,43 @@ export default function Studio({
     return getByPath(editContent.fields, focusedPath) ?? ''
   }, [editContent, focusedPath, mobileTextEditing])
 
-  const showThemeRail =
-    isNarrow &&
-    !templatesOpen &&
-    !mobileInspectorOpen &&
-    editContent?.kind === 'emergence' &&
-    Boolean(selected)
+  /** Mobile statusbar image context — mirrors on-slot chrome actions above CapCut dock. */
+  const mobileImageFocus = useMemo(() => {
+    if (!isNarrow || templatesOpen || focusedKind !== 'image' || !focusedPath || !editContent) {
+      return null
+    }
+    const isEmergence = editContent.kind === 'emergence'
+    // Emergence chrome uses variant="logo"; props boards keep photo fit on logoSrc slots.
+    const isLogo = isLogoImagePath(focusedPath) && isEmergence
+    let src = ''
+    if (isLogo) {
+      const logoMode = normalizeLogoMode(editContent.event?.logoMode)
+      src = logoMode === 'image' ? String(editContent.event?.logoSrc || '').trim() : ''
+    } else {
+      const value = isEmergence
+        ? getByPath(editContent, focusedPath)
+        : getByPath(editContent.fields, focusedPath)
+      src = typeof value === 'string' ? value.trim() : ''
+    }
+    const hasImage = Boolean(src)
+    const leaf = String(focusedPath).split('.').pop() || ''
+    const fieldHint = leaf.replace(/(Src|Url|Image|Photo)$/i, '')
+    let label = isLogo ? 'Logo' : 'Photo'
+    if (!isLogo && fieldHint && !/^photo$/i.test(fieldHint)) {
+      label = fieldHint.charAt(0).toUpperCase() + fieldHint.slice(1)
+    }
+    return {
+      path: focusedPath,
+      isLogo,
+      isEmergence,
+      hasImage,
+      label,
+      fit: getImageFit(editContent.imageFits, focusedPath),
+      logoLayout: clampLogoLayout(
+        isEmergence ? editContent.event?.logoLayout : editContent.logoLayout,
+      ),
+    }
+  }, [editContent, focusedKind, focusedPath, isNarrow, templatesOpen])
 
   const studioAppClass = [
     'studio-app',
@@ -1682,12 +1821,12 @@ export default function Studio({
             <button
               type="button"
               className={`studio-topbar__chip studio-topbar__chip--panel${
-                mobileInspectorOpen ? ' is-active' : ''
+                (isPhone ? mobileDockMode !== 'main' : mobileInspectorOpen) ? ' is-active' : ''
               }`}
-              onClick={toggleMobileInspector}
+              onClick={handleMobilePanelChip}
               title="Open layers, edit & export"
               aria-label="Open layers, edit and export"
-              aria-pressed={mobileInspectorOpen}
+              aria-pressed={isPhone ? mobileDockMode !== 'main' : mobileInspectorOpen}
               data-tour="panel"
             >
               <Layers size={14} strokeWidth={2.25} />
@@ -1892,9 +2031,48 @@ export default function Studio({
           busy={busy}
           exportProgress={exportProgress}
           exportLabel={exportLabel}
-          onToggleInspector={isNarrow ? toggleMobileInspector : undefined}
+          onToggleInspector={isNarrow && !isPhone ? toggleMobileInspector : undefined}
+          onOpenEditMenu={isPhone ? openMobileEditMenu : undefined}
+          onDockBack={handleDockBack}
+          dockMode={isPhone ? mobileDockMode : 'main'}
+          onEditMenuSelect={handleEditMenuSelect}
           inspectorOpen={mobileInspectorOpen}
           highlightTool={toolCoachHighlight}
+          layers={boardItems}
+          selectedLayerId={selectedId}
+          onSelectLayer={(id) => {
+            if (!activeProjectId) return
+            patchTab(activeProjectId, { selectedId: id })
+          }}
+          editContent={!templatesOpen ? editContent : null}
+          focusedPath={focusedPath}
+          focusedKind={focusedKind}
+          onEditChange={(path, value) => {
+            if (!selectedId || !activeProjectId) return
+            patchDraft(activeProjectId, selectedId, path, value)
+          }}
+          onFocusField={handleFocusField}
+          onPickImage={handlePickImage}
+          onClearImage={handleClearImage}
+          onAlignChange={handleAlignChange}
+          onResetDraft={handleResetDraft}
+          onUseTextLogo={() => handleUseTextLogo()}
+          onUseImageLogo={() => handleUseImageLogo()}
+          onRestoreDefaultLogo={() => handleRestoreDefaultLogo()}
+          onImageFitChange={handleImageFitChange}
+          onLogoLayoutChange={handleLogoLayoutChange}
+          hasSavedEdits={Boolean(drafts[activeProjectId]?.[selectedId])}
+          format={format}
+          hdScaleId={hdScaleId}
+          onFormatChange={setFormat}
+          onHdScaleChange={setHdScaleId}
+          onCopySize={handleCopySize}
+          exportWidth={selected?.width || 0}
+          exportHeight={selected?.height || 0}
+          exportError={error}
+          onDuplicateLayer={handleDuplicateLayer}
+          onDeleteLayer={handleDeleteLayer}
+          canDeleteLayer={boardItems.length > 1}
         />
 
         {/* Phone: thin Signal line above bottom tool dock — does not displace icons */}
@@ -1967,16 +2145,6 @@ export default function Studio({
           />
           */}
 
-          {showThemeRail ? (
-            <ThemeRail
-              activeThemeId={editContent.colorTheme || DEFAULT_EMERGENCE_COLOR_THEME}
-              onChange={(themeId) => {
-                if (!selectedId) return
-                patchDraft(activeProjectId, selectedId, 'colorTheme', themeId)
-              }}
-            />
-          ) : null}
-
           {mobileTextEditing ? (
             <MobileTextEditor
               path={focusedPath}
@@ -2022,12 +2190,219 @@ export default function Studio({
                     : error
                       ? error
                       : selected
-                        ? isNarrow
-                          ? `${selected.name} · ${selected.width}×${selected.height}`
-                          : `${selected.name} · artboard ${selected.width}×${selected.height} · export ${selected.width * (HD_SCALES[hdScaleId]?.scale ?? 3)}×${selected.height * (HD_SCALES[hdScaleId]?.scale ?? 3)}`
+                        ? isNarrow && mobileImageFocus
+                          ? mobileImageFocus.label
+                          : isNarrow
+                            ? `${selected.name} · ${selected.width}×${selected.height}`
+                            : `${selected.name} · artboard ${selected.width}×${selected.height} · export ${selected.width * (HD_SCALES[hdScaleId]?.scale ?? 3)}×${selected.height * (HD_SCALES[hdScaleId]?.scale ?? 3)}`
                         : 'Click an artboard'}
                 </span>
-                {isNarrow && selected ? (
+                {isNarrow && selected && mobileImageFocus ? (
+                  <div
+                    className="studio-statusbar__quick studio-statusbar__quick--image"
+                    role="toolbar"
+                    aria-label={mobileImageFocus.isLogo ? 'Logo actions' : 'Photo actions'}
+                  >
+                    {mobileImageFocus.isLogo && mobileImageFocus.hasImage ? (
+                      <>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Size −"
+                          aria-label="Logo size down"
+                          disabled={mobileImageFocus.logoLayout.scale <= LOGO_SCALE_MIN + 0.001}
+                          onClick={() =>
+                            handleLogoLayoutChange(
+                              scaleLogoLayout(mobileImageFocus.logoLayout, 1 / LOGO_SCALE_STEP),
+                            )
+                          }
+                        >
+                          <Minus size={15} strokeWidth={2.25} />
+                          <span>Size −</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Size +"
+                          aria-label="Logo size up"
+                          disabled={mobileImageFocus.logoLayout.scale >= LOGO_SCALE_MAX - 0.001}
+                          onClick={() =>
+                            handleLogoLayoutChange(
+                              scaleLogoLayout(mobileImageFocus.logoLayout, LOGO_SCALE_STEP),
+                            )
+                          }
+                        >
+                          <Plus size={15} strokeWidth={2.25} />
+                          <span>Size +</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Nudge left"
+                          aria-label="Nudge logo left"
+                          disabled={mobileImageFocus.logoLayout.offsetX <= LOGO_OFFSET_X_MIN + 0.001}
+                          onClick={() =>
+                            handleLogoLayoutChange(
+                              nudgeLogoLayout(mobileImageFocus.logoLayout, -LOGO_NUDGE_X),
+                            )
+                          }
+                        >
+                          <ChevronLeft size={15} strokeWidth={2.25} />
+                          <span>Left</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Nudge right"
+                          aria-label="Nudge logo right"
+                          disabled={mobileImageFocus.logoLayout.offsetX >= LOGO_OFFSET_X_MAX - 0.001}
+                          onClick={() =>
+                            handleLogoLayoutChange(
+                              nudgeLogoLayout(mobileImageFocus.logoLayout, LOGO_NUDGE_X),
+                            )
+                          }
+                        >
+                          <ChevronRight size={15} strokeWidth={2.25} />
+                          <span>Right</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Nudge up"
+                          aria-label="Nudge logo up"
+                          disabled={mobileImageFocus.logoLayout.offsetY <= LOGO_OFFSET_Y_MIN + 0.001}
+                          onClick={() =>
+                            handleLogoLayoutChange(
+                              nudgeLogoLayout(mobileImageFocus.logoLayout, 0, -LOGO_NUDGE_Y),
+                            )
+                          }
+                        >
+                          <ArrowUp size={15} strokeWidth={2.25} />
+                          <span>Up</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Nudge down"
+                          aria-label="Nudge logo down"
+                          disabled={mobileImageFocus.logoLayout.offsetY >= LOGO_OFFSET_Y_MAX - 0.001}
+                          onClick={() =>
+                            handleLogoLayoutChange(
+                              nudgeLogoLayout(mobileImageFocus.logoLayout, 0, LOGO_NUDGE_Y),
+                            )
+                          }
+                        >
+                          <ArrowDown size={15} strokeWidth={2.25} />
+                          <span>Down</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Reset layout"
+                          aria-label="Reset logo layout"
+                          onClick={() => handleLogoLayoutChange(DEFAULT_LOGO_LAYOUT)}
+                        >
+                          <RotateCcw size={15} strokeWidth={2.25} />
+                          <span>Reset</span>
+                        </button>
+                        {mobileImageFocus.isEmergence ? (
+                          <>
+                            <button
+                              type="button"
+                              className="studio-statusbar__action"
+                              title="Use text logo"
+                              aria-label="Use text logo"
+                              onClick={() => handleUseTextLogo()}
+                            >
+                              <Type size={15} strokeWidth={2.25} />
+                              <span>Text</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="studio-statusbar__action"
+                              title="Use Flier Studio logo"
+                              aria-label="Restore Flier Studio logo"
+                              onClick={() => handleRestoreDefaultLogo()}
+                            >
+                              <Sparkles size={15} strokeWidth={2.25} />
+                              <span>Default</span>
+                            </button>
+                          </>
+                        ) : null}
+                      </>
+                    ) : null}
+                    {!mobileImageFocus.isLogo && mobileImageFocus.hasImage ? (
+                      <>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Zoom out"
+                          aria-label="Zoom out"
+                          disabled={mobileImageFocus.fit.scale <= IMAGE_FIT_MIN_SCALE + 0.001}
+                          onClick={() =>
+                            handleImageFitChange(
+                              mobileImageFocus.path,
+                              zoomImageFit(mobileImageFocus.fit, 1 / 1.15),
+                            )
+                          }
+                        >
+                          <Minus size={15} strokeWidth={2.25} />
+                          <span>Zoom −</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Zoom in"
+                          aria-label="Zoom in"
+                          disabled={mobileImageFocus.fit.scale >= IMAGE_FIT_MAX_SCALE - 0.001}
+                          onClick={() =>
+                            handleImageFitChange(
+                              mobileImageFocus.path,
+                              zoomImageFit(mobileImageFocus.fit, 1.15),
+                            )
+                          }
+                        >
+                          <Plus size={15} strokeWidth={2.25} />
+                          <span>Zoom +</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="studio-statusbar__action"
+                          title="Reset crop"
+                          aria-label="Reset crop"
+                          onClick={() =>
+                            handleImageFitChange(mobileImageFocus.path, DEFAULT_IMAGE_FIT)
+                          }
+                        >
+                          <RotateCcw size={15} strokeWidth={2.25} />
+                          <span>Reset</span>
+                        </button>
+                      </>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="studio-statusbar__action"
+                      title={mobileImageFocus.hasImage ? 'Replace image' : 'Add photo'}
+                      aria-label={mobileImageFocus.hasImage ? 'Replace image' : 'Add photo'}
+                      onClick={() => handlePickImage(mobileImageFocus.path)}
+                    >
+                      <ImagePlus size={15} strokeWidth={2.25} />
+                      <span>{mobileImageFocus.hasImage ? 'Replace' : 'Add'}</span>
+                    </button>
+                    {mobileImageFocus.hasImage ? (
+                      <button
+                        type="button"
+                        className="studio-statusbar__action studio-statusbar__action--danger"
+                        title={mobileImageFocus.isLogo ? 'Remove logo' : 'Remove image'}
+                        aria-label={mobileImageFocus.isLogo ? 'Remove logo' : 'Remove image'}
+                        onClick={() => handleClearImage(mobileImageFocus.path)}
+                      >
+                        <Trash2 size={15} strokeWidth={2.25} />
+                        <span>Delete</span>
+                      </button>
+                    ) : null}
+                  </div>
+                ) : isNarrow && selected ? (
                   <div className="studio-statusbar__quick" role="toolbar" aria-label="Board actions">
                     <button
                       type="button"
@@ -2199,6 +2574,11 @@ export default function Studio({
         templatesOpen={templatesOpen}
         onClose={closeTour}
         onEnsurePanelOpen={() => {
+          if (isPhone) {
+            setMobileInspectorOpen(false)
+            setMobileDockMode('edit-menu')
+            return
+          }
           if (isNarrow) setMobileInspectorOpen(true)
         }}
       />

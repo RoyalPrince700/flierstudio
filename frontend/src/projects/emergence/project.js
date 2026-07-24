@@ -20,8 +20,7 @@ export default createProject({
   id: 'emergence',
   name: 'Emergence',
   brand: 'Emerge',
-  description:
-    'Emerge conference fliers — Cascade Stage (fixed 6) + Cascade Stage Flex (dynamic 1–10).',
+  description: 'Emerge conference fliers — Cascade Stage and Cascade Stage Flex.',
   color: '#3A8DFF',
   fliers,
 })

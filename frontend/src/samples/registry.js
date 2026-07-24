@@ -70,6 +70,9 @@ const PRINCIPLES_BY_PROJECT = {
   oxygenfm: 'src/samples/radioshow/PRINCIPLES.md',
   'royal-prince': 'src/samples/void-profile-ask/PRINCIPLES.md',
   'prayer-chain': 'prayerchaindesignguide.md',
+  'skyline-trio': 'src/fliers/skyline-trio/PRINCIPLES.md',
+  'pill-arc-gallery': 'src/fliers/pill-arc-gallery/PRINCIPLES.md',
+  'offer-quintet': 'src/fliers/offer-quintet/PRINCIPLES.md',
 }
 
 function sizeLabel(width, height) {
