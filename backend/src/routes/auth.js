@@ -85,7 +85,9 @@ router.post('/google', async (req, res) => {
       sendWelcomeEmailSafe(user)
     }
 
-    return res.json({ user: user.toSafeJSON() })
+    // `token` is a Bearer fallback for mobile browsers that drop cross-site
+    // httpOnly cookies (cookie remains primary when the browser stores it).
+    return res.json({ user: user.toSafeJSON(), token })
   } catch (err) {
     console.error('Google auth failed', err)
     return res.status(401).json({ error: 'Google sign-in failed' })

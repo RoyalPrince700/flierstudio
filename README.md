@@ -71,7 +71,9 @@ The frontend does **not** need a public site URL env var for routing — it *is*
 | `CLIENT_URL` | `https://www.flierstudio.com` (canonical). Optionally comma-add `https://flierstudio.com` until apex→www redirects are solid. |
 | `GOOGLE_CLIENT_ID` | Same Web client ID as frontend |
 | `MONGODB_URI` / `JWT_SECRET` / `ADMIN_EMAIL` | Production values |
-| `NODE_ENV` | `production` (auth cookies use `Secure` + `SameSite=None`) |
+| `NODE_ENV` | `production` (auth cookies use `Secure` + `SameSite=None` + `Partitioned`) |
+
+When the SPA and API are on different hosts, mobile Safari may drop the cross-site cookie. Login still returns a JWT; the client stores it and sends `Authorization: Bearer` as a fallback. Cookie remains primary when the browser keeps it.
 
 **Frontend Vercel env (required):**
 

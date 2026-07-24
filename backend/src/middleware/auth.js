@@ -1,9 +1,9 @@
 import { User } from '../models/User.js'
-import { COOKIE_NAME, verifyUserToken } from '../lib/tokens.js'
+import { getTokenFromRequest, verifyUserToken } from '../lib/tokens.js'
 
 export async function requireAuth(req, res, next) {
   try {
-    const token = req.cookies?.[COOKIE_NAME]
+    const token = getTokenFromRequest(req)
     if (!token) {
       return res.status(401).json({ error: 'Not signed in' })
     }

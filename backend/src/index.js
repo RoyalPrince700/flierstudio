@@ -44,6 +44,8 @@ app.use(
       callback(null, false)
     },
     credentials: true,
+    // Explicit so credentialed + Bearer preflights stay reliable on mobile.
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 )
 app.use(morgan('dev'))

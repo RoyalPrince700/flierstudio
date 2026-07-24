@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
-import { api } from './api'
+import { api, ApiError } from './api'
 import { listTemplateCollections } from '../samples/registry'
 
 export function buildCollectionSyncPayload() {
@@ -144,7 +144,7 @@ export function normalizeCategories(list) {
 }
 
 export function useTemplatePublish() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, refresh: refreshAuth } = useAuth()
   const [collectionPublishMap, setCollectionPublishMap] = useState({})
   const [unpublishedDesignsMap, setUnpublishedDesignsMap] = useState({})
   const [loading, setLoading] = useState(true)
@@ -155,14 +155,22 @@ export function useTemplatePublish() {
     setError('')
     try {
       if (isAdmin) {
-        await api('/api/admin/templates/sync', {
-          method: 'POST',
-          body: { collections: buildCollectionSyncPayload() },
-        })
+        const data = await withAuthRetry(async () => {
+          await api('/api/admin/templates/sync', {
+            method: 'POST',
+            body: { collections: buildCollectionSyncPayload() },
+          })
+          return api('/api/templates/publish-state')
+        }, refreshAuth)
+        setCollectionPublishMap(mapCollectionPublishState(data.collections || {}))
+        setUnpublishedDesignsMap(mapUnpublishedDesigns(data.unpublishedDesigns || {}))
+      } else {
+        // Studio stays behind RequireAuth; visibility uses the public endpoint so a
+        // momentarily missing cross-site cookie does not red-banner the gallery.
+        const data = await fetchPublicPublishState()
+        setCollectionPublishMap(data.collectionPublishMap)
+        setUnpublishedDesignsMap(data.unpublishedDesignsMap)
       }
-      const data = await api('/api/templates/publish-state')
-      setCollectionPublishMap(mapCollectionPublishState(data.collections || {}))
-      setUnpublishedDesignsMap(mapUnpublishedDesigns(data.unpublishedDesigns || {}))
     } catch (err) {
       setError(err?.message || 'Could not load template publish state')
       setCollectionPublishMap({})
@@ -170,7 +178,7 @@ export function useTemplatePublish() {
     } finally {
       setLoading(false)
     }
-  }, [isAdmin])
+  }, [isAdmin, refreshAuth])
 
   useEffect(() => {
     refresh()
@@ -184,6 +192,23 @@ export function useTemplatePublish() {
     refresh,
     isAdmin,
     includeUnpublished: isAdmin,
+  }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** One retry after auth refresh — covers post-login cookie/Bearer race on mobile. */
+async function withAuthRetry(run, refreshAuth) {
+  try {
+    return await run()
+  } catch (err) {
+    if (!(err instanceof ApiError) || err.status !== 401) throw err
+    const user = await refreshAuth()
+    if (!user) throw err
+    await sleep(200)
+    return run()
   }
 }
 

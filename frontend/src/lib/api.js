@@ -1,3 +1,5 @@
+import { getAuthToken } from './authToken'
+
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 export class ApiError extends Error {
@@ -10,10 +12,12 @@ export class ApiError extends Error {
 
 export async function api(path, options = {}) {
   const { body, headers, ...rest } = options
+  const bearer = getAuthToken()
   const res = await fetch(`${API_URL}${path}`, {
     credentials: 'include',
     headers: {
       ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { api } from '../lib/api'
+import { api, ApiError } from '../lib/api'
+import { clearAuthToken, setAuthToken } from '../lib/authToken'
 
 const AuthContext = createContext(null)
 
@@ -14,7 +15,11 @@ export function AuthProvider({ children }) {
       setUser(data.user)
       setError('')
       return data.user
-    } catch {
+    } catch (err) {
+      // Expired / missing session — drop Bearer fallback so we don't half-auth.
+      if (err instanceof ApiError && err.status === 401) {
+        clearAuthToken()
+      }
       setUser(null)
       return null
     }
@@ -41,6 +46,8 @@ export function AuthProvider({ children }) {
       method: 'POST',
       body: { credential },
     })
+    // Store before setUser so RequireAuth children (e.g. templates) can auth APIs.
+    if (data.token) setAuthToken(data.token)
     setUser(data.user)
     return data.user
   }, [])
@@ -50,6 +57,7 @@ export function AuthProvider({ children }) {
     try {
       await api('/api/auth/logout', { method: 'POST' })
     } finally {
+      clearAuthToken()
       setUser(null)
     }
   }, [])
