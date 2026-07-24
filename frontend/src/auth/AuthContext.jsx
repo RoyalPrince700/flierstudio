@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from '../lib/api'
-import { clearAuthToken, setAuthToken } from '../lib/authToken'
+import { clearAuthToken, getAuthToken, setAuthToken } from '../lib/authToken'
 
 const AuthContext = createContext(null)
 
@@ -16,8 +16,9 @@ export function AuthProvider({ children }) {
       setError('')
       return data.user
     } catch (err) {
-      // Expired / missing session — drop Bearer fallback so we don't half-auth.
-      if (err instanceof ApiError && err.status === 401) {
+      // Boot GET /api/auth/me → 401 while logged out is expected (not a Google bug).
+      // Only clear Bearer when we had one — session was expected and failed.
+      if (err instanceof ApiError && err.status === 401 && getAuthToken()) {
         clearAuthToken()
       }
       setUser(null)

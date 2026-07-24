@@ -66,10 +66,11 @@ router.post('/google', async (req, res) => {
       return res.status(400).json({ error: 'Missing Google credential' })
     }
 
+    const audience = process.env.GOOGLE_CLIENT_ID
     const client = getGoogleClient()
     const ticket = await client.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience,
     })
     const payload = ticket.getPayload()
     if (!payload) {
@@ -89,8 +90,11 @@ router.post('/google', async (req, res) => {
     // httpOnly cookies (cookie remains primary when the browser stores it).
     return res.json({ user: user.toSafeJSON(), token })
   } catch (err) {
-    console.error('Google auth failed', err)
-    return res.status(401).json({ error: 'Google sign-in failed' })
+    console.error('Google auth failed', err?.message || err)
+    // Audience / origin mismatches surface here after GIS returns a credential.
+    return res.status(401).json({
+      error: 'Google sign-in failed. Confirm VITE_GOOGLE_CLIENT_ID matches GOOGLE_CLIENT_ID and this origin is authorized in Google Cloud.',
+    })
   }
 })
 

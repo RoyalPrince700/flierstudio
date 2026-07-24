@@ -94,8 +94,11 @@ export default function LoginScreen({ theme = 'dark' }) {
         }
 
   async function handleGoogleSuccess(response) {
-    if (!response.credential) {
-      setError('Google did not return a credential.')
+    if (!response?.credential) {
+      // Often COOP/postMessage blocked GIS before a credential was delivered.
+      setError(
+        'Google did not return a credential. Check that this origin is allowed in Google Cloud, then retry (pop-ups must not be blocked).',
+      )
       return
     }
     setBusy(true)
@@ -109,6 +112,12 @@ export default function LoginScreen({ theme = 'dark' }) {
     } finally {
       setBusy(false)
     }
+  }
+
+  function handleGoogleError() {
+    setError(
+      'Google sign-in was cancelled or blocked. Allow pop-ups for this site and try again.',
+    )
   }
 
   return (
@@ -156,7 +165,7 @@ export default function LoginScreen({ theme = 'dark' }) {
             <GoogleLogin
               key={googleWidth}
               onSuccess={handleGoogleSuccess}
-              onError={() => setError('Google sign-in was cancelled or failed.')}
+              onError={handleGoogleError}
               useOneTap={false}
               theme={isDark ? 'filled_black' : 'outline'}
               size="large"

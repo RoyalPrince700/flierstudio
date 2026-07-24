@@ -6,5 +6,14 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    // Mirror production: GIS popups need to postMessage the credential back.
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
+  },
+  preview: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
   },
 })

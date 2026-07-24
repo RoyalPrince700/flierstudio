@@ -32,7 +32,15 @@ requireEnv('GOOGLE_CLIENT_ID')
 
 const app = express()
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
+// CORP cross-origin: SPA on another host must read API responses.
+// COOP same-origin-allow-popups: Helmet’s default `same-origin` is fine for
+// JSON APIs but keep it GIS-safe if this host ever serves an opener document.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  }),
+)
 app.use(
   cors({
     origin(origin, callback) {
