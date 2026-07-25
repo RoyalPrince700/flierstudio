@@ -1159,6 +1159,15 @@
   background: color-mix(in srgb, var(--studio-accent) 28%, transparent);
 }
 
+.inspector__rail-swatch.is-hidden {
+  opacity: 0.4;
+}
+
+.inspector__rail-swatch.is-hidden .inspector__thumb,
+.inspector__rail-swatch.is-hidden .inspector__swatch {
+  filter: grayscale(0.4);
+}
+
 .inspector__rail-swatch .inspector__swatch,
 .inspector__rail-swatch .inspector__thumb {
   width: 18px;
@@ -1200,6 +1209,20 @@
   color: var(--studio-accent-ink);
 }
 
+.inspector__layer-row.is-hidden {
+  opacity: 0.48;
+}
+
+.inspector__layer-row.is-hidden .inspector__thumb,
+.inspector__layer-row.is-hidden .inspector__swatch {
+  opacity: 0.7;
+  filter: grayscale(0.35);
+}
+
+.inspector__layer-row.is-hidden.is-active {
+  opacity: 0.72;
+}
+
 .inspector__layer {
   display: flex;
   align-items: center;
@@ -1232,7 +1255,8 @@
 }
 
 .inspector__layer-row:hover .inspector__layer-actions,
-.inspector__layer-row.is-active .inspector__layer-actions {
+.inspector__layer-row.is-active .inspector__layer-actions,
+.inspector__layer-row.is-hidden .inspector__layer-actions {
   opacity: 1;
 }
 

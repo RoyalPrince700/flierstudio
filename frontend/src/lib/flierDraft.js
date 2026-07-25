@@ -54,6 +54,8 @@ export function createEmergenceContent() {
     stagePeopleCount: DEFAULT_STAGE_PEOPLE_COUNT,
     stagePeople: seedStagePeopleFromLists(speakers, panelists),
     includeConvener: true,
+    /** Cascade Stage Flex — light peach/mint speaker tray (`.e-grid__card`). */
+    showSpeakerStageBg: true,
     convener: {
       label: emergence.event.convenerLabel,
       photoSrc: '',
@@ -63,6 +65,23 @@ export function createEmergenceContent() {
     imageFits: {},
     colorTheme: 'ocean',
   }
+}
+
+/** Board-level content seed from template props (e.g. Updated opens tray-off). */
+export function emergenceBoardContentSeed(item) {
+  const seed = item?.props?.content
+  if (seed && typeof seed === 'object' && !Array.isArray(seed)) {
+    // Ignore full drafts accidentally left on props.content — only partial seeds.
+    if (!(seed.event || seed.speakers || seed.panelists || seed.stagePeople)) {
+      return seed
+    }
+  }
+  // Mapped studio items overwrite props.content with a full draft; fall back by id.
+  const id = typeof item?.id === 'string' ? item.id : ''
+  if (id === 'emergence-cascade-flex-updated' || id.includes('cascade-flex-updated')) {
+    return { showSpeakerStageBg: false }
+  }
+  return {}
 }
 
 export function getByPath(obj, path) {
@@ -104,8 +123,8 @@ export function setByPath(obj, path, value) {
   return next
 }
 
-export function mergeEmergenceDraft(draft) {
-  const base = createEmergenceContent()
+export function mergeEmergenceDraft(draft, boardDefaults = {}) {
+  const base = { ...createEmergenceContent(), ...boardDefaults }
   if (!draft) return base
   const event = { ...base.event, ...draft.event }
 
@@ -184,6 +203,10 @@ export function mergeEmergenceDraft(draft) {
     typeof draft.includeConvener === 'boolean'
       ? draft.includeConvener
       : base.includeConvener !== false
+  const showSpeakerStageBg =
+    typeof draft.showSpeakerStageBg === 'boolean'
+      ? draft.showSpeakerStageBg
+      : base.showSpeakerStageBg !== false
 
   return {
     event,
@@ -192,6 +215,7 @@ export function mergeEmergenceDraft(draft) {
     stagePeopleCount,
     stagePeople,
     includeConvener,
+    showSpeakerStageBg,
     convener: { ...base.convener, ...draft.convener },
     fonts: { ...base.fonts, ...draft.fonts },
     alignments: { ...base.alignments, ...(draft.alignments || {}) },
@@ -280,12 +304,22 @@ export function getArtboardDraft(drafts, projectId, itemId) {
   return drafts?.[projectId]?.[itemId] ?? null
 }
 
-export function patchArtboardDraft(drafts, projectId, itemId, path, value, editKind) {
+export function patchArtboardDraft(
+  drafts,
+  projectId,
+  itemId,
+  path,
+  value,
+  editKind,
+  boardDefaults = {},
+) {
   if (!projectId || !itemId) return drafts
   const projectDrafts = drafts[projectId] || {}
   const current =
     projectDrafts[itemId] ||
-    (editKind === 'emergence' ? createEmergenceContent() : { alignments: {} })
+    (editKind === 'emergence'
+      ? mergeEmergenceDraft(null, boardDefaults)
+      : { alignments: {} })
   return {
     ...drafts,
     [projectId]: {
@@ -296,11 +330,21 @@ export function patchArtboardDraft(drafts, projectId, itemId, path, value, editK
   }
 }
 
-export function setArtboardAlignment(drafts, projectId, itemId, textPath, align, editKind) {
+export function setArtboardAlignment(
+  drafts,
+  projectId,
+  itemId,
+  textPath,
+  align,
+  editKind,
+  boardDefaults = {},
+) {
   const projectDrafts = drafts[projectId] || {}
   const current =
     projectDrafts[itemId] ||
-    (editKind === 'emergence' ? createEmergenceContent() : { alignments: {} })
+    (editKind === 'emergence'
+      ? mergeEmergenceDraft(null, boardDefaults)
+      : { alignments: {} })
   return {
     ...drafts,
     [projectId]: {
@@ -345,14 +389,16 @@ export function buildEditViewModel(item, draft, projectId) {
   if (!item) return null
   const editKind = getItemEditKind(item, projectId)
   if (editKind === 'emergence') {
-    const merged = mergeEmergenceDraft(draft)
+    const merged = mergeEmergenceDraft(draft, emergenceBoardContentSeed(item))
     return {
       kind: 'emergence',
       boardId: item.id,
       stageFlex:
         item.id === 'emergence-cascade-stage-flex' ||
+        item.id === 'emergence-cascade-flex-updated' ||
         item.props?.stageFlex === true ||
-        item.id?.includes('cascade-stage-flex'),
+        item.id?.includes('cascade-stage-flex') ||
+        item.id?.includes('cascade-flex-updated'),
       ...merged,
     }
   }

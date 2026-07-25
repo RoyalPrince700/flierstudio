@@ -18,11 +18,11 @@ import {
 import './emergence-templates.css'
 
 /**
- * Cascade Stage Flex — same chrome as Cascade Stage, dynamic stagePeople 1–10.
- * N≤8: 1080×1350 portrait. N≥9: growing landscape banner (one tall portrait row).
- * Original `EmergenceCascadeStage` stays fixed 3+3; this board owns the flex layout.
+ * Cascade Flex Updated — independent copy of Cascade Stage Flex.
+ * Same chrome + dynamic stagePeople 1–10; owns e-flier--cascade-flex-updated CSS.
+ * Original EmergenceCascadeStageFlex / cascade-stage-flex stays untouched.
  */
-export default function EmergenceCascadeStageFlex(props) {
+export default function EmergenceCascadeFlexUpdated(props) {
   const {
     event,
     stagePeople,
@@ -59,8 +59,8 @@ export default function EmergenceCascadeStageFlex(props) {
       className={[
         'e-flier',
         'e-flier--cascade-stage',
-        'e-flier--cascade-stage-flex',
-        showConvener ? '' : 'e-flier--cascade-stage-flex-solo',
+        'e-flier--cascade-flex-updated',
+        showConvener ? '' : 'e-flier--cascade-flex-updated-solo',
       ]
         .filter(Boolean)
         .join(' ')}

@@ -301,6 +301,7 @@ export default function ToolRail({
     ? clampStagePeopleCount(editContent.stagePeopleCount)
     : STAGE_PEOPLE_MIN
   const includeConvener = isEmergence ? editContent.includeConvener !== false : true
+  const showSpeakerStageBg = isEmergence ? editContent.showSpeakerStageBg !== false : true
   const currentAlign = focusedPath ? editContent?.alignments?.[focusedPath] || '' : ''
   const focusedImageSrc = useMemo(() => {
     if (!editContent || !focusedPath || !imageFocused || logoFocused) return ''
@@ -436,6 +437,14 @@ export default function ToolRail({
         active: includeConvener,
         onClick: () => onEditChange?.('includeConvener', !includeConvener),
       })
+      chips.push({
+        id: 'stage-bg',
+        dockLabel: 'Stage BG',
+        label: 'Speaker stage background',
+        icon: LayoutGrid,
+        active: showSpeakerStageBg,
+        onClick: () => onEditChange?.('showSpeakerStageBg', !showSpeakerStageBg),
+      })
     }
 
     chips.push({
@@ -469,6 +478,7 @@ export default function ToolRail({
     hasSavedEdits,
     imageFocused,
     includeConvener,
+    showSpeakerStageBg,
     isEmergence,
     logoFocused,
     onClearImage,

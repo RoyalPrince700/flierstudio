@@ -36,6 +36,7 @@ export function layerThumbSignature(item) {
       content.convener?.photoSrc || '',
       content.stagePeopleCount ?? '',
       content.includeConvener === false ? '0' : '1',
+      content.showSpeakerStageBg === false ? '0' : '1',
       speakers,
       panelists,
       stagePeople,

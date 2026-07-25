@@ -107,6 +107,7 @@ export function resolveProjectBoard(project, layout) {
           sourceId: entry.templateId,
           templateId: entry.templateId,
           editKind: 'props',
+          hidden: Boolean(entry.hidden),
         }
       }
 
@@ -118,11 +119,61 @@ export function resolveProjectBoard(project, layout) {
         name: entry.name || source.name,
         filename: `${source.filename || entry.sourceId}-${id === entry.sourceId ? 'main' : 'copy'}`,
         sourceId: entry.sourceId,
+        hidden: Boolean(entry.hidden),
       }
     })
     .filter(Boolean)
 
   return layoutBoardItems(raw)
+}
+
+/** Toggle canvas visibility for a layer. Duplicates of hidden layers start visible. */
+export function toggleBoardLayerVisibility(layout, project, itemId) {
+  const base = syncBoardLayoutWithProject(layout, project)
+  const entry = base.entries[itemId]
+  if (!entry) {
+    return { layout: base, hidden: false, nextSelectedId: null }
+  }
+
+  const hidden = !entry.hidden
+  const nextLayout = {
+    order: base.order,
+    entries: {
+      ...base.entries,
+      [itemId]: hidden ? { ...entry, hidden: true } : omitHidden(entry),
+    },
+  }
+
+  let nextSelectedId = null
+  if (hidden) {
+    nextSelectedId = nearestVisibleLayerId(nextLayout, itemId)
+  }
+
+  return { layout: nextLayout, hidden, nextSelectedId }
+}
+
+function omitHidden(entry) {
+  if (!entry || !('hidden' in entry)) return entry
+  const next = { ...entry }
+  delete next.hidden
+  return next
+}
+
+/** Nearest non-hidden layer in order (prefer next, then previous). */
+export function nearestVisibleLayerId(layout, fromId) {
+  const order = layout?.order ?? []
+  const entries = layout?.entries ?? {}
+  const index = order.indexOf(fromId)
+  if (index < 0) {
+    return order.find((id) => !entries[id]?.hidden) || null
+  }
+  for (let dist = 1; dist < order.length; dist += 1) {
+    const after = order[index + dist]
+    if (after && !entries[after]?.hidden) return after
+    const before = order[index - dist]
+    if (before && !entries[before]?.hidden) return before
+  }
+  return null
 }
 
 export function duplicateBoardLayer(layout, project, itemId, newId) {
@@ -151,6 +202,7 @@ export function duplicateBoardLayer(layout, project, itemId, newId) {
   const order = [...base.order]
   order.splice(index < 0 ? order.length : index + 1, 0, id)
 
+  // New duplicates always start visible even when the source layer is hidden.
   const nextEntry = entry.templateId
     ? { templateId: entry.templateId, name: copyName }
     : { sourceId: entry.sourceId, name: copyName }

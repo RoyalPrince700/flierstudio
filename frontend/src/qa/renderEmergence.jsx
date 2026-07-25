@@ -17,9 +17,19 @@ const FLEX_QA_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 const CONVENER_SLAB_QA_THEMES = ['ocean', 'ember', 'violet']
 const CONVENER_QA_PHOTO = '/assets/gracelife/cityscape.jpg'
 
+function flexContent(template, overrides = {}) {
+  return {
+    ...createEmergenceContent(),
+    ...(template.props?.content || {}),
+    ...overrides,
+  }
+}
+
 function boardsForTemplate(template) {
   const Component = template.Component
-  if (template.id !== 'cascade-stage-flex') {
+  const isFlex =
+    template.id === 'cascade-stage-flex' || template.id === 'cascade-flex-updated'
+  if (!isFlex) {
     return [
       <div key={template.id} data-shot={template.id} style={{ marginBottom: 24 }}>
         <Component {...(template.props || {})} />
@@ -28,8 +38,7 @@ function boardsForTemplate(template) {
   }
 
   const countBoards = FLEX_QA_COUNTS.map((count) => {
-    const content = createEmergenceContent()
-    content.stagePeopleCount = count
+    const content = flexContent(template, { stagePeopleCount: count })
     return (
       <div
         key={`${template.id}-n${count}`}
@@ -42,9 +51,10 @@ function boardsForTemplate(template) {
   })
 
   const soloBoards = [1, 2, 4, 5, 6, 7, 8, 9, 10].map((count) => {
-    const content = createEmergenceContent()
-    content.stagePeopleCount = count
-    content.includeConvener = false
+    const content = flexContent(template, {
+      stagePeopleCount: count,
+      includeConvener: false,
+    })
     return (
       <div
         key={`${template.id}-n${count}-solo`}
@@ -59,10 +69,11 @@ function boardsForTemplate(template) {
   /* N=6–8 Ember: solo + with-convener multi-row balance */
   const highNBalanceBoards = [6, 7, 8].flatMap((count) =>
     [false, true].map((withConvener) => {
-      const content = createEmergenceContent()
-      content.stagePeopleCount = count
-      content.includeConvener = withConvener
-      content.colorTheme = 'ember'
+      const content = flexContent(template, {
+        stagePeopleCount: count,
+        includeConvener: withConvener,
+        colorTheme: 'ember',
+      })
       const shot = withConvener
         ? `${template.id}-n${count}-ember`
         : `${template.id}-n${count}-solo-ember`
@@ -77,10 +88,11 @@ function boardsForTemplate(template) {
   /* N=9–10 Ember banner: landscape artboard + stage balance */
   const bannerBalanceBoards = [9, 10].flatMap((count) =>
     [false, true].map((withConvener) => {
-      const content = createEmergenceContent()
-      content.stagePeopleCount = count
-      content.includeConvener = withConvener
-      content.colorTheme = 'ember'
+      const content = flexContent(template, {
+        stagePeopleCount: count,
+        includeConvener: withConvener,
+        colorTheme: 'ember',
+      })
       const shot = withConvener
         ? `${template.id}-n${count}-banner-ember`
         : `${template.id}-n${count}-solo-banner-ember`
@@ -95,14 +107,15 @@ function boardsForTemplate(template) {
   /* Filled-photo theme matrix — verifies --e-convener-slab (N=1) and no slab (N=2) */
   const slabThemeBoards = [1, 2].flatMap((count) =>
     CONVENER_SLAB_QA_THEMES.map((theme) => {
-      const content = createEmergenceContent()
-      content.stagePeopleCount = count
-      content.includeConvener = true
-      content.colorTheme = theme
-      content.convener = {
-        ...content.convener,
-        photoSrc: CONVENER_QA_PHOTO,
-      }
+      const content = flexContent(template, {
+        stagePeopleCount: count,
+        includeConvener: true,
+        colorTheme: theme,
+        convener: {
+          ...createEmergenceContent().convener,
+          photoSrc: CONVENER_QA_PHOTO,
+        },
+      })
       const shot = `${template.id}-n${count}-filled-${theme}`
       return (
         <div key={shot} data-shot={shot} style={{ marginBottom: 24 }}>
@@ -114,11 +127,26 @@ function boardsForTemplate(template) {
 
   /* N=4 + convener equal-column QA (Ocean / Ember) */
   const n4EqualBoards = ['ocean', 'ember'].map((theme) => {
-    const content = createEmergenceContent()
-    content.stagePeopleCount = 4
-    content.includeConvener = true
-    content.colorTheme = theme
+    const content = flexContent(template, {
+      stagePeopleCount: 4,
+      includeConvener: true,
+      colorTheme: theme,
+    })
     const shot = `${template.id}-n4-eq-${theme}`
+    return (
+      <div key={shot} data-shot={shot} style={{ marginBottom: 24 }}>
+        <Component {...(template.props || {})} content={content} />
+      </div>
+    )
+  })
+
+  /* Tray toggle QA — N=6 with stage bg on and off */
+  const trayToggleBoards = [true, false].map((showBg) => {
+    const content = flexContent(template, {
+      stagePeopleCount: 6,
+      showSpeakerStageBg: showBg,
+    })
+    const shot = `${template.id}-n6-tray-${showBg ? 'on' : 'off'}`
     return (
       <div key={shot} data-shot={shot} style={{ marginBottom: 24 }}>
         <Component {...(template.props || {})} content={content} />
@@ -133,13 +161,12 @@ function boardsForTemplate(template) {
     ...bannerBalanceBoards,
     ...slabThemeBoards,
     ...n4EqualBoards,
+    ...trayToggleBoards,
   ]
 }
 
-const boards = Object.values(EMERGENCE_TEMPLATES).flatMap(boardsForTemplate)
-
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <div style={{ padding: 24 }}>{boards}</div>
+    {Object.values(EMERGENCE_TEMPLATES).flatMap((template) => boardsForTemplate(template))}
   </StrictMode>,
 )

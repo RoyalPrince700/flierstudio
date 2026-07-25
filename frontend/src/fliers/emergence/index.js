@@ -1,5 +1,6 @@
 import EmergenceCascadeStage from './EmergenceCascadeStage'
 import EmergenceCascadeStageFlex from './EmergenceCascadeStageFlex'
+import EmergenceCascadeFlexUpdated from './EmergenceCascadeFlexUpdated'
 
 export const EMERGENCE_TEMPLATES = {
   'cascade-stage': {
@@ -15,6 +16,14 @@ export const EMERGENCE_TEMPLATES = {
       'Cascade Stage with dynamic people on stage (1–10) and balanced grid recipes',
     Component: EmergenceCascadeStageFlex,
     props: { stageFlex: true },
+  },
+  'cascade-flex-updated': {
+    id: 'cascade-flex-updated',
+    label: 'Cascade Flex Updated',
+    description:
+      'Independent Flex variant — N=6 portrait cards, trayless stage, clearer type',
+    Component: EmergenceCascadeFlexUpdated,
+    props: { stageFlex: true, content: { showSpeakerStageBg: false } },
   },
 }
 

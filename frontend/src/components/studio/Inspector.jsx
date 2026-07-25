@@ -4,6 +4,8 @@ import {
   ChevronRight,
   Copy,
   Download,
+  Eye,
+  EyeOff,
   FileImage,
   Layers,
   Link2,
@@ -101,6 +103,7 @@ export default function Inspector({
   onCopySize,
   onDuplicateLayer,
   onDeleteLayer,
+  onToggleLayerVisibility,
   canDeleteLayer = true,
   mode = 'board',
   templatesItems = [],
@@ -199,8 +202,12 @@ export default function Inspector({
 
   function renderLayerRow(item) {
     const active = (templatesMode ? templatesSelectedId : selectedId) === item.id
+    const hidden = Boolean(item.hidden)
     return (
-      <li key={item.id} className={`inspector__layer-row${active ? ' is-active' : ''}`}>
+      <li
+        key={item.id}
+        className={`inspector__layer-row${active ? ' is-active' : ''}${hidden ? ' is-hidden' : ''}`}
+      >
         <button
           type="button"
           className={`inspector__layer${active ? ' is-active' : ''}`}
@@ -215,6 +222,23 @@ export default function Inspector({
 
         {!templatesMode ? (
           <div className="inspector__layer-actions">
+            <button
+              type="button"
+              className="inspector__layer-action"
+              title={hidden ? 'Show layer' : 'Hide layer'}
+              aria-label={hidden ? `Show ${item.name}` : `Hide ${item.name}`}
+              aria-pressed={!hidden}
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleLayerVisibility?.(item.id)
+              }}
+            >
+              {hidden ? (
+                <EyeOff size={13} strokeWidth={2.25} />
+              ) : (
+                <Eye size={13} strokeWidth={2.25} />
+              )}
+            </button>
             <button
               type="button"
               className="inspector__layer-action"
@@ -421,13 +445,14 @@ export default function Inspector({
             {layerItems.map((item) => {
               const active =
                 (templatesMode ? templatesSelectedId : selectedId) === item.id
+              const hidden = Boolean(item.hidden)
               return (
                 <li key={item.id}>
                   <button
                     type="button"
-                    className={`inspector__rail-swatch${active ? ' is-active' : ''}`}
-                    title={item.name}
-                    aria-label={item.name}
+                    className={`inspector__rail-swatch${active ? ' is-active' : ''}${hidden ? ' is-hidden' : ''}`}
+                    title={hidden ? `${item.name} (hidden)` : item.name}
+                    aria-label={hidden ? `${item.name}, hidden` : item.name}
                     aria-pressed={active}
                     onClick={() => selectLayer(item.id)}
                   >

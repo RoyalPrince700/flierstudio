@@ -48,6 +48,7 @@ export function resolveEmergenceData(props = {}) {
     stagePeople: content.stagePeople,
     stagePeopleCount: content.stagePeopleCount,
     includeConvener: content.includeConvener,
+    showSpeakerStageBg: content.showSpeakerStageBg,
     convener: content.convener,
     studioEdit,
     rootStyle,

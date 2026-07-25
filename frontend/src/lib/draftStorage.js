@@ -9,7 +9,11 @@ const DB_VERSION = 1
 const STORE = 'drafts'
 const RECORD_ID = 'all'
 
-const EMERGENCE_ITEM_IDS = ['emergence-cascade-stage', 'emergence-cascade-stage-flex']
+const EMERGENCE_ITEM_IDS = [
+  'emergence-cascade-stage',
+  'emergence-cascade-stage-flex',
+  'emergence-cascade-flex-updated',
+]
 
 function isArtboardDraftMap(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false

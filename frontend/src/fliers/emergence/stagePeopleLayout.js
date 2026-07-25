@@ -112,7 +112,7 @@ export function stageFlexBannerCssVars(count, { includeConvener = true } = {}) {
   }
 }
 
-/** Detect Cascade Stage Flex board items (including duplicates). */
+/** Detect any Emergence Flex board (Cascade Stage Flex or Cascade Flex Updated). */
 export function isEmergenceCascadeStageFlexItem(item) {
   if (!item) return false
   if (item.props?.stageFlex === true) return true
@@ -121,8 +121,12 @@ export function isEmergenceCascadeStageFlexItem(item) {
   return (
     id === 'emergence-cascade-stage-flex' ||
     sourceId === 'emergence-cascade-stage-flex' ||
+    id === 'emergence-cascade-flex-updated' ||
+    sourceId === 'emergence-cascade-flex-updated' ||
     id.includes('cascade-stage-flex') ||
-    sourceId.includes('cascade-stage-flex')
+    sourceId.includes('cascade-stage-flex') ||
+    id.includes('cascade-flex-updated') ||
+    sourceId.includes('cascade-flex-updated')
   )
 }
 

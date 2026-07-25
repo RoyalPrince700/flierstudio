@@ -193,6 +193,7 @@ export default function EditPanel({
     ? clampStagePeopleCount(content.stagePeopleCount)
     : STAGE_PEOPLE_MIN
   const includeConvener = isEmergence ? content.includeConvener !== false : true
+  const showSpeakerStageBg = isEmergence ? content.showSpeakerStageBg !== false : true
 
   const stageFlexSection =
     isEmergence && content.stageFlex ? (
@@ -244,6 +245,14 @@ export default function EditPanel({
             onChange={(e) => onChange('includeConvener', e.target.checked)}
           />
           <span>Include convener column</span>
+        </label>
+        <label className="edit-panel__field edit-panel__check">
+          <input
+            type="checkbox"
+            checked={showSpeakerStageBg}
+            onChange={(e) => onChange('showSpeakerStageBg', e.target.checked)}
+          />
+          <span>Speaker stage background</span>
         </label>
         <p className="inspector__note">
           Layout reflows for visual balance. Reducing count keeps hidden slot edits.

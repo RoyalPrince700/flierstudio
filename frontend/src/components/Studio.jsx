@@ -38,6 +38,7 @@ import {
   buildEditViewModel,
   clearArtboardDraft,
   copyArtboardDraft,
+  emergenceBoardContentSeed,
   getArtboardDraft,
   getByPath,
   getItemEditKind,
@@ -85,6 +86,7 @@ import {
   saveBoardLayouts,
   syncBoardLayoutWithProject,
   TEMPLATE_WORKSPACE_ID,
+  toggleBoardLayerVisibility,
 } from '../lib/boardLayout'
 import { layoutBoardItems } from '../projects/layout'
 import {
@@ -431,8 +433,11 @@ export default function Studio({
       const { items } = resolveProjectBoard(resolveStudioProject(projectId), layout)
       const item = items.find((entry) => entry.id === itemId)
       const editKind = getItemEditKind(item, projectId)
+      const boardSeed = emergenceBoardContentSeed(item)
       recordHistory(`${projectId}:${itemId}:${path}`)
-      setDrafts((prev) => patchArtboardDraft(prev, projectId, itemId, path, value, editKind))
+      setDrafts((prev) =>
+        patchArtboardDraft(prev, projectId, itemId, path, value, editKind, boardSeed),
+      )
     },
     [boardLayouts, recordHistory],
   )
@@ -474,6 +479,39 @@ export default function Studio({
       }))
       setFocusedPath(null)
       setFocusedKind(null)
+    },
+    [activeProjectId, boardLayouts, recordHistory],
+  )
+
+  const handleToggleLayerVisibility = useCallback(
+    (itemId) => {
+      if (!activeProjectId || !itemId) return
+      const projectRef = resolveStudioProject(activeProjectId)
+      const current = boardLayouts[activeProjectId]
+      const { layout, hidden, nextSelectedId } = toggleBoardLayerVisibility(
+        current,
+        projectRef,
+        itemId,
+      )
+      recordHistory()
+      setBoardLayouts((prev) => ({ ...prev, [activeProjectId]: layout }))
+      if (hidden) {
+        setTabState((prev) => {
+          const tab = prev[activeProjectId] ?? createTabState(activeProjectId)
+          if (tab.selectedId !== itemId) return prev
+          return {
+            ...prev,
+            [activeProjectId]: {
+              ...tab,
+              selectedId: nextSelectedId ?? itemId,
+            },
+          }
+        })
+        if (nextSelectedId && nextSelectedId !== itemId) {
+          setFocusedPath(null)
+          setFocusedKind(null)
+        }
+      }
     },
     [activeProjectId, boardLayouts, recordHistory],
   )
@@ -676,6 +714,7 @@ export default function Studio({
   const handleAlignChange = useCallback(
     (textPath, align) => {
       if (!textPath || !selectedId) return
+      const boardSeed = emergenceBoardContentSeed(selectedBaseItem)
       recordHistory(`${activeProjectId}:${selectedId}:align:${textPath}`)
       setDrafts((prev) =>
         setArtboardAlignment(
@@ -685,13 +724,14 @@ export default function Studio({
           textPath,
           align,
           selectedEditKind,
+          boardSeed,
         ),
       )
       setPrimaryTool('text')
       setFocusedPath(textPath)
       setFocusedKind('text')
     },
-    [activeProjectId, recordHistory, selectedEditKind, selectedId],
+    [activeProjectId, recordHistory, selectedBaseItem, selectedEditKind, selectedId],
   )
 
   const handlePickImage = useCallback((path) => {
@@ -711,13 +751,22 @@ export default function Studio({
       const { items } = resolveProjectBoard(resolveStudioProject(projectId), layout)
       const item = items.find((entry) => entry.id === itemId)
       const editKind = getItemEditKind(item, projectId)
+      const boardSeed = emergenceBoardContentSeed(item)
       const isEmergenceLogo = editKind === 'emergence' && isLogoImagePath(path)
       recordHistory(`${projectId}:${itemId}:${path}`)
       setDrafts((prev) => {
-        let next = patchArtboardDraft(prev, projectId, itemId, path, '', editKind)
+        let next = patchArtboardDraft(prev, projectId, itemId, path, '', editKind, boardSeed)
         // Brand logo: clear must empty the slot (not restore Flier Studio).
         if (isEmergenceLogo) {
-          next = patchArtboardDraft(next, projectId, itemId, 'event.logoMode', 'none', editKind)
+          next = patchArtboardDraft(
+            next,
+            projectId,
+            itemId,
+            'event.logoMode',
+            'none',
+            editKind,
+            boardSeed,
+          )
         }
         next = patchArtboardDraft(
           next,
@@ -726,6 +775,7 @@ export default function Studio({
           imageFitDraftPath(path),
           { ...DEFAULT_IMAGE_FIT },
           editKind,
+          boardSeed,
         )
         return next
       })
@@ -775,17 +825,42 @@ export default function Studio({
       const item = items.find((entry) => entry.id === itemId)
       const editKind = getItemEditKind(item, projectId)
       if (editKind !== 'emergence') return
+      const boardSeed = emergenceBoardContentSeed(item)
       recordHistory(`${projectId}:${itemId}:event.logoMode`)
       setDrafts((prev) => {
         let next = prev
         if (logoMode != null) {
-          next = patchArtboardDraft(next, projectId, itemId, 'event.logoMode', logoMode, editKind)
+          next = patchArtboardDraft(
+            next,
+            projectId,
+            itemId,
+            'event.logoMode',
+            logoMode,
+            editKind,
+            boardSeed,
+          )
         }
         if (logoSrc !== undefined) {
-          next = patchArtboardDraft(next, projectId, itemId, 'event.logoSrc', logoSrc, editKind)
+          next = patchArtboardDraft(
+            next,
+            projectId,
+            itemId,
+            'event.logoSrc',
+            logoSrc,
+            editKind,
+            boardSeed,
+          )
         }
         if (wordmark != null) {
-          next = patchArtboardDraft(next, projectId, itemId, 'event.wordmark', wordmark, editKind)
+          next = patchArtboardDraft(
+            next,
+            projectId,
+            itemId,
+            'event.wordmark',
+            wordmark,
+            editKind,
+            boardSeed,
+          )
         }
         return next
       })
@@ -814,8 +889,11 @@ export default function Studio({
       const pid = projectId || activeProjectId
       const iid = itemId || selectedId
       if (!pid || !iid) return
+      const layout = boardLayouts[pid]
+      const { items } = resolveProjectBoard(resolveStudioProject(pid), layout)
+      const item = items.find((entry) => entry.id === iid)
       const draft = getDraft(pid, iid)
-      const merged = mergeEmergenceDraft(draft)
+      const merged = mergeEmergenceDraft(draft, emergenceBoardContentSeed(item))
       const wordmark =
         merged.event?.wordmark?.trim() ||
         merged.event?.theme?.trim() ||
@@ -827,7 +905,7 @@ export default function Studio({
         focusKind: 'text',
       })
     },
-    [activeProjectId, applyEmergenceBrand, getDraft, selectedId],
+    [activeProjectId, applyEmergenceBrand, boardLayouts, getDraft, selectedId],
   )
 
   const handleUseImageLogo = useCallback(
@@ -835,8 +913,11 @@ export default function Studio({
       const pid = projectId || activeProjectId
       const iid = itemId || selectedId
       if (!pid || !iid) return
+      const layout = boardLayouts[pid]
+      const { items } = resolveProjectBoard(resolveStudioProject(pid), layout)
+      const item = items.find((entry) => entry.id === iid)
       const draft = getDraft(pid, iid)
-      const merged = mergeEmergenceDraft(draft)
+      const merged = mergeEmergenceDraft(draft, emergenceBoardContentSeed(item))
       const existing = typeof merged.event?.logoSrc === 'string' ? merged.event.logoSrc.trim() : ''
       applyEmergenceBrand(pid, iid, {
         logoMode: 'image',
@@ -845,7 +926,7 @@ export default function Studio({
         focusKind: 'image',
       })
     },
-    [activeProjectId, applyEmergenceBrand, getDraft, selectedId],
+    [activeProjectId, applyEmergenceBrand, boardLayouts, getDraft, selectedId],
   )
 
   const handleResetDraft = useCallback(() => {
@@ -885,6 +966,7 @@ export default function Studio({
         const { items } = resolveProjectBoard(resolveStudioProject(activeProjectId), layout)
         const item = items.find((entry) => entry.id === selectedId)
         const editKind = getItemEditKind(item, activeProjectId)
+        const boardSeed = emergenceBoardContentSeed(item)
         recordHistory(`${activeProjectId}:${selectedId}:${path}`)
         setDrafts((prev) => {
           let next = patchArtboardDraft(
@@ -894,6 +976,7 @@ export default function Studio({
             path,
             dataUrl,
             editKind,
+            boardSeed,
           )
           // Brand logo upload switches into image mode.
           if (editKind === 'emergence' && isLogoImagePath(path)) {
@@ -904,6 +987,7 @@ export default function Studio({
               'event.logoMode',
               'image',
               editKind,
+              boardSeed,
             )
           }
           // New / replaced image starts at exact cover crop
@@ -914,6 +998,7 @@ export default function Studio({
             imageFitDraftPath(path),
             { ...DEFAULT_IMAGE_FIT },
             editKind,
+            boardSeed,
           )
           return next
         })
@@ -931,14 +1016,15 @@ export default function Studio({
     const mapped = items.map((item) => {
       const editKind = getItemEditKind(item, activeProjectId)
       const draft = getDraft(activeProjectId, item.id)
+      const boardSeed = emergenceBoardContentSeed(item)
       const alignments =
         editKind === 'emergence'
-          ? mergeEmergenceDraft(draft).alignments
+          ? mergeEmergenceDraft(draft, boardSeed).alignments
           : mergePropsDraft(item.props || {}, draft).alignments
 
       const imageFits =
         editKind === 'emergence'
-          ? mergeEmergenceDraft(draft).imageFits
+          ? mergeEmergenceDraft(draft, boardSeed).imageFits
           : mergePropsDraft(item.props || {}, draft).imageFits
 
       const studioEdit = {
@@ -1013,7 +1099,7 @@ export default function Studio({
 
       let next = item
       if (editKind === 'emergence') {
-        const content = mergeEmergenceDraft(draft)
+        const content = mergeEmergenceDraft(draft, boardSeed)
         next = {
           ...item,
           props: {
@@ -1065,6 +1151,18 @@ export default function Studio({
 
   const boardItems = boardPack.items
   const bounds = boardPack.bounds ?? { width: 1000, height: 1000 }
+
+  /** Visible boards only — packed so hiding a layer collapses canvas clutter. */
+  const canvasBoard = useMemo(() => {
+    const visible = boardItems.filter((item) => !item.hidden)
+    if (visible.length === boardItems.length) {
+      return { items: boardItems, bounds }
+    }
+    return layoutBoardItems(visible)
+  }, [boardItems, bounds])
+
+  const canvasItems = canvasBoard.items
+  const canvasBounds = canvasBoard.bounds ?? bounds
 
   const selected = useMemo(
     () => boardItems.find((item) => item.id === selectedId) || null,
@@ -1227,17 +1325,17 @@ export default function Studio({
     if (!shell || !project) return
     const rect = shell.getBoundingClientRect()
     const pad = 72
-    const scaleX = (rect.width - pad * 2) / bounds.width
-    const scaleY = (rect.height - pad * 2) / bounds.height
+    const scaleX = (rect.width - pad * 2) / canvasBounds.width
+    const scaleY = (rect.height - pad * 2) / canvasBounds.height
     const nextZoom = Math.min(scaleX, scaleY, 1)
     patchTab(activeProjectId, {
       zoom: nextZoom,
       pan: {
-        x: (rect.width - bounds.width * nextZoom) / 2,
-        y: (rect.height - bounds.height * nextZoom) / 2,
+        x: (rect.width - canvasBounds.width * nextZoom) / 2,
+        y: (rect.height - canvasBounds.height * nextZoom) / 2,
       },
     })
-  }, [activeProjectId, bounds.height, bounds.width, project])
+  }, [activeProjectId, canvasBounds.height, canvasBounds.width, project])
 
   useEffect(() => {
     fitToScreen()
@@ -2153,7 +2251,7 @@ export default function Studio({
             </div>
           ) : (
             <Artboard
-              items={boardItems}
+              items={canvasItems}
               selectedId={selectedId}
               tool={tool}
               zoom={zoom}
@@ -2523,6 +2621,7 @@ export default function Studio({
           onCopySize={handleCopySize}
           onDuplicateLayer={handleDuplicateLayer}
           onDeleteLayer={handleDeleteLayer}
+          onToggleLayerVisibility={handleToggleLayerVisibility}
           canDeleteLayer={boardItems.length > 1}
           templatesItems={templatesInspectorItems}
           templatesSelectedId={
