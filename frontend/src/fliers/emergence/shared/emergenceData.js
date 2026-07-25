@@ -12,7 +12,9 @@ export function resolveEmergenceData(props = {}) {
   const fonts = content.fonts
   const studioEdit = props.studioEdit || null
   const stageFlex = props.stageFlex === true
-  const includeConvener = content.includeConvener !== false
+  // TEMP: allowConvener false on Cascade Flex Updated — re-enable when convener edit is finished.
+  const allowConvener = props.allowConvener !== false
+  const includeConvener = allowConvener && content.includeConvener !== false
   const boardSize = stageFlex
     ? resolveStageFlexBoardSize(content.stagePeopleCount, { includeConvener })
     : emergence.size
@@ -47,7 +49,7 @@ export function resolveEmergenceData(props = {}) {
     panelists: content.panelists,
     stagePeople: content.stagePeople,
     stagePeopleCount: content.stagePeopleCount,
-    includeConvener: content.includeConvener,
+    includeConvener,
     showSpeakerStageBg: content.showSpeakerStageBg,
     convener: content.convener,
     studioEdit,

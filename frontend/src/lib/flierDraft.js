@@ -3,6 +3,7 @@ import { emergence } from '../design/emergenceTokens'
 import {
   DEFAULT_STAGE_PEOPLE_COUNT,
   clampStagePeopleCount,
+  emergenceItemAllowsConvener,
   resolveStagePeople,
   seedStagePeopleFromLists,
 } from '../fliers/emergence/stagePeopleLayout'
@@ -79,7 +80,8 @@ export function emergenceBoardContentSeed(item) {
   // Mapped studio items overwrite props.content with a full draft; fall back by id.
   const id = typeof item?.id === 'string' ? item.id : ''
   if (id === 'emergence-cascade-flex-updated' || id.includes('cascade-flex-updated')) {
-    return { showSpeakerStageBg: false }
+    // TEMP: includeConvener forced off — re-enable when convener edit is finished.
+    return { showSpeakerStageBg: false, includeConvener: false }
   }
   return {}
 }
@@ -199,10 +201,15 @@ export function mergeEmergenceDraft(draft, boardDefaults = {}) {
     stagePeopleCount,
     base.stagePeople,
   )
-  const includeConvener =
+  let includeConvener =
     typeof draft.includeConvener === 'boolean'
       ? draft.includeConvener
       : base.includeConvener !== false
+  // TEMP: Cascade Flex Updated board seed locks speakers-only until convener edit is finished.
+  // (Seed sets includeConvener: false — do not let old drafts revive the column.)
+  if (base.includeConvener === false) {
+    includeConvener = false
+  }
   const showSpeakerStageBg =
     typeof draft.showSpeakerStageBg === 'boolean'
       ? draft.showSpeakerStageBg
@@ -390,6 +397,9 @@ export function buildEditViewModel(item, draft, projectId) {
   const editKind = getItemEditKind(item, projectId)
   if (editKind === 'emergence') {
     const merged = mergeEmergenceDraft(draft, emergenceBoardContentSeed(item))
+    // TEMP: allowConvener false on Cascade Flex Updated — re-enable when convener edit is finished.
+    const allowConvener = emergenceItemAllowsConvener(item)
+    if (!allowConvener) merged.includeConvener = false
     return {
       kind: 'emergence',
       boardId: item.id,
@@ -400,6 +410,7 @@ export function buildEditViewModel(item, draft, projectId) {
         item.id?.includes('cascade-stage-flex') ||
         item.id?.includes('cascade-flex-updated'),
       ...merged,
+      allowConvener,
     }
   }
   const merged = mergePropsDraft(item.props || {}, draft)

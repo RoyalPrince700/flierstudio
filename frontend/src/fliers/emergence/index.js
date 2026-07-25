@@ -23,7 +23,12 @@ export const EMERGENCE_TEMPLATES = {
     description:
       'Independent Flex variant — N=6 portrait cards, trayless stage, clearer type',
     Component: EmergenceCascadeFlexUpdated,
-    props: { stageFlex: true, content: { showSpeakerStageBg: false } },
+    // TEMP: allowConvener: false — re-enable when convener edit is finished (set true / remove).
+    props: {
+      stageFlex: true,
+      allowConvener: false,
+      content: { showSpeakerStageBg: false, includeConvener: false },
+    },
   },
 }
 

@@ -429,14 +429,17 @@ export default function ToolRail({
         active: dockStrip === 'people',
         onClick: () => toggleStrip('people'),
       })
-      chips.push({
-        id: 'convener',
-        dockLabel: 'Convener',
-        label: 'Include convener column',
-        icon: Users,
-        active: includeConvener,
-        onClick: () => onEditChange?.('includeConvener', !includeConvener),
-      })
+      // TEMP: hide on Cascade Flex Updated until convener edit is finished (allowConvener).
+      if (editContent.allowConvener !== false) {
+        chips.push({
+          id: 'convener',
+          dockLabel: 'Convener',
+          label: 'Include convener column',
+          icon: Users,
+          active: includeConvener,
+          onClick: () => onEditChange?.('includeConvener', !includeConvener),
+        })
+      }
       chips.push({
         id: 'stage-bg',
         dockLabel: 'Stage BG',

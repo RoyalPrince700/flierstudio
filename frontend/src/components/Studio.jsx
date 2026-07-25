@@ -90,6 +90,7 @@ import {
 } from '../lib/boardLayout'
 import { layoutBoardItems } from '../projects/layout'
 import {
+  emergenceItemAllowsConvener,
   isEmergenceCascadeStageFlexItem,
   resolveStageFlexBoardSize,
 } from '../fliers/emergence/stagePeopleLayout'
@@ -1110,8 +1111,9 @@ export default function Studio({
         }
         /* Flex N≥9 → banner artboard; N≤8 restores portrait (size follows count). */
         if (isEmergenceCascadeStageFlexItem(item)) {
+          const allowConvener = emergenceItemAllowsConvener(item)
           const size = resolveStageFlexBoardSize(content.stagePeopleCount, {
-            includeConvener: content.includeConvener !== false,
+            includeConvener: allowConvener && content.includeConvener !== false,
           })
           next = { ...next, width: size.width, height: size.height }
         }

@@ -3,7 +3,8 @@ import EditableText from '../../components/studio/EditableText'
 import { editableTextProps } from '../../components/studio/editableTextProps'
 import PortraitSlot from './shared/PortraitSlot'
 import {
-  ConvenerSlot,
+  // TEMP: ConvenerSlot gated off — re-enable when convener edit is finished (allowConvener: true).
+  // ConvenerSlot,
   EmergenceBackground,
   EmergenceFooter,
   EmergenceHeader,
@@ -21,15 +22,18 @@ import './emergence-templates.css'
  * Cascade Flex Updated — independent copy of Cascade Stage Flex.
  * Same chrome + dynamic stagePeople 1–10; owns e-flier--cascade-flex-updated CSS.
  * Original EmergenceCascadeStageFlex / cascade-stage-flex stays untouched.
+ *
+ * TEMP: speakers-only (no convener column). Re-enable when convener edit is finished:
+ * set allowConvener: true on cascade-flex-updated template and restore showConvener /
+ * ConvenerSlot branch below.
  */
 export default function EmergenceCascadeFlexUpdated(props) {
   const {
     event,
     stagePeople,
     stagePeopleCount,
-    includeConvener,
     showSpeakerStageBg,
-    convener,
+    // convener, // TEMP: restore with ConvenerSlot when allowConvener is re-enabled
     studioEdit,
     rootStyle,
     personProps,
@@ -37,7 +41,8 @@ export default function EmergenceCascadeFlexUpdated(props) {
 
   const count = stagePeopleCount
   const people = stagePeople
-  const showConvener = includeConvener !== false
+  // TEMP: force speakers-only — ignore draft includeConvener until edit work is done.
+  const showConvener = false
   const showStageCard = showSpeakerStageBg !== false
   const landscape = isStageFlexBannerCount(count)
   const rows = stagePeopleRowGroups(people, { includeConvener: showConvener })
@@ -60,13 +65,13 @@ export default function EmergenceCascadeFlexUpdated(props) {
         'e-flier',
         'e-flier--cascade-stage',
         'e-flier--cascade-flex-updated',
-        showConvener ? '' : 'e-flier--cascade-flex-updated-solo',
+        'e-flier--cascade-flex-updated-solo',
       ]
         .filter(Boolean)
         .join(' ')}
       style={rootStyle}
       data-people-count={count}
-      data-include-convener={showConvener ? '1' : '0'}
+      data-include-convener="0"
       data-stage-card={showStageCard ? '1' : '0'}
       data-orientation={landscape ? 'landscape' : 'portrait'}
     >
@@ -145,6 +150,7 @@ export default function EmergenceCascadeFlexUpdated(props) {
               </div>
             </div>
 
+            {/* TEMP: convener column disabled — restore when allowConvener is re-enabled:
             {showConvener ? (
               <ConvenerSlot
                 className="e-grid__convener"
@@ -153,6 +159,7 @@ export default function EmergenceCascadeFlexUpdated(props) {
                 studioEdit={studioEdit}
               />
             ) : null}
+            */}
           </div>
 
           <KeywordStrip event={event} studioEdit={studioEdit} />

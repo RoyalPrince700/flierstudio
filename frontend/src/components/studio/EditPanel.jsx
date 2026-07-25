@@ -238,14 +238,17 @@ export default function EditPanel({
             <Plus size={14} strokeWidth={2.25} />
           </button>
         </div>
-        <label className="edit-panel__field edit-panel__check">
-          <input
-            type="checkbox"
-            checked={includeConvener}
-            onChange={(e) => onChange('includeConvener', e.target.checked)}
-          />
-          <span>Include convener column</span>
-        </label>
+        {/* TEMP: hide on Cascade Flex Updated until convener edit is finished (allowConvener). */}
+        {content.allowConvener !== false ? (
+          <label className="edit-panel__field edit-panel__check">
+            <input
+              type="checkbox"
+              checked={includeConvener}
+              onChange={(e) => onChange('includeConvener', e.target.checked)}
+            />
+            <span>Include convener column</span>
+          </label>
+        ) : null}
         <label className="edit-panel__field edit-panel__check">
           <input
             type="checkbox"

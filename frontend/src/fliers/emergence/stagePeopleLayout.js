@@ -130,6 +130,34 @@ export function isEmergenceCascadeStageFlexItem(item) {
   )
 }
 
+/** Cascade Flex Updated only (not Cascade Stage Flex). */
+export function isEmergenceCascadeFlexUpdatedItem(item) {
+  if (!item) return false
+  const id = String(item.id || '')
+  const sourceId = String(item.sourceId || '')
+  return (
+    id === 'emergence-cascade-flex-updated' ||
+    sourceId === 'emergence-cascade-flex-updated' ||
+    id.includes('cascade-flex-updated') ||
+    sourceId.includes('cascade-flex-updated')
+  )
+}
+
+/**
+ * Whether this Flex board may show / toggle the convener column.
+ * TEMP: Cascade Flex Updated defaults off until convener edit is finished —
+ * set `allowConvener: true` on the `cascade-flex-updated` template to restore.
+ */
+export function emergenceItemAllowsConvener(item) {
+  if (!item) return true
+  if (typeof item.props?.allowConvener === 'boolean') {
+    return item.props.allowConvener
+  }
+  // Fallback when template prop is missing: Updated stays locked off.
+  if (isEmergenceCascadeFlexUpdatedItem(item)) return false
+  return true
+}
+
 export function defaultStagePerson(index) {
   const n = index + 1
   const padded = String(n).padStart(2, '0')
