@@ -42,13 +42,32 @@ export default function AdminUsers() {
     }
   }
 
+  async function deleteUser(user) {
+    const label = user.name || user.email || 'this user'
+    const confirmed = window.confirm(
+      `Delete ${label} (${user.email})? They will no longer be able to sign in.`,
+    )
+    if (!confirmed) return
+
+    setBusyId(user.id)
+    setError('')
+    try {
+      await api(`/api/admin/users/${user.id}`, { method: 'DELETE' })
+      setUsers((prev) => prev.filter((u) => u.id !== user.id))
+    } catch (err) {
+      setError(err?.message || 'Could not delete user')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-page__header">
         <div>
           <h1 className="admin-page__title">Users</h1>
           <p className="admin-page__copy">
-            All signed-in accounts. Promote trusted users to admin or demote as needed.
+            All signed-in accounts. Promote trusted users to admin, demote, or remove accounts.
           </p>
         </div>
         <button type="button" className="admin-board__refresh" onClick={load} disabled={loading}>
@@ -96,25 +115,35 @@ export default function AdminUsers() {
                   <td>{formatDate(u.lastLoginAt)}</td>
                   <td>{formatDate(u.createdAt)}</td>
                   <td>
-                    {u.role === 'admin' ? (
+                    <div className="admin-board__actions">
+                      {u.role === 'admin' ? (
+                        <button
+                          type="button"
+                          className="admin-board__mini"
+                          disabled={busyId === u.id}
+                          onClick={() => setRole(u.id, 'user')}
+                        >
+                          Make user
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="admin-board__mini admin-board__mini--primary"
+                          disabled={busyId === u.id}
+                          onClick={() => setRole(u.id, 'admin')}
+                        >
+                          Make admin
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className="admin-board__mini"
+                        className="admin-board__mini admin-board__mini--danger"
                         disabled={busyId === u.id}
-                        onClick={() => setRole(u.id, 'user')}
+                        onClick={() => deleteUser(u)}
                       >
-                        Make user
+                        Delete
                       </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="admin-board__mini admin-board__mini--primary"
-                        disabled={busyId === u.id}
-                        onClick={() => setRole(u.id, 'admin')}
-                      >
-                        Make admin
-                      </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}

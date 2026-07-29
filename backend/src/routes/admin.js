@@ -90,6 +90,34 @@ router.patch('/users/:id/role', async (req, res) => {
   }
 })
 
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const targetId = req.params.id
+
+    if (targetId === req.user._id.toString()) {
+      return res.status(400).json({ error: 'You cannot delete your own account' })
+    }
+
+    const user = await User.findById(targetId)
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    if (user.role === 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin' })
+      if (adminCount <= 1) {
+        return res.status(400).json({ error: 'Cannot delete the last remaining admin' })
+      }
+    }
+
+    await User.deleteOne({ _id: user._id })
+    return res.json({ ok: true, deletedId: user._id.toString() })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ error: 'Could not delete user' })
+  }
+})
+
 /** Category catalog — seeds + admin-created custom labels. */
 router.get('/categories', async (_req, res) => {
   try {

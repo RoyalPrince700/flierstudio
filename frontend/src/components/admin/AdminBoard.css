@@ -270,9 +270,26 @@
   color: var(--studio-text);
 }
 
+.admin-board__mini--danger {
+  border-color: color-mix(in srgb, var(--studio-danger) 40%, var(--studio-chip-border));
+  background: color-mix(in srgb, var(--studio-danger) 12%, var(--studio-chip));
+  color: var(--studio-danger);
+}
+
+.admin-board__mini--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--studio-danger) 22%, var(--studio-chip));
+  border-color: color-mix(in srgb, var(--studio-danger) 55%, var(--studio-chip-border));
+}
+
 .admin-board__mini:disabled {
   opacity: 0.55;
   cursor: default;
+}
+
+.admin-board__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .admin-board__list {

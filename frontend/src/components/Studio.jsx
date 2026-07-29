@@ -1533,7 +1533,7 @@ export default function Studio({
     setError('')
     try {
       const scale = HD_SCALES[hdScaleId]?.scale ?? 3
-      await exportFlier(node, {
+      const result = await exportFlier(node, {
         format,
         filename: `${selected.filename}-${Date.now()}`,
         width: selected.width,
@@ -1545,6 +1545,12 @@ export default function Studio({
           setExportLabel(label)
         },
       })
+      if (result?.cancelled) {
+        setError('Export cancelled — nothing was saved. Export again to save to Photos or Files.')
+        setExportProgress(0)
+        setExportLabel(EXPORT_PROGRESS.started.label)
+        return
+      }
       trackFlierDownload({
         projectId: activeProjectId || '',
         designId: selected.sourceId || selected.id,
